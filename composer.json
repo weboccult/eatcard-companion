@@ -1,0 +1,28 @@
+{
+  "name": "weboccult/eatcard-companion",
+  "description": "To handle all generic function and features.",
+  "keywords": [
+    "weboccult",
+    "eatcard-companion"
+  ],
+  "type": "library",
+  "require": {
+    "php": "^7.4|^8.0",
+    "illuminate/support": "^8.0",
+    "ext-bcmath": "*"
+  },
+  "homepage": "https://github.com/weboccult/eatcard-helpers",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Darshit Hedpara",
+      "email": "weboccults@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Weboccult\\EatcardCompanion\\": "src"
+    }
+  }
+}
