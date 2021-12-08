@@ -23,6 +23,9 @@
   "autoload": {
     "psr-4": {
       "Weboccult\\EatcardCompanion\\": "src"
-    }
+    },
+    "files":[
+        "src/Helpers/general.php"
+    ]
   }
 }

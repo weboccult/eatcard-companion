@@ -32,7 +32,7 @@ composer require weboccult/eatcard-companion
 
 ```php
 use Weboccult\EatcardCompanion\Traits\TRAIT_NAME;
-use function Weboccult\EatcardCompanion\Helpers\FUNCTION_NAME;
+use function Weboccult\EatcardCompanion\Helpers\{FUNCTION1, FUNCTION2};
 ```
 
 ## Available Traits
@@ -42,6 +42,7 @@ use function Weboccult\EatcardCompanion\Helpers\FUNCTION_NAME;
 ## Available Helper Functions
 
 - eatcardSayHello : test function
+- splitDigits : to split digits from specific position
 
 ## Changelog
 
