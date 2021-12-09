@@ -9,7 +9,10 @@
   "require": {
     "php": "^7.4|^8.0",
     "illuminate/support": "^8.0",
-    "ext-bcmath": "*"
+    "ext-bcmath": "*",
+    "nunomaduro/collision": "^5.10",
+    "pestphp/pest": "^1.21",
+    "phpunit/phpunit": "^9.5"
   },
   "homepage": "https://github.com/weboccult/eatcard-helpers",
   "license": "MIT",
@@ -27,5 +30,16 @@
     "files":[
         "src/Helpers/general.php"
     ]
-  }
+  },
+  "autoload-dev": {
+      "psr-4": {
+          "Weboccult\\EatcardCompanion\\Tests\\": "tests"
+      }
+  },
+  "scripts": {
+      "test": "vendor/bin/pest",
+      "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
