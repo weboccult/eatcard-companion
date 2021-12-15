@@ -9,10 +9,11 @@
   "require": {
     "php": "^7.4|^8.0",
     "illuminate/support": "^8.0",
+    "illuminate/database": "^8.0",
     "ext-bcmath": "*",
-    "nunomaduro/collision": "^5.10",
-    "pestphp/pest": "^1.21",
-    "phpunit/phpunit": "^9.5"
+    "nunomaduro/collision": "^5.0",
+    "pestphp/pest": "^1.0",
+    "phpunit/phpunit": "^9.0"
   },
   "homepage": "https://github.com/weboccult/eatcard-helpers",
   "license": "MIT",
@@ -28,7 +29,8 @@
       "Weboccult\\EatcardCompanion\\": "src"
     },
     "files":[
-        "src/Helpers/general.php"
+        "src/Helpers/general.php",
+        "src/Helpers/pacakgeHelper.php"
     ]
   },
   "autoload-dev": {
@@ -39,6 +41,19 @@
   "scripts": {
       "test": "vendor/bin/pest",
       "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  },
+  "extra": {
+      "laravel": {
+          "providers": [
+              "Weboccult\\EatcardCompanion\\Services\\Prints\\Providers\\EatcardPrintServiceProvider"
+          ],
+          "aliases": {
+              "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Prints\\Facades\\EatcardPrint"
+          }
+      }
+  },
+  "config": {
+      "sort-packages": true
   },
   "minimum-stability": "dev",
   "prefer-stable": true
