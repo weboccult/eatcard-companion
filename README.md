@@ -6,8 +6,6 @@
 </h2>
 <br>
 
----
-
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/weboccult/eatcard-companion/run-tests/master?style=for-the-badge)
 ![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/weboccult/eatcard-companion/run-tests?label=tests&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/weboccult/eatcard-companion?style=for-the-badge)
@@ -27,7 +25,6 @@
 
 This companion package will help our team to manage to generic functionality and features at one place.
 
----
 ## Installation
 
 #### You can install the package via composer:
