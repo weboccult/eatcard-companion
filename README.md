@@ -8,6 +8,7 @@
 
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/weboccult/eatcard-companion/run-tests/master?style=for-the-badge)
 ![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/weboccult/eatcard-companion/run-tests?label=tests&style=for-the-badge)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/weboccult/eatcard-companion/Check%20&%20fix%20styling?label=Check%20%26%20fix%20styling&logo=github&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/weboccult/eatcard-companion?style=for-the-badge)
 
 ![Packagist PHP Version Support](https://img.shields.io/packagist/php-v/weboccult/eatcard-companion?style=for-the-badge)
