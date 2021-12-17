@@ -3,11 +3,10 @@
 namespace Weboccult\EatcardCompanion\Enums;
 
 /**
- * Class PaymentTypes
- * @package App\Enums
+ * Class PaymentTypes.
  */
 class PrintTypes extends BaseEnum
 {
-    const SQS = 'SQS';
-    const PROTOCOL = 'PROTOCOL';
+    public const SQS = 'SQS';
+    public const PROTOCOL = 'PROTOCOL';
 }
