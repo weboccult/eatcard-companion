@@ -4,9 +4,6 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
 use Exception;
 
-/**
- *
- */
 abstract class BaseProcessor implements BaseProcessorContract
 {
     protected string $createdFrom = 'companion';
@@ -16,8 +13,8 @@ abstract class BaseProcessor implements BaseProcessorContract
      */
     public function __construct()
     {
-        if (!$this->createdFrom == 'companion') {
-            throw new Exception('You need to define value of created_from on order processor class : ' . get_class($this));
+        if (! $this->createdFrom == 'companion') {
+            throw new Exception('You need to define value of created_from on order processor class : '.get_class($this));
         }
     }
 }

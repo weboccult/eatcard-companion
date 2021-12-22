@@ -4,9 +4,6 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Processors;
 
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 
-/**
- *
- */
 class TakeawayProcessor extends BaseProcessor
 {
     protected string $createdFrom = 'takeaway';
