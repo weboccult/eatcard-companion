@@ -1,22 +1,12 @@
 {
   "name": "weboccult/eatcard-companion",
   "description": "To handle all generic function and features.",
+  "license": "MIT",
+  "type": "library",
   "keywords": [
     "weboccult",
     "eatcard-companion"
   ],
-  "type": "library",
-  "require": {
-    "php": "^7.4|^8.0",
-    "illuminate/support": "^8.0",
-    "illuminate/database": "^8.0",
-    "ext-bcmath": "*",
-    "nunomaduro/collision": "^5.0",
-    "pestphp/pest": "^1.0",
-    "phpunit/phpunit": "^9.0"
-  },
-  "homepage": "https://github.com/weboccult/eatcard-helpers",
-  "license": "MIT",
   "authors": [
     {
       "name": "Darshit Hedpara",
@@ -24,39 +14,49 @@
       "role": "Developer"
     }
   ],
+  "homepage": "https://github.com/weboccult/eatcard-helpers",
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "ext-bcmath": "*",
+    "illuminate/database": "^8.0",
+    "illuminate/support": "^8.0",
+    "nunomaduro/collision": "^5.0",
+    "pestphp/pest": "^1.0",
+    "phpunit/phpunit": "^9.0"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "autoload": {
     "psr-4": {
       "Weboccult\\EatcardCompanion\\": "src"
     },
-    "files":[
-        "src/Helpers/general.php",
-        "src/Helpers/pacakgeHelper.php"
+    "files": [
+      "src/Helpers/general.php",
+      "src/Helpers/pacakgeHelper.php"
     ]
   },
   "autoload-dev": {
-      "psr-4": {
-          "Weboccult\\EatcardCompanion\\Tests\\": "tests"
-      }
-  },
-  "scripts": {
-      "test": "vendor/bin/pest",
-      "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
-  },
-  "extra": {
-      "laravel": {
-          "providers": [
-              "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
-              "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
-          ],
-          "aliases": {
-              "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
-              "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
-          }
-      }
+    "psr-4": {
+      "Weboccult\\EatcardCompanion\\Tests\\": "tests"
+    }
   },
   "config": {
-      "sort-packages": true
+    "sort-packages": true
   },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+  "extra": {
+    "laravel": {
+      "aliases": {
+        "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
+        "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
+      },
+      "providers": [
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/pest",
+    "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  }
 }
