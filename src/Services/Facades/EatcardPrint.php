@@ -1,21 +1,23 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Prints\Facades;
+namespace Weboccult\EatcardCompanion\Services\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Weboccult\EatcardCompanion\Services\Core\EatcardPrint as EatcardPrintCore;
 
 /**
  * @method static mixed toJson()
- * @method static EatcardPrint via(string $driver)
- * @mixin EatcardPrint
  *
- * @return EatcardPrint
+ * @mixin EatcardPrintCore
+ *
+ * @return EatcardPrintCore
+ *
+ * @see EatcardPrintCore
  */
 class EatcardPrint extends Facade
 {
     /**
      * Get the registered name of the component.
-     *
      * @return string
      */
     protected static function getFacadeAccessor(): string

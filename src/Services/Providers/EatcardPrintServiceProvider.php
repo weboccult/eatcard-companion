@@ -1,10 +1,13 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Prints\Providers;
+namespace Weboccult\EatcardCompanion\Services\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Weboccult\EatcardCompanion\Services\Prints\Core\EatcardPrint;
+use Weboccult\EatcardCompanion\Services\Core\EatcardPrint;
 
+/**
+ *
+ */
 class EatcardPrintServiceProvider extends ServiceProvider
 {
     public function boot()

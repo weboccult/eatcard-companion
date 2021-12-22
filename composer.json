@@ -45,10 +45,12 @@
   "extra": {
       "laravel": {
           "providers": [
-              "Weboccult\\EatcardCompanion\\Services\\Prints\\Providers\\EatcardPrintServiceProvider"
+              "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
+              "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
           ],
           "aliases": {
-              "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Prints\\Facades\\EatcardPrint"
+              "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
+              "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
           }
       }
   },

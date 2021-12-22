@@ -1,10 +1,13 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Prints;
+namespace Weboccult\EatcardCompanion\Services\Common\Prints\Generators;
 
-use Weboccult\EatcardCompanion\Services\Prints\Core\BasePrint;
+use Weboccult\EatcardCompanion\Services\Common\Prints\BasePrint;
 
-class SqsPrint extends BasePrint
+/**
+ *
+ */
+class ProtocolGenerator extends BasePrint
 {
     public function validate()
     {

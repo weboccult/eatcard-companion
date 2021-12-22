@@ -4,10 +4,22 @@ if (! function_exists('eatcardPrint')) {
     /**
      * Access eatcardPrint through helper.
      *
-     * @return Weboccult\EatcardCompanion\Services\Prints\Core\EatcardPrint
+     * @return Weboccult\EatcardCompanion\Services\Core\EatcardPrint
      */
-    function eatcardPrint(): Weboccult\EatcardCompanion\Services\Prints\Core\EatcardPrint
+    function eatcardPrint(): Weboccult\EatcardCompanion\Services\Core\EatcardPrint
     {
         return app('eatcard-print');
+    }
+}
+
+if (! function_exists('eatcardOrder')) {
+    /**
+     * Access eatcardPrint through helper.
+     *
+     * @return Weboccult\EatcardCompanion\Services\Core\EatcardOrder
+     */
+    function eatcardOrder(): Weboccult\EatcardCompanion\Services\Core\EatcardOrder
+    {
+        return app('eatcard-order');
     }
 }
