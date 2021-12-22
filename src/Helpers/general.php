@@ -17,6 +17,7 @@ if (! function_exists('eatcardSayHello')) {
         return $string;
     }
 }
+
 if (! function_exists('splitDigits')) {
     /**
      * @description Split and return splited or diff od splited value
