@@ -18,7 +18,6 @@ class StoreReservation extends Model
         'is_round_exist',
     ];
 
-
     public function getReservationDateAttribute()
     {
         return $this->getRawOriginal('res_date');
