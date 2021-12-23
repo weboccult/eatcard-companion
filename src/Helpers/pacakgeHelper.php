@@ -14,7 +14,7 @@ if (! function_exists('eatcardPrint')) {
 
 if (! function_exists('eatcardOrder')) {
     /**
-     * Access eatcardPrint through helper.
+     * Access eatcardOrder through helper.
      *
      * @return Weboccult\EatcardCompanion\Services\Core\EatcardOrder
      */
