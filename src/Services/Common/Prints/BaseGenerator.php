@@ -2,7 +2,6 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
-interface BasePrintContract
+abstract class BaseGenerator implements BasePrintContract
 {
-    public function dispatch();
 }

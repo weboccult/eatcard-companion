@@ -2,9 +2,9 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Generators;
 
-use Weboccult\EatcardCompanion\Services\Common\Prints\BasePrint;
+use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 
-class ProtocolGenerator extends BasePrint
+class ProtocolGenerator extends BaseGenerator
 {
     public function validate()
     {

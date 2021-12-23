@@ -4,13 +4,13 @@ namespace Weboccult\EatcardCompanion\Services\Core;
 
 use Exception;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
-use Weboccult\EatcardCompanion\Services\Common\Prints\BasePrint;
+use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\ProtocolGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SqsGenerator;
 
 class EatcardPrint
 {
-    protected BasePrint $printGenerator;
+    protected BaseGenerator $printGenerator;
 
     /**
      * @param string $printType
