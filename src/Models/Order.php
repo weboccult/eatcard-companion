@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
@@ -10,13 +11,22 @@ class Order extends Model
     use SoftDeletes;
 
     protected $appends = ['full_name'];
+    /**
+     * @var mixed
+     */
 
-    public function getFullNameAttribute()
+    /**
+     * @return string
+     */
+    public function getFullNameAttribute(): string
     {
         return $this->first_name.' '.$this->last_name;
     }
 
-    public function kiosk()
+    /**
+     * @return BelongsTo
+     */
+    public function kiosk(): BelongsTo
     {
         return $this->belongsTo(KioskDevice::class, 'kiosk_id', 'id');
     }

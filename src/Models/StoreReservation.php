@@ -18,11 +18,19 @@ class StoreReservation extends Model
         'is_round_exist',
     ];
 
+    /**
+     * @return array|mixed
+     */
     public function getReservationDateAttribute()
     {
         return $this->getRawOriginal('res_date');
     }
 
+    /**
+     * @param $value
+     *
+     * @return mixed
+     */
     public function getResDateAttribute($value)
     {
         return getDutchDate($value);

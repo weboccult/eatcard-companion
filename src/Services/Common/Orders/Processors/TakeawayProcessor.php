@@ -12,4 +12,9 @@ class TakeawayProcessor extends BaseProcessor
     {
         // TODO: Implement dispatch() method.
     }
+
+    public function prepareValidationsRules(): array
+    {
+        // TODO: Implement prepareValidationsRules() method.
+    }
 }
