@@ -110,7 +110,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     public function prepareValidationsRules(): array
     {
         return [
-            'Store can\'t be empty' => true,
+            'Store can\'t be empty' => empty($this->store),
         ];
     }
 

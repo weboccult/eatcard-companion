@@ -70,7 +70,9 @@ class PosTakeawayProcessor extends BaseProcessor
      */
     public function dispatch(): array
     {
+        $this->prepareValidationsRules();
         $this->validate($this->localRules);
+
         // TODO : Create logic goes here...
         $payloadFinal = $this->preparePayload();
         $order = $this->createOrder($payloadFinal['order']);
@@ -86,11 +88,16 @@ class PosTakeawayProcessor extends BaseProcessor
     {
         $defaultValidationRules = parent::prepareValidationsRules();
         $overrideValidationRules = [
-
+            'Device can\'t be empty' => empty($this->device),
         ];
 
-        $removeValidationRules = [];
+        $finalRules = array_merge($defaultValidationRules, $overrideValidationRules);
 
-        $this->localRules = array_merge($defaultValidationRules, $overrideValidationRules);
+        $removeValidationRules = [
+            'Store can\'t be empty',
+        ];
+
+//        #remove[$removeValidationRules];
+        $this->localRules = [];
     }
 }
