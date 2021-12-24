@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
 use Illuminate\Support\Facades\Cache;
+use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Store;
 use Throwable;
@@ -22,16 +23,16 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected array $cart = [];
 
-    protected Store $store;
+    protected ?Store $store;
 
-    protected KioskDevice $device;
+    protected ?KioskDevice $device;
 
     /**
      * @throws Exception
      */
     public function __construct()
     {
-        if (! $this->createdFrom == 'companion') {
+        if ($this->createdFrom == 'companion') {
             throw new Exception('You need to define value of created_from on order processor class : '.get_class($this));
         }
     }
@@ -53,6 +54,14 @@ abstract class BaseProcessor implements BaseProcessorContract
     }
 
     /**
+     * @param array $payload
+     */
+    public function setPayload(array $payload): void
+    {
+        $this->payload = $payload;
+    }
+
+    /**
      * @return Store
      */
     public function getStore(): Store
@@ -62,6 +71,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     /**
      * @param $storeId
+     *
+     * @throws Exception
      */
     public function setStore($storeId): void
     {
@@ -75,6 +86,9 @@ abstract class BaseProcessor implements BaseProcessorContract
         ])->remember('{eat-card}-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
             return Store::with('storeSetting')->where('id', $storeId)->first();
         });
+        if (empty($store)) {
+            throw new StoreEmptyException();
+        }
         $this->store = $store;
     }
 
@@ -100,8 +114,11 @@ abstract class BaseProcessor implements BaseProcessorContract
      */
     public function preparePayload(): array
     {
-        // TODO
-        return $this->getCart();
+        // TODO : prepare tax and other field for order and order items
+        return [
+            'order' => [],
+            'order_items' => $this->getCart(),
+        ];
     }
 
     /**
@@ -110,7 +127,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     public function prepareValidationsRules(): array
     {
         return [
-            'Store can\'t be empty' => empty($this->store),
+            // 'Store can\'t be empty' => empty($this->store),
         ];
     }
 
@@ -120,16 +137,16 @@ abstract class BaseProcessor implements BaseProcessorContract
     public function validate($rules): void
     {
         foreach ($rules as $ex => $condition) {
-            throw_if($condition, new Exception($ex, 422));
+            throw_if($condition, new $ex());
         }
     }
 
-    public function createOrder(array $payload): array
+    public function createOrder(array $payload): void
     {
         // return Order::create($payload)
     }
 
-    public function createOrderItems(string $orderId, array $items): array
+    public function createOrderItems(string $orderId, array $items): void
     {
         // return OrderItem::create($payload)
     }

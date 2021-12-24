@@ -4,19 +4,13 @@ namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 
 class StoreReservation extends Model
 {
     use SoftDeletes;
 
     protected $table = 'store_reservations';
-
-    protected $appends = [
-        'dutch_date',
-        'reservation_date'
-        /*, 'res_dutch_date'*/,
-        'is_round_exist',
-    ];
 
     /**
      * @return array|mixed
@@ -29,9 +23,9 @@ class StoreReservation extends Model
     /**
      * @param $value
      *
-     * @return mixed
+     * @return string
      */
-    public function getResDateAttribute($value)
+    public function getResDateAttribute($value): string
     {
         return getDutchDate($value);
     }

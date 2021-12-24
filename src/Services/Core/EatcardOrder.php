@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Core;
 
+use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use Exception;
 
@@ -17,7 +18,7 @@ class EatcardOrder
         if (class_exists($processor)) {
             $this->processor = new $processor();
         } else {
-            throw new Exception($processor.'does not exists.!', 422);
+            throw new ClassNotFoundException(sprintf('Class %s not found.', $processor));
         }
 
         return $this;
@@ -30,9 +31,10 @@ class EatcardOrder
         return $this;
     }
 
-    public function payload(array $cart): self
+    public function payload(array $payload): self
     {
-//        $this->processor->setCart($cart);
+        $this->processor->setPayload($payload);
+
         return $this;
     }
 

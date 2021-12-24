@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Helpers;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 if (! function_exists('eatcardSayHello')) {
@@ -48,5 +49,68 @@ if (! function_exists('splitDigits')) {
 
             return $rounded_digit;
         }
+    }
+}
+
+if (! function_exists('getDutchDate')) {
+    /**
+     * @param string $date
+     * @param bool $day2let
+     *
+     * @return string
+     * @Description
+     */
+    function getDutchDate(string $date, bool $day2let = false): string
+    {
+        $dutchDayNames = [
+            'Sunday' => 'zondag',
+            'Monday' => 'maandag',
+            'Tuesday' => 'dinsdag',
+            'Wednesday' => 'woensdag',
+            'Thursday' => 'donderdag',
+            'Friday' => 'vrijdag',
+            'Saturday' => 'zaterdag',
+        ];
+        $monthNames = [
+            'January' => 'januari',
+            'February' => 'februari',
+            'March' => 'maart',
+            'April' => 'april',
+            'May' => 'mei',
+            'June' => 'juni',
+            'July' => 'juli',
+            'August' => 'augustus',
+            'September' => 'september',
+            'October' => 'oktober',
+            'November' => 'november',
+            'December' => 'december',
+        ];
+        $day = $day2let ? appDutchDay2Letter(Carbon::parse($date)->format('l')) : $dutchDayNames[Carbon::parse($date)
+            ->format('l')];
+
+        return $day.' '.Carbon::parse($date)->format('d').' '.$monthNames[Carbon::parse($date)
+                ->format('F')].' '.Carbon::parse($date)->format('Y');
+    }
+}
+
+if (! function_exists('getDutchDate')) {
+    /**
+     * @param string $day
+     *
+     * @return string
+     */
+    function appDutchDay2Letter(string $day): string
+    {
+        $dutchDayNames = [
+            'Sunday' => 'Zo',
+            'Monday' => 'Ma',
+            'Tuesday' => 'Di',
+            'Wednesday' => 'Wo',
+            'Thursday' => 'Do',
+            'Friday' => 'Vr',
+            'Saturday' => 'Za',
+        ];
+
+        return $dutchDayNames[$day];
     }
 }

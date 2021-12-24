@@ -2,7 +2,9 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Processors;
 
+use Exception;
 use Throwable;
+use Weboccult\EatcardCompanion\Exceptions\KioskDeviceEmptyException;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 
 class PosTakeawayProcessor extends BaseProcessor
@@ -11,38 +13,39 @@ class PosTakeawayProcessor extends BaseProcessor
 
     protected string $orderStatus = 'preparing';
 
-    protected string $createdBy = '';
-
-    protected string $savedOrderId = '';
-
-    protected array $localRules = [];
-
     public function __construct()
     {
         parent::__construct();
-        $this->setCreatedBy();
-        $this->setSavedOrderId();
-        $this->preparePayloadStore();
     }
 
-    public function setCreatedBy(): void
+    public function setCreatedByField(): void
     {
         if (! empty($this->payload) && isset($this->payload['pos_user_id'])) {
             $this->createdBy = $this->payload['pos_user_id'];
         }
     }
 
-    public function setSavedOrderId(): void
+    public function setSavedOrderIdField(): void
     {
-        if (! empty($this->inputs) && isset($this->inputs['saved_order_id'])) {
-            $this->savedOrderId = $this->inputs['saved_order_id'];
+        if (! empty($this->payload) && isset($this->payload['saved_order_id'])) {
+            $this->savedOrderId = $this->payload['saved_order_id'];
         }
     }
 
-    public function preparePayloadStore(): void
+    /**
+     * @throws Exception
+     */
+    public function setStoreModel(): void
     {
-        if (! empty($this->inputs) && isset($this->inputs['store_id'])) {
-            $this->setStore($this->inputs['store_id']);
+        if (! empty($this->payload) && isset($this->payload['store_id'])) {
+            $this->setStore($this->payload['store_id']);
+        }
+    }
+
+    public function setDeviceModel(): void
+    {
+        if (! empty($this->payload) && isset($this->payload['device_id'])) {
+            $this->setDevice($this->payload['device_id']);
         }
     }
 
@@ -53,32 +56,15 @@ class PosTakeawayProcessor extends BaseProcessor
     {
         $defaultPayload = parent::preparePayload();
 
-        $overrideValues = ['item'  => 2, 'item2' => 2];
-
-        $removeField = ['asd', 'zyx'];
-
-        $final = [
-            'order' => null,
-            'order_items' => null,
+        $overrideValues = [
+            'order' => [],
+            'order_items' => [
+                'item2' => 'XXX',
+                'item3' => 1,
+            ],
         ];
 
-        return array_merge($defaultPayload, ['item'  => 2, 'item2' => 2]);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function dispatch(): array
-    {
-        $this->prepareValidationsRules();
-        $this->validate($this->localRules);
-
-        // TODO : Create logic goes here...
-        $payloadFinal = $this->preparePayload();
-        $order = $this->createOrder($payloadFinal['order']);
-        $orderItems = $this->createOrderItems($order->id, $payloadFinal['order_items']);
-
-        return $order;
+        return array_replace_recursive($defaultPayload, $overrideValues);
     }
 
     /**
@@ -88,16 +74,38 @@ class PosTakeawayProcessor extends BaseProcessor
     {
         $defaultValidationRules = parent::prepareValidationsRules();
         $overrideValidationRules = [
-            'Device can\'t be empty' => empty($this->device),
+            KioskDeviceEmptyException::class => empty($this->device),
         ];
 
         $finalRules = array_merge($defaultValidationRules, $overrideValidationRules);
 
         $removeValidationRules = [
-            'Store can\'t be empty',
+            // 'Store can\'t be empty',
         ];
 
-//        #remove[$removeValidationRules];
-        $this->localRules = [];
+        return collect($finalRules)->reject(fn ($value, $key) => in_array($key, $removeValidationRules))->toArray();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function dispatch(): array
+    {
+        $this->setCreatedByField();
+        $this->setSavedOrderIdField();
+        $this->setStoreModel();
+        $this->setDeviceModel();
+
+        $localRules = $this->prepareValidationsRules();
+        $this->validate($localRules);
+
+        // TODO : Create logic goes here...
+        $payloadFinal = $this->preparePayload();
+
+        dd($this);
+        $order = $this->createOrder($payloadFinal['order']);
+        $orderItems = $this->createOrderItems($order->id, $payloadFinal['order_items']);
+
+        return $order;
     }
 }

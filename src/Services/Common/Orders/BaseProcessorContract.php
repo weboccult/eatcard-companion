@@ -6,7 +6,7 @@ interface BaseProcessorContract
 {
     public function dispatch();
 
-    public function validate();
+    public function validate(array $rules);
 
     public function prepareValidationsRules();
 }
