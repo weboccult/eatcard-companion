@@ -18,7 +18,7 @@ class EatcardOrder
         if (class_exists($processor)) {
             $this->processor = new $processor();
         } else {
-            throw new ClassNotFoundException(sprintf('Class %s not found.', $processor));
+            throw new ClassNotFoundException($processor);
         }
 
         return $this;

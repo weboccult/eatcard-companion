@@ -12,10 +12,10 @@ use Weboccult\EatcardCompanion\Exceptions\Core\EatcardException;
 class ClassNotFoundException extends EatcardException
 {
     /**
-     * @param string $message
+     * @param string $class
      */
-    public function __construct($message)
+    public function __construct($class)
     {
-        parent::__construct($message);
+        parent::__construct(sprintf('Class %s not found.', $class));
     }
 }
