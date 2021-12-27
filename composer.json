@@ -18,12 +18,12 @@
   "require": {
     "php": "^7.4 || ^8.0",
     "ext-bcmath": "*",
+    "ext-json": "*",
     "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
     "nunomaduro/collision": "^5.0",
     "pestphp/pest": "^1.0",
-    "phpunit/phpunit": "^9.0",
-    "ext-json": "*"
+    "phpunit/phpunit": "^9.0"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -52,9 +52,9 @@
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
       },
       "providers": [
-          "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
-          "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
-          "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
+        "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
       ]
     }
   },
