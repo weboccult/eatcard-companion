@@ -3,7 +3,10 @@
 namespace Weboccult\EatcardCompanion\Helpers;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\OrderHistory;
 
 if (! function_exists('eatcardSayHello')) {
     /**
@@ -112,5 +115,72 @@ if (! function_exists('getDutchDate')) {
         ];
 
         return $dutchDayNames[$day];
+    }
+}
+
+if (! function_exists('appDutchDate')) {
+    /**
+     * @param $date
+     *
+     * @return string
+     */
+    function appDutchDate($date): string
+    {
+        $dutchDayNames = [
+            'Sunday' => 'Zo',
+            'Monday' => 'Ma',
+            'Tuesday' => 'Di',
+            'Wednesday' => 'Wo',
+            'Thursday' => 'Do',
+            'Friday' => 'Vr',
+            'Saturday' => 'Za',
+        ];
+
+        return $dutchDayNames[Carbon::parse($date)->format('l')].' '.Carbon::parse($date)->format('d-m-y');
+    }
+}
+
+if (! function_exists('generatePOSOrderId')) {
+    /**
+     * @param $store_id
+     *
+     * @return int|string
+     */
+    function generatePOSOrderId($store_id)
+    {
+        $order_history = OrderHistory::where('store_id', $store_id)->where('order_type', 'pos')->where(function ($q) {
+            $q->where(DB::raw('LENGTH(order_id)'), '=', '8')->where('order_id', 'LIKE', Carbon::now()
+                        ->format('y').'0%');
+        })
+
+                ->whereNotBetween('created_at', [
+                '2021-03-11 00:00:00',
+                '2021-03-12 23:59:59',
+            ])->orderBy('created_at', 'desc')->first();
+        if ($order_history) {
+            $order_history->makeHidden(['full_name']);
+        }
+        $order = Order::where('store_id', $store_id)->where('order_type', 'pos')->where(function ($q) {
+            $q->where(DB::raw('LENGTH(order_id)'), '=', '8')
+                    ->where('order_id', 'LIKE', Carbon::now()->format('y').'0%');
+        })
+                //            ->whereDate('created_at',date('Y-m-d'))
+                ->orderBy('created_at', 'desc')->first();
+
+        if ($order) {
+            $order->makeHidden(['full_name']);
+        }
+        if ($order && $order_history) {
+            //            Log::info('order & order history '.$order_history->id);
+            if ($order_history->id > $order->id) {
+                //                Log::info(' order history > order '. $order->id.' '.$order_history->id);
+                $order = $order_history;
+            }
+        } elseif ($order_history) {
+            //            Log::info('only order history '.$order_history->id);
+            $order = $order_history;
+        }
+        //        Log::info('new order id + 1 '.$order->order_id);
+        return $order ? $order->order_id + 1 : date('y').'000001';
     }
 }

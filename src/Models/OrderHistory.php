@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 class OrderHistory extends Model
 {
     use SoftDeletes;
+
+    protected $table = 'orders_history';
 
     protected $appends = ['full_name', 'generated_date'];
     /**
