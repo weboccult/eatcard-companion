@@ -22,7 +22,8 @@
     "illuminate/support": "^8.0",
     "nunomaduro/collision": "^5.0",
     "pestphp/pest": "^1.0",
-    "phpunit/phpunit": "^9.0"
+    "phpunit/phpunit": "^9.0",
+    "ext-json": "*"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -51,8 +52,9 @@
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
       },
       "providers": [
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
+          "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
+          "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
+          "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
       ]
     }
   },
