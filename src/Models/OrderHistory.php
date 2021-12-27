@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Order extends Model
+class OrderHistory extends Model
 {
     use SoftDeletes;
 
-    protected $appends = ['full_name', 'generated_date'];
+    protected $appends = ['full_name' , 'generated_date'];
     /**
      * @var mixed
      */
@@ -52,7 +52,7 @@ class Order extends Model
      */
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class, 'order_id');
+        return $this->hasMany(OrderItemHistory::class, 'order_id');
     }
 
     /**

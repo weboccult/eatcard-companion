@@ -132,4 +132,12 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class, 'product_id');
     }
+
+    /**
+     * @return HasMany
+     */
+    public function ayce_class(): HasMany
+    {
+        return $this->hasMany(DineinCategoryAyce::class, 'product_id');
+    }
 }
