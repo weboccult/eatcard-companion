@@ -32,10 +32,10 @@ class Order extends Model
         $dutch_date = appDutchDate($this->order_date);
         if ($this->order_type === 'dine_in' || $this->order_type === 'kiosk') {
             $text = ($this->dine_in_type == 'take_out') ? 'Meenemen' : (($this->dine_in_type == 'dine_in') ? 'Dine-in' : '');
-            return 'direct ' . ($this->checkout_no ? $this->checkout_no : '') . ' ' . $text;
-        }
-        else {
-            return $dutch_date . ' ' . $this->order_time;
+
+            return 'direct '.($this->checkout_no ? $this->checkout_no : '').' '.$text;
+        } else {
+            return $dutch_date.' '.$this->order_time;
         }
     }
 
