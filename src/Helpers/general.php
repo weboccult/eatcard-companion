@@ -428,4 +428,3 @@ if (! function_exists('changePriceFormat')) {
         return ($val) ? number_format((float) $val, 2, ',', '') : '0,00';
     }
 }
-
