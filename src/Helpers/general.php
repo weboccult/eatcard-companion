@@ -416,3 +416,16 @@ if (! function_exists('cartTotalValueCalc')) {
         }
     }
 }
+
+if (! function_exists('changePriceFormat')) {
+    /**
+     * @param $val
+     *
+     * @return string
+     */
+    function changePriceFormat($val): string
+    {
+        return ($val) ? number_format((float) $val, 2, ',', '') : '0,00';
+    }
+}
+
