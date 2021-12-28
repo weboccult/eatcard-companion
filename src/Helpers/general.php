@@ -23,19 +23,6 @@ if (! function_exists('eatcardSayHello')) {
     }
 }
 
-if (! function_exists('safeDefine')) {
-    /**
-     * @description it will not cause any errors if constant is already defined in parent system.
-     */
-    function safeDefine($key, $value): void
-    {
-        if (! defined($key)) {
-            echo $key.' - In'.'<br>';
-            define($key, $value);
-        }
-    }
-}
-
 if (! function_exists('splitDigits')) {
     /**
      * @description Split and return split or diff od split value
