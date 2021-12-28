@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Weboccult\EatcardCompanion\Classes\ImageFilters;
 use Weboccult\EatcardCompanion\Traits\Translatable;
@@ -139,5 +140,21 @@ class Product extends Model
     public function ayce_class(): HasMany
     {
         return $this->hasMany(DineinCategoryAyce::class, 'product_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function printersPivot(): HasMany
+    {
+        return $this->hasMany(ProductPrinter::class, 'product_id');
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function printers(): BelongsToMany
+    {
+        return $this->belongsToMany(StorePrinter::class, 'product_printers', 'product_id', 'printer_id')->withPivot('id')->orderBy('pivot_id', 'asc');
     }
 }
