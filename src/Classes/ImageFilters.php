@@ -12,15 +12,24 @@ use Exception;
 class ImageFilters
 {
     /**
-     * Usage
+     * @usage :
      * \App\ImageFilters::applyFilter('FILTER_NAME','AWS-S3-FULL-URL-IMAGE');
-     * AVAILABLE FILTERS : ['productName', 'productMedium', 'userProfileDropDown', 'storeBanner'].
+     *
+     * @available_filters :
+     * [
+     *  'productName',
+     *  'productMedium',
+     *  'userProfileDropDown',
+     *  'storeBanner',
+     * ]
+     *
+     * @description To use auto generated image scales from lambda function on AWS
      */
     public static array $filters = [
         'ProductNormalImage'       => ['size' => '200x200'],
         'UserProfileDropDownImage' => ['size' => '70x70'],
         'StoreBannerImage'         => ['size' => '940x220'],
-        'StorePrintLogoImage'         => ['size' => '200xauto'],
+        'StorePrintLogoImage'      => ['size' => '200xauto'],
         'EmailStoreLogo'           => ['size' => '200xauto'],
     ];
 

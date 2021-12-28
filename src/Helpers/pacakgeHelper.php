@@ -2,6 +2,7 @@
 
 use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Stringable;
 
 if (! function_exists('companionLogger')) {
     /**
@@ -23,7 +24,7 @@ if (! function_exists('companionLogger')) {
             } catch (Exception $e) {
             }
         }
-        $logContent = collect($values)->pipeInto(\Illuminate\Support\Stringable::class)->jsonSerialize();
+        $logContent = collect($values)->pipeInto(Stringable::class)->jsonSerialize();
         switch ($driver) {
             case LoggerTypes::FILE:
                 Log::info($logContent);
