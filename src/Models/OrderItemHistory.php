@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItemHistory extends Model
 {
+    protected $table = 'order_items_history';
+
     /**
      * @return BelongsTo
      */
