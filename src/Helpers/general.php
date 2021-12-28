@@ -213,6 +213,83 @@ if (! function_exists('generatePOSOrderId')) {
     }
 }
 
+if (! function_exists('getAycePrice')) {
+    /**
+     * @param array $ayce_data
+     *
+     * @return float|int
+     * @Description calculate ayce price if reservation is all_you_eat
+     */
+    function getAycePrice(array $ayce_data)
+    {
+        $ayce_amount = 0;
+        if (isset($ayce_data['dinein_price'])) {
+            $ayce_amount += isset($ayce_data['no_of_adults']) ? (int) $ayce_data['no_of_adults'] * (isset($ayce_data['dinein_price']['price']) ? (float) $ayce_data['dinein_price']['price'] : 0) : 0;
+            $ayce_amount += isset($ayce_data['no_of_kids2']) ? (int) $ayce_data['no_of_kids2'] * (isset($ayce_data['dinein_price']['child_price_2']) ? (float) $ayce_data['dinein_price']['child_price_2'] : 0) : 0;
+            if (isset($ayce_data['dinein_price']['is_per_year']) && $ayce_data['dinein_price']['is_per_year']) {
+                if (isset($ayce_data['kids_age']) && count($ayce_data['kids_age']) > 0) {
+                    $min_age = (int) $ayce_data['dinein_price']['min_age'];
+                    $max_age = (int) $ayce_data['dinein_price']['max_age'];
+                    $kid_price = (float) $ayce_data['dinein_price']['child_price'];
+                    foreach ($ayce_data['kids_age'] as $kids_age) {
+                        $ayce_amount += ((((int) $kids_age) - $min_age) + 1) * $kid_price;
+                    }
+                }
+            } else {
+                $ayce_amount += isset($ayce_data['no_of_kids']) ? (int) $ayce_data['no_of_kids'] * (isset($ayce_data['dinein_price']['child_price']) ? (float) $ayce_data['dinein_price']['child_price'] : 0) : 0;
+            }
+            if (isset($ayce_data['dinein_price']['dynamic_prices'])) {
+                foreach ($ayce_data['dinein_price']['dynamic_prices'] as $dynamic_prices) {
+                    if (isset($dynamic_prices['person'])) {
+                        $ayce_amount += (int) $dynamic_prices['person'] * (float) $dynamic_prices['price'];
+                    }
+                }
+            }
+        }
+
+        return $ayce_amount;
+    }
+}
+
+if (! function_exists('cartTotalValueCalc')) {
+    /**
+     * @param $total_value
+     * @param $base_value
+     * @param $discount_type
+     * @param $discount
+     * @param $cart_total
+     *
+     * @return float|int|void
+     */
+    function discountCalc($total_value, $base_value, $discount_type, $discount, $cart_total = 0)
+    {
+        try {
+            $discount_per = 0;
+            $calculted_amount = 0;
+            $discount = (float) $discount;
+            if ($total_value == $base_value && $discount_type == 1 && $cart_total == 0) {
+                $calculted_amount = $discount;
+
+                return $calculted_amount;
+            }
+            if ($discount_type == 1 && $cart_total == 0) { // EURO (amount) discount
+                $discount_per = round(($discount * 100) / $total_value, 5);
+            } elseif ($discount_type == 1 && $cart_total > 0) {
+                $discount_per = round(($discount * 100) / $cart_total, 5);
+            } else {
+                $discount_per = $discount;
+            }
+            if ($discount_per > 0) {
+                $calculted_amount = ($base_value * $discount_per) / 100;
+            }
+
+            return $calculted_amount;
+        } catch (\Exception $e) {
+            Log::info('discountCalc - helper error: '.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+        }
+    }
+}
+
 if (! function_exists('cartTotalValueCalc')) {
     /**
      * @param $items
