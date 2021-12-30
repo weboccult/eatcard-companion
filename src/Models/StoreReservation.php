@@ -47,4 +47,12 @@ class StoreReservation extends Model
     {
         return $this->hasMany(ReservationTable::class, 'reservation_id');
     }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function tables2(): BelongsToMany
+    {
+        return $this->belongsToMany(Table::class, 'reservation_tables', 'reservation_id', 'table_id');
+    }
 }

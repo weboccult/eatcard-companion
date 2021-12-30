@@ -17,4 +17,9 @@ class Store extends Model
     {
         return $this->hasOne(StoreSetting::class, 'store_id', 'id');
     }
+
+    public function takeawaySetting(): HasOne
+    {
+        return $this->hasOne(TakeawaySetting::class, 'store_id', 'id');
+    }
 }
