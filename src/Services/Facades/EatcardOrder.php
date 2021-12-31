@@ -6,7 +6,11 @@ use Illuminate\Support\Facades\Facade;
 use Weboccult\EatcardCompanion\Services\Core\EatcardOrder as EatcardOrderCore;
 
 /**
- * @method static mixed processor()
+ * @method static cart(array $cart)
+ * @method static payload(array $cart)
+ * @method static processor(string $processor)
+ * @method static system(string $system)
+ * @method static dispatch()
  *
  * @mixin EatcardOrderCore
  *

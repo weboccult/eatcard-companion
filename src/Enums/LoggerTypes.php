@@ -3,7 +3,7 @@
 namespace Weboccult\EatcardCompanion\Enums;
 
 /**
- * Class LoggerTypes.
+ * Enum LoggerTypes.
  */
 class LoggerTypes extends BaseEnum
 {

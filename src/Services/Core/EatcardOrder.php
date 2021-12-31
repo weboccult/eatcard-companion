@@ -2,9 +2,9 @@
 
 namespace Weboccult\EatcardCompanion\Services\Core;
 
+use Exception;
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
-use Exception;
 
 class EatcardOrder
 {
@@ -24,6 +24,13 @@ class EatcardOrder
         return $this;
     }
 
+    public function system(string $system): self
+    {
+        $this->processor->setSystem($system);
+
+        return $this;
+    }
+
     public function cart(array $cart): self
     {
         $this->processor->setCart($cart);
@@ -39,9 +46,9 @@ class EatcardOrder
     }
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function dispatch()
+    public function dispatch(): array
     {
         return $this->processor->dispatch();
     }

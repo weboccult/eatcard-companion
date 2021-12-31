@@ -1,8 +1,8 @@
 <?php
 
-use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Stringable;
+use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 
 if (! function_exists('companionLogger')) {
     /**

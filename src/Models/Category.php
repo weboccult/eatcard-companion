@@ -4,8 +4,8 @@ namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Weboccult\EatcardCompanion\Traits\Translatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Weboccult\EatcardCompanion\Traits\Translatable;
 
 class Category extends Model
 {

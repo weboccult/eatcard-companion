@@ -4,27 +4,61 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Store;
+use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PaymentProcess;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11Broadcasting;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage12Notification;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage13ExtraOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage1PrepareValidationRules;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage2ValidateValidations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage3PrepareBasicData;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage4EnableSettings;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage5DatabaseInteraction;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage6PrepareAdvanceData;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage7PerformOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage8PerformFeesCalculation;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9CreateProcess;
 
 abstract class BaseProcessor implements BaseProcessorContract
 {
+    use Stage1PrepareValidationRules;
+    use Stage2ValidateValidations;
+    use Stage3PrepareBasicData;
+    use Stage4EnableSettings;
+    use Stage5DatabaseInteraction;
+    use Stage6PrepareAdvanceData;
+    use Stage7PerformOperations;
+    use Stage8PerformFeesCalculation;
+    use Stage9CreateProcess;
+    use Stage10PaymentProcess;
+    use Stage11Broadcasting;
+    use Stage12Notification;
+    use Stage13ExtraOperations;
+
     protected string $createdFrom = 'companion';
-
-    protected string $orderStatus = 'received';
-
-    protected string $createdBy = '';
-
-    protected string $savedOrderId = '';
 
     protected array $payload = [];
 
     protected array $cart = [];
 
+    protected string $system = 'none';
+
     protected ?Store $store;
+
+    protected ?StoreReservation $storeReservation;
 
     protected ?KioskDevice $device;
 
     public function __construct()
     {
+    }
+
+    /**
+     * @param string $system
+     */
+    public function setSystem(string $system): void
+    {
+        $this->system = $system;
     }
 
     /**
@@ -44,121 +78,141 @@ abstract class BaseProcessor implements BaseProcessorContract
     }
 
     /**
-     * @return bool[]
+     * @return array
      */
-    protected function preparePayload(): array
+    public function dispatch(): array
     {
+        $this->stag1PrepareValidationRules();
+        $this->stage2ValidateValidations();
+        $this->stage3PrepareBasicData();
+        $this->enabledSettings();
+        $this->databaseInteraction();
+        $this->prepareAdvanceData();
+        $this->performOperations();
+        $this->performFeesCalculation();
+        $this->createProcess();
+        $this->paymentProcess();
+        $this->broadcasting();
+        $this->notification();
+        $this->extraOperations();
+
         return [
-            'parent' => true,
+            'output' => 'anything...',
         ];
     }
 
-    public function dispatch()
-    {
-        // $this->prepareValidationRules();
-        // $this->validateValidations();
-        // $this->prepareBasicData();
-        // $this->enabledSettings();
-        // $this->databaseInteraction();
-        // $this->prepareAdvanceData();
-        // $this->performOperations();
-        // $this->performFeesCalculation();
-        // $this->createProcess();
-        // $this->payment();
-        // $this->broadcasting();
-        // $this->notification();
-        // $this->extraOperations();
-    }
-
     // Document and Developer guides
-
     // postFix Prepare = prepare array values into protected variable in the class
     // postFix Data = fetch data from the database and set values into protected variable in the class
+    private function stag1PrepareValidationRules()
+    {
+        $this->prepareOverridableCommonRule();
+        $this->overridableRulesSystemSpecific();
+        $this->multiCheckoutValidation();
+        $this->setDeliveryZipCodeValidation();
+        $this->setDeliveryRadiusValidation();
+    }
 
-    // prepareValidationRules()
-    //        protected function prepareOverridableCommonRule() {}
-    //        protected function overridableRulesSystemSpecific() {}
-    //        protected function multiCheckoutValidation() {}
-    //        protected function setDeliveryZipCodeValidation() {}
-    //        protected function setDeliveryRadiusValidation() {}
-    //        protected function setDeliveryRadiusValidation() {}
+    private function stage2ValidateValidations()
+    {
+        //Note : use prepared rules and throw errors
+        $this->validateCommonRules();
+        $this->validateSystemSpecificRules();
+        $this->validateExtraRules();
+    }
 
-    // validateValidations()
-    //Note : use prepared rules and throw errors
-    //        protected function validateCommonRules() {}
-    //        protected function validateSystemSpecificRules() {}
-    //        protected function validateExtraRules() {}
+    private function stage3PrepareBasicData()
+    {
+        $this->prepareUserId();
+        $this->prepareCreatedFrom();
+        $this->prepareOrderStatus();
+        $this->prepareOrderBasicDetails();
+        $this->prepareSavedOrderIdData();
+        $this->prepareReservationDetails();
+    }
 
-    // prepareBasicData()
-    //        protected function prepareUserId() {}
-    //        protected function prepareCreatedFrom() {}
-    //        protected function prepareOrderStatus() {}
-    //        protected function prepareOrderBasicDetails() {}
-    //        protected function prepareSavedOrderIdData() {}
-    //        protected function prepareReservationDetails() {}
+    private function enabledSettings()
+    {
+        $this->enabledAdditionalFees();
+        $this->enabledDeliveryFees();
+        $this->enabledStatiegeDeposite();
+        $this->enableNewLetterSubscription();
+    }
 
-    // enabledSettings()
-    //        protected function enabledAdditionalFees() {}
-    //        protected function enabledDeliveryFees() {}
-    //        protected function enabledStatiegeDeposite() {}
-    //        protected function enableNewLetterSubscription() {}
+    private function databaseInteraction()
+    {
+        $this->setDeviceData();
+        $this->setProductData();
+        $this->setSupplementData();
+        $this->setReservationData();
+    }
 
-    // databaseInteraction()
-    //        protected function setDeviceData() {}
-    //        protected function setProductData() {}
-    //        protected function setSupplementData() {}
-    //        protected function setReservationData() {}
+    private function prepareAdvanceData()
+    {
+        $this->prepareOrderDiscount();
+        $this->preparePaymentDetails();
+        $this->preparePaymentMethod();
+        $this->prepareOrderId();
+        $this->prepareOrderDetails();
+        $this->prepareSupplementDetails();
+        $this->prepareOrderItemsDetails();
+        $this->prepareAyceAmountDetails();
+        $this->prepareEditOrderDetails();
+        $this->prepareUndoOrderDetails();
+        $this->prepareCouponDetails();
+    }
 
-    // prepareAdvanceData()
-    //        protected function prepareOrderDiscount() {}
-    //        protected function preparePaymentDetails() {}
-    //        protected function preparePaymentMethod() {}
-    //        protected function prepareOrderId() {}
-    //        protected function prepareOrderDetails() {}
-    //        protected function prepareSupplementDetails() {}
-    //        protected function prepareOrderItemsDetails() {}
-    //        protected function prepareAyceAmountDetails() {}
-    //        protected function prepareEditOrderDetails() {}
-    //        protected function prepareUndoOrderDetails() {}
-    //        protected function prepareCouponDetails() {}
+    private function performOperations()
+    {
+        $this->editOrderOperation();
+        $this->undoOperation();
+        $this->couponOperation();
+        $this->deductCouponAmountFromPurchaseOrderOperation();
+    }
 
-    // performOperations()
-    //        protected function editOrderOperation() {}
-    //        protected function undoOperation() {}
-    //        protected function couponOperation() {}
-    //        protected function deductCouponAmountFromPurchaseOrderOperation() {}
+    private function performFeesCalculation()
+    {
+        $this->setAdditionalFees();
+        $this->setDeliveryFees();
+    }
 
-    // performFeesCalculation()
-    //        protected function setAdditionalFees() {}
-    //        protected function setDeliveryFees() {}
+    private function createProcess()
+    {
+        $this->createOrder();
+        $this->createOrderItems();
+        $this->markOrderAsFuturePrint();
+        $this->checkoutReservation();
+        $this->createDeliveryIntoDatabase();
+    }
 
-    // createProcess()
-    //        protected function createOrder() {}
-    //        protected function createOrderItems() {}
-    //        protected function markOrderAsFuturePrint() {}
-    //        protected function checkoutReservation() {}
-    //        protected function createDeliveryIntoDatabase() {}
+    private function paymentProcess()
+    {
+        $this->ccvPayment();
+        $this->wiPayment();
+        $this->molliePayment();
+        $this->multiSafePayment();
+        $this->updateOrderReferenceIdFromPaymentGateway();
+        $this->setBypassPaymentLogicAndOverridePaymentResponse();
+    }
 
-    // payment()
-    //        protected function ccvPayment() {}
-    //        protected function wiPayment() {}
-    //        protected function molliePayment() {}
-    //        protected function multiSafePayment() {}
-    //        protected function updateOrderReferenceIdFromPaymentGateway() {}
-    //        protected function setBypassPaymentLogicAndOverridePaymentResponse() {}
+    private function broadcasting()
+    {
+        $this->sendWebNotification();
+        $this->sendAppNotification();
+        $this->socketPublish();
+        $this->newOrderSocketPublish();
+        $this->checkoutReservationSocketPublish();
+    }
 
-    // broadcasting()
-    //        protected function sendWebNotification() {}
-    //        protected function sendAppNotification() {}
-    //        protected function socketPublish() {}
-    //        protected function newOrderSocketPublish() {}
-    //        protected function checkoutReservationSocketPublish() {}
+    private function notification()
+    {
+        $this->sendEmailLogic();
+        $this->setSessionPaymentUpdate(); // not sure about this
+    }
 
-    // notification()
-    //        protected function sendEmailLogic() {}
-    //        protected function setSessionPaymentUpdate() {} // not sure about this
-
-    // extraOperations()
-    //        protected function setNewLetterSubscriptionData() {}
-    //        protected function setKioskOrderAnswerChoiceLogic() {}
+    private function extraOperations()
+    {
+        $this->setNewLetterSubscriptionData();
+        $this->setKioskOrderAnswerChoiceLogic();
+    }
 }
