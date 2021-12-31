@@ -2,12 +2,8 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
-use Illuminate\Support\Facades\Cache;
-use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Store;
-use Throwable;
-use Exception;
 
 abstract class BaseProcessor implements BaseProcessorContract
 {
@@ -27,22 +23,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected ?KioskDevice $device;
 
-    /**
-     * @throws Exception
-     */
     public function __construct()
     {
-        if ($this->createdFrom == 'companion') {
-            throw new Exception('You need to define value of created_from on order processor class : '.get_class($this));
-        }
-    }
-
-    /**
-     * @return array
-     */
-    public function getCart(): array
-    {
-        return $this->cart;
     }
 
     /**
@@ -62,92 +44,121 @@ abstract class BaseProcessor implements BaseProcessorContract
     }
 
     /**
-     * @return Store
-     */
-    public function getStore(): Store
-    {
-        return $this->store;
-    }
-
-    /**
-     * @param $storeId
-     *
-     * @throws Exception
-     */
-    public function setStore($storeId): void
-    {
-        $store = Cache::tags([
-            FLUSH_ALL,
-            FLUSH_POS,
-            FLUSH_STORE_BY_ID.$storeId,
-            STORE_CHANGE_BY_ID.$storeId,
-            STORE_SETTING,
-            TAKEAWAY_SETTING.$storeId,
-        ])->remember('{eat-card}-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
-            return Store::with('storeSetting')->where('id', $storeId)->first();
-        });
-        if (empty($store)) {
-            throw new StoreEmptyException();
-        }
-        $this->store = $store;
-    }
-
-    /**
-     * @param $deviceId
-     */
-    public function setDevice($deviceId): void
-    {
-        $device = Cache::tags([
-            FLUSH_ALL,
-            FLUSH_POS,
-            FLUSH_STORE_BY_ID.$deviceId,
-            KIOSK_DEVICES,
-        ])
-            ->remember('{eat-card}-kiosk-device-with-code-'.$this->store->id.$deviceId, CACHING_TIME, function () use ($deviceId) {
-                return KioskDevice::where('pos_code', $deviceId)->where('store_id', $this->store->id)->first();
-            });
-        $this->device = $device;
-    }
-
-    /**
-     * @return array
-     */
-    public function preparePayload(): array
-    {
-        // TODO : prepare tax and other field for order and order items
-        return [
-            'order' => [],
-            'order_items' => $this->getCart(),
-        ];
-    }
-
-    /**
      * @return bool[]
      */
-    public function prepareValidationsRules(): array
+    protected function preparePayload(): array
     {
         return [
-            // 'Store can\'t be empty' => empty($this->store),
+            'parent' => true,
         ];
     }
 
-    /**
-     * @throws Throwable
-     */
-    public function validate($rules): void
+    public function dispatch()
     {
-        foreach ($rules as $ex => $condition) {
-            throw_if($condition, new $ex());
-        }
+        // $this->prepareValidationRules();
+        // $this->validateValidations();
+        // $this->prepareBasicData();
+        // $this->enabledSettings();
+        // $this->databaseInteraction();
+        // $this->prepareAdvanceData();
+        // $this->performOperations();
+        // $this->performFeesCalculation();
+        // $this->createProcess();
+        // $this->payment();
+        // $this->broadcasting();
+        // $this->notification();
+        // $this->extraOperations();
     }
 
-    public function createOrder(array $payload): void
-    {
-        // return Order::create($payload)
-    }
+    // Document and Developer guides
 
-    public function createOrderItems(string $orderId, array $items): void
-    {
-        // return OrderItem::create($payload)
-    }
+    // postFix Prepare = prepare array values into protected variable in the class
+    // postFix Data = fetch data from the database and set values into protected variable in the class
+
+    // prepareValidationRules()
+    //        protected function prepareOverridableCommonRule() {}
+    //        protected function overridableRulesSystemSpecific() {}
+    //        protected function multiCheckoutValidation() {}
+    //        protected function setDeliveryZipCodeValidation() {}
+    //        protected function setDeliveryRadiusValidation() {}
+    //        protected function setDeliveryRadiusValidation() {}
+
+    // validateValidations()
+    //Note : use prepared rules and throw errors
+    //        protected function validateCommonRules() {}
+    //        protected function validateSystemSpecificRules() {}
+    //        protected function validateExtraRules() {}
+
+    // prepareBasicData()
+    //        protected function prepareUserId() {}
+    //        protected function prepareCreatedFrom() {}
+    //        protected function prepareOrderStatus() {}
+    //        protected function prepareOrderBasicDetails() {}
+    //        protected function prepareSavedOrderIdData() {}
+    //        protected function prepareReservationDetails() {}
+
+    // enabledSettings()
+    //        protected function enabledAdditionalFees() {}
+    //        protected function enabledDeliveryFees() {}
+    //        protected function enabledStatiegeDeposite() {}
+    //        protected function enableNewLetterSubscription() {}
+
+    // databaseInteraction()
+    //        protected function setDeviceData() {}
+    //        protected function setProductData() {}
+    //        protected function setSupplementData() {}
+    //        protected function setReservationData() {}
+
+    // prepareAdvanceData()
+    //        protected function prepareOrderDiscount() {}
+    //        protected function preparePaymentDetails() {}
+    //        protected function preparePaymentMethod() {}
+    //        protected function prepareOrderId() {}
+    //        protected function prepareOrderDetails() {}
+    //        protected function prepareSupplementDetails() {}
+    //        protected function prepareOrderItemsDetails() {}
+    //        protected function prepareAyceAmountDetails() {}
+    //        protected function prepareEditOrderDetails() {}
+    //        protected function prepareUndoOrderDetails() {}
+    //        protected function prepareCouponDetails() {}
+
+    // performOperations()
+    //        protected function editOrderOperation() {}
+    //        protected function undoOperation() {}
+    //        protected function couponOperation() {}
+    //        protected function deductCouponAmountFromPurchaseOrderOperation() {}
+
+    // performFeesCalculation()
+    //        protected function setAdditionalFees() {}
+    //        protected function setDeliveryFees() {}
+
+    // createProcess()
+    //        protected function createOrder() {}
+    //        protected function createOrderItems() {}
+    //        protected function markOrderAsFuturePrint() {}
+    //        protected function checkoutReservation() {}
+    //        protected function createDeliveryIntoDatabase() {}
+
+    // payment()
+    //        protected function ccvPayment() {}
+    //        protected function wiPayment() {}
+    //        protected function molliePayment() {}
+    //        protected function multiSafePayment() {}
+    //        protected function updateOrderReferenceIdFromPaymentGateway() {}
+    //        protected function setBypassPaymentLogicAndOverridePaymentResponse() {}
+
+    // broadcasting()
+    //        protected function sendWebNotification() {}
+    //        protected function sendAppNotification() {}
+    //        protected function socketPublish() {}
+    //        protected function newOrderSocketPublish() {}
+    //        protected function checkoutReservationSocketPublish() {}
+
+    // notification()
+    //        protected function sendEmailLogic() {}
+    //        protected function setSessionPaymentUpdate() {} // not sure about this
+
+    // extraOperations()
+    //        protected function setNewLetterSubscriptionData() {}
+    //        protected function setKioskOrderAnswerChoiceLogic() {}
 }

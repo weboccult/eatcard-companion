@@ -1,0 +1,186 @@
+<?php
+
+namespace Weboccult\EatcardCompanion\Backup\Orders;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
+use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\Product;
+use Weboccult\EatcardCompanion\Models\Store;
+use Throwable;
+use Exception;
+use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessorContract;
+
+abstract class BaseProcessor implements BaseProcessorContract
+{
+    protected string $createdFrom = 'companion';
+
+    protected string $orderStatus = 'received';
+
+    protected string $createdBy = '';
+
+    protected string $savedOrderId = '';
+
+    protected array $payload = [];
+
+    protected array $cart = [];
+
+    protected ?Store $store;
+
+    protected ?KioskDevice $device;
+
+    /**
+     * @throws Exception
+     */
+    public function __construct()
+    {
+        if ($this->createdFrom == 'companion') {
+            throw new Exception('You need to define value of created_from on order processor class : '.get_class($this));
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getCart(): array
+    {
+        return $this->cart;
+    }
+
+    /**
+     * @param array $cart
+     */
+    public function setCart(array $cart): void
+    {
+        $this->cart = $cart;
+    }
+
+    /**
+     * @param array $payload
+     */
+    public function setPayload(array $payload): void
+    {
+        $this->payload = $payload;
+    }
+
+    /**
+     * @return Store
+     */
+    public function getStore(): Store
+    {
+        return $this->store;
+    }
+
+    /**
+     * @param $storeId
+     *
+     * @throws Exception
+     */
+    public function setStore($storeId): void
+    {
+        $store = Cache::tags([
+            FLUSH_ALL,
+            FLUSH_POS,
+            FLUSH_STORE_BY_ID.$storeId,
+            STORE_CHANGE_BY_ID.$storeId,
+            STORE_SETTING,
+            TAKEAWAY_SETTING.$storeId,
+        ])->remember('{eat-card}-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
+            return Store::with('storeSetting')->where('id', $storeId)->first();
+        });
+        if (empty($store)) {
+            throw new StoreEmptyException();
+        }
+        $this->store = $store;
+    }
+
+    /**
+     * @param $deviceId
+     */
+    public function setDevice($deviceId): void
+    {
+        $device = Cache::tags([
+            FLUSH_ALL,
+            FLUSH_POS,
+            FLUSH_STORE_BY_ID.$deviceId,
+            KIOSK_DEVICES,
+        ])
+            ->remember('{eat-card}-kiosk-device-with-code-'.$this->store->id.$deviceId, CACHING_TIME, function () use ($deviceId) {
+                return KioskDevice::where('pos_code', $deviceId)->where('store_id', $this->store->id)->first();
+            });
+        $this->device = $device;
+    }
+
+    /**
+     * @return Builder[]|Collection|Product[]
+     */
+    public function prepareProducts()
+    {
+        $product_ids = collect($this->cart)->pluck('id')->toArray();
+        companionLogger('ProductIds', $product_ids);
+
+        return Product::withTrashed()->with([
+            'category' => function ($q1) {
+                $q1->withTrashed();
+                $q1->select('id', 'tax');
+            },
+            'ayce_class',
+        ])->whereIn('id', $product_ids)->get();
+    }
+
+    /**
+     * @return string[]|void
+     */
+    public function checkDuplicateCartIdExist()
+    {
+        $product_cart_id = [];
+        foreach ($this->cart as $key => $item) {
+            if (count($product_cart_id) > 0 && in_array($item['cartId'], $product_cart_id)) {
+                return ['same_cart_id' => 'Duplicate product added on cart. Please empty your cart and try again.'];
+            } else {
+                $product_cart_id[] = $item['cartId'];
+            }
+        }
+    }
+
+    /**
+     * @return bool[]
+     */
+    public function prepareValidationsRules(): array
+    {
+        return [
+            // ExceptionClass:class => CONDITION,
+        ];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function validate($rules): void
+    {
+        foreach ($rules as $ex => $condition) {
+            throw_if($condition, new $ex());
+        }
+    }
+
+    public function createOrder(array $payload): void
+    {
+        // return Order::create($payload)
+    }
+
+    public function createOrderItems(string $orderId, array $items): void
+    {
+        // return OrderItem::create($payload)
+    }
+
+    public function testFunction()
+    {
+        $this->createdFrom = 'test';
+
+        return [
+            'value' => 1,
+        ];
+    }
+}
