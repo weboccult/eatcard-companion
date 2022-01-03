@@ -19,6 +19,7 @@
     "php": "^7.4 || ^8.0",
     "ext-bcmath": "*",
     "ext-json": "*",
+    "illuminate/collections": "^8.0",
     "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
     "nunomaduro/collision": "^5.0",
