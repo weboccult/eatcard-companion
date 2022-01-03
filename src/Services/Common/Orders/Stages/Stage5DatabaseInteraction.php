@@ -7,6 +7,10 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
  */
 trait Stage5DatabaseInteraction
 {
+    protected function setStoreData()
+    {
+    }
+
     protected function setDeviceData()
     {
     }

@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 10
+ * @description Stag 12
  */
-trait Stage10PaymentProcess
+trait Stage12PaymentProcess
 {
     protected function ccvPayment()
     {

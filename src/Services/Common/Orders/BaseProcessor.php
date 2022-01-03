@@ -5,35 +5,51 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PaymentProcess;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11Broadcasting;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage12Notification;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage13ExtraOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11CreateProcess;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage12PaymentProcess;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage13Broadcasting;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage14Notification;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage15ExtraOperations;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage1PrepareValidationRules;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage2ValidateValidations;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage3PrepareBasicData;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage4EnableSettings;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage5DatabaseInteraction;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage6PrepareAdvanceData;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage7PerformOperations;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage8PerformFeesCalculation;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9CreateProcess;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage6preparePostValidationRulesAfterDatabaseInteraction;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage7ValidatePostValidationRules;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage8PrepareAdvanceData;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9PerformOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\ManualAccessors;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\Staggable;
 
+/**
+ * @mixin MagicAccessors
+ * @mixin ManualAccessors
+ *
+ * @author Darshit Hedpara
+ */
 abstract class BaseProcessor implements BaseProcessorContract
 {
+    use Staggable;
+    use MagicAccessors;
+    use ManualAccessors;
     use Stage1PrepareValidationRules;
     use Stage2ValidateValidations;
     use Stage3PrepareBasicData;
     use Stage4EnableSettings;
     use Stage5DatabaseInteraction;
-    use Stage6PrepareAdvanceData;
-    use Stage7PerformOperations;
-    use Stage8PerformFeesCalculation;
-    use Stage9CreateProcess;
-    use Stage10PaymentProcess;
-    use Stage11Broadcasting;
-    use Stage12Notification;
-    use Stage13ExtraOperations;
+    use Stage6preparePostValidationRulesAfterDatabaseInteraction;
+    use Stage7ValidatePostValidationRules;
+    use Stage8PrepareAdvanceData;
+    use Stage9PerformOperations;
+    use Stage10PerformFeesCalculation;
+    use Stage11CreateProcess;
+    use Stage12PaymentProcess;
+    use Stage13Broadcasting;
+    use Stage14Notification;
+    use Stage15ExtraOperations;
 
     protected string $createdFrom = 'companion';
 
@@ -49,170 +65,200 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected ?KioskDevice $device;
 
+    protected array $commonRules = [];
+
+    protected array $systemSpecificRules = [];
+
+    protected array $orderData = [];
+
+    protected ?array $dumpDieValue = null;
+
+    /** @var array<array> */
+    protected $orderItemsData = [];
+
     public function __construct()
     {
     }
 
     /**
-     * @param string $system
+     * @return array|void|null
      */
-    public function setSystem(string $system): void
+    public function dispatch()
     {
-        $this->system = $system;
-    }
-
-    /**
-     * @param array $cart
-     */
-    public function setCart(array $cart): void
-    {
-        $this->cart = $cart;
-    }
-
-    /**
-     * @param array $payload
-     */
-    public function setPayload(array $payload): void
-    {
-        $this->payload = $payload;
-    }
-
-    /**
-     * @return array
-     */
-    public function dispatch(): array
-    {
-        $this->stag1PrepareValidationRules();
-        $this->stage2ValidateValidations();
-        $this->stage3PrepareBasicData();
-        $this->enabledSettings();
-        $this->databaseInteraction();
-        $this->prepareAdvanceData();
-        $this->performOperations();
-        $this->performFeesCalculation();
-        $this->createProcess();
-        $this->paymentProcess();
-        $this->broadcasting();
-        $this->notification();
-        $this->extraOperations();
-
-        return [
-            'output' => 'anything...',
-        ];
+        return $this->stageIt([
+            fn () => $this->stag1_PrepareValidationRules(),
+            fn () => $this->stage2_ValidateValidations(),
+            fn () => $this->stage3_PrepareBasicData(),
+            fn () => $this->stage4_EnabledSettings(),
+            fn () => $this->stage5_DatabaseInteraction(),
+            fn () => $this->stage6_PrepareValidationRulesAfterDatabaseInteraction(),
+            fn () => $this->stage7_ValidatePostValidationRules(),
+            fn () => $this->stage8_PrepareAdvanceData(),
+            fn () => $this->stage9_PerformOperations(),
+            fn () => $this->stage10_PerformFeesCalculation(),
+            fn () => $this->stage11_CreateProcess(),
+            fn () => $this->stage12_PaymentProcess(),
+            fn () => $this->stage13_Broadcasting(),
+            fn () => $this->stage14_Notification(),
+            fn () => $this->stage15_ExtraOperations(),
+        ], true);
     }
 
     // Document and Developer guides
     // postFix Prepare = prepare array values into protected variable in the class
     // postFix Data = fetch data from the database and set values into protected variable in the class
-    private function stag1PrepareValidationRules()
+    private function stag1_PrepareValidationRules()
     {
-        $this->prepareOverridableCommonRule();
-        $this->overridableRulesSystemSpecific();
-        $this->multiCheckoutValidation();
-        $this->setDeliveryZipCodeValidation();
-        $this->setDeliveryRadiusValidation();
+        $this->stageIt([
+            fn () => $this->overridableCommonRule(),
+            fn () => $this->overridableSystemSpecificRules(),
+            fn () => $this->setDeliveryZipCodeValidation(),
+            fn () => $this->setDeliveryRadiusValidation(),
+        ]);
+        dd($this);
     }
 
-    private function stage2ValidateValidations()
+    private function stage2_ValidateValidations()
     {
         //Note : use prepared rules and throw errors
-        $this->validateCommonRules();
-        $this->validateSystemSpecificRules();
-        $this->validateExtraRules();
+        $this->stageIt([
+            fn () => $this->validateCommonRules(),
+            fn () => $this->validateSystemSpecificRules(),
+            fn () => $this->validateExtraRules(),
+        ]);
     }
 
-    private function stage3PrepareBasicData()
+    private function stage3_PrepareBasicData()
     {
-        $this->prepareUserId();
-        $this->prepareCreatedFrom();
-        $this->prepareOrderStatus();
-        $this->prepareOrderBasicDetails();
-        $this->prepareSavedOrderIdData();
-        $this->prepareReservationDetails();
+        $this->stageIt([
+            fn () => $this->prepareUserId(),
+            fn () => $this->prepareCreatedFrom(),
+            fn () => $this->prepareOrderStatus(),
+            fn () => $this->prepareOrderBasicDetails(),
+            fn () => $this->prepareSavedOrderIdData(),
+            fn () => $this->prepareReservationDetails(),
+        ]);
     }
 
-    private function enabledSettings()
+    private function stage4_EnabledSettings()
     {
-        $this->enabledAdditionalFees();
-        $this->enabledDeliveryFees();
-        $this->enabledStatiegeDeposite();
-        $this->enableNewLetterSubscription();
+        $this->stageIt([
+            fn () => $this->enabledAdditionalFees(),
+            fn () => $this->enabledDeliveryFees(),
+            fn () => $this->enabledStatiegeDeposite(),
+            fn () => $this->enableNewLetterSubscription(),
+        ]);
     }
 
-    private function databaseInteraction()
+    private function stage5_DatabaseInteraction()
     {
-        $this->setDeviceData();
-        $this->setProductData();
-        $this->setSupplementData();
-        $this->setReservationData();
+        $this->stageIt([
+            fn () => $this->setStoreData(),
+            fn () => $this->setDeviceData(),
+            fn () => $this->setProductData(),
+            fn () => $this->setSupplementData(),
+            fn () => $this->setReservationData(),
+        ]);
     }
 
-    private function prepareAdvanceData()
+    private function stage6_PrepareValidationRulesAfterDatabaseInteraction()
     {
-        $this->prepareOrderDiscount();
-        $this->preparePaymentDetails();
-        $this->preparePaymentMethod();
-        $this->prepareOrderId();
-        $this->prepareOrderDetails();
-        $this->prepareSupplementDetails();
-        $this->prepareOrderItemsDetails();
-        $this->prepareAyceAmountDetails();
-        $this->prepareEditOrderDetails();
-        $this->prepareUndoOrderDetails();
-        $this->prepareCouponDetails();
+        $this->stageIt([
+            fn () => $this->storeExistValidation(),
+            fn () => $this->reservationAlreadyCheckoutValidation(),
+        ]);
     }
 
-    private function performOperations()
+    private function stage7_ValidatePostValidationRules()
     {
-        $this->editOrderOperation();
-        $this->undoOperation();
-        $this->couponOperation();
-        $this->deductCouponAmountFromPurchaseOrderOperation();
+        $this->stageIt([
+            fn () => $this->validatePostValidationRules(),
+        ]);
     }
 
-    private function performFeesCalculation()
+    private function stage8_PrepareAdvanceData()
     {
-        $this->setAdditionalFees();
-        $this->setDeliveryFees();
+        $this->stageIt([
+            fn () => $this->prepareOrderDiscount(),
+            fn () => $this->preparePaymentDetails(),
+            fn () => $this->preparePaymentMethod(),
+            fn () => $this->prepareOrderId(),
+            fn () => $this->prepareOrderDetails(),
+            fn () => $this->prepareSupplementDetails(),
+            fn () => $this->prepareOrderItemsDetails(),
+            fn () => $this->prepareAyceAmountDetails(),
+            fn () => $this->prepareEditOrderDetails(),
+            fn () => $this->prepareUndoOrderDetails(),
+            fn () => $this->prepareCouponDetails(),
+        ]);
     }
 
-    private function createProcess()
+    private function stage9_PerformOperations()
     {
-        $this->createOrder();
-        $this->createOrderItems();
-        $this->markOrderAsFuturePrint();
-        $this->checkoutReservation();
-        $this->createDeliveryIntoDatabase();
+        $this->stageIt([
+            fn () => $this->editOrderOperation(),
+            fn () => $this->undoOperation(),
+            fn () => $this->couponOperation(),
+            fn () => $this->deductCouponAmountFromPurchaseOrderOperation(),
+        ]);
     }
 
-    private function paymentProcess()
+    private function stage10_PerformFeesCalculation()
     {
-        $this->ccvPayment();
-        $this->wiPayment();
-        $this->molliePayment();
-        $this->multiSafePayment();
-        $this->updateOrderReferenceIdFromPaymentGateway();
-        $this->setBypassPaymentLogicAndOverridePaymentResponse();
+        $this->stageIt([
+            fn () => $this->setAdditionalFees(),
+            fn () => $this->setDeliveryFees(),
+        ]);
     }
 
-    private function broadcasting()
+    private function stage11_CreateProcess()
     {
-        $this->sendWebNotification();
-        $this->sendAppNotification();
-        $this->socketPublish();
-        $this->newOrderSocketPublish();
-        $this->checkoutReservationSocketPublish();
+        $this->stageIt([
+            fn () => $this->createOrder(),
+            fn () => $this->createOrderItems(),
+            fn () => $this->markOrderAsFuturePrint(),
+            fn () => $this->checkoutReservation(),
+            fn () => $this->createDeliveryIntoDatabase(),
+        ]);
     }
 
-    private function notification()
+    private function stage12_PaymentProcess()
     {
-        $this->sendEmailLogic();
-        $this->setSessionPaymentUpdate(); // not sure about this
+        $this->stageIt([
+            fn () => $this->ccvPayment(),
+            fn () => $this->wiPayment(),
+            fn () => $this->molliePayment(),
+            fn () => $this->multiSafePayment(),
+            fn () => $this->updateOrderReferenceIdFromPaymentGateway(),
+            fn () => $this->setBypassPaymentLogicAndOverridePaymentResponse(),
+        ]);
     }
 
-    private function extraOperations()
+    private function stage13_Broadcasting()
     {
-        $this->setNewLetterSubscriptionData();
-        $this->setKioskOrderAnswerChoiceLogic();
+        $this->stageIt([
+            fn () => $this->sendWebNotification(),
+            fn () => $this->sendAppNotification(),
+            fn () => $this->socketPublish(),
+            fn () => $this->newOrderSocketPublish(),
+            fn () => $this->checkoutReservationSocketPublish(),
+        ]);
+    }
+
+    private function stage14_Notification()
+    {
+        $this->stageIt([
+            fn () => $this->sendEmailLogic(),
+            fn () => $this->setSessionPaymentUpdate(),
+            // not sure about this
+        ]);
+    }
+
+    private function stage15_ExtraOperations()
+    {
+        $this->stageIt([
+            fn () => $this->setNewLetterSubscriptionData(),
+            fn () => $this->setKioskOrderAnswerChoiceLogic(),
+        ]);
     }
 }

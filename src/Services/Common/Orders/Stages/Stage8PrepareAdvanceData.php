@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 6
+ * @description Stag 8
  */
-trait Stage6PrepareAdvanceData
+trait Stage8PrepareAdvanceData
 {
     protected function prepareOrderDiscount()
     {

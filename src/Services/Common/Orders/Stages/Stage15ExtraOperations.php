@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 13
+ * @description Stag 15
  */
-trait Stage13ExtraOperations
+trait Stage15ExtraOperations
 {
     protected function setNewLetterSubscriptionData()
     {

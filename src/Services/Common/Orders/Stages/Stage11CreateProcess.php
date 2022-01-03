@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 9
+ * @description Stag 11
  */
-trait Stage9CreateProcess
+trait Stage11CreateProcess
 {
     protected function createOrder()
     {

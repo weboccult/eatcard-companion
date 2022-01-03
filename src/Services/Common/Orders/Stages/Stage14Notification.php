@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 12
+ * @description Stag 14
  */
-trait Stage12Notification
+trait Stage14Notification
 {
     protected function sendEmailLogic()
     {

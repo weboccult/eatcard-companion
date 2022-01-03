@@ -3,9 +3,9 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
- * @description Stag 8
+ * @description Stag 10
  */
-trait Stage8PerformFeesCalculation
+trait Stage10PerformFeesCalculation
 {
     protected function setAdditionalFees()
     {

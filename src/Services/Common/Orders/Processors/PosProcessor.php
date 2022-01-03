@@ -13,13 +13,8 @@ class PosProcessor extends BaseProcessor
         parent::__construct();
     }
 
-    /**
-     * @return bool[]
-     */
-    public function preparePayload(): array
+    protected function overridableCommonRule()
     {
-        return [
-            'child' => true,
-        ];
+        $this->setCommonRules([]);
     }
 }

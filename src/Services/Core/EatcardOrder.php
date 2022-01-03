@@ -46,9 +46,9 @@ class EatcardOrder
     }
 
     /**
-     * @return array
+     * @return array|void|null
      */
-    public function dispatch(): array
+    public function dispatch()
     {
         return $this->processor->dispatch();
     }
