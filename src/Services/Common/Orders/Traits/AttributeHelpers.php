@@ -2,15 +2,13 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Traits;
 
-use function collect;
-
 /**
- * @description Manual Setters & Accessor with custom logic.
+ * @description Manual Getter Setters & Accessor with custom logic.
  * @mixin MagicAccessors
  *
  * @author Darshit Hedpara
  */
-trait ManualAccessors
+trait AttributeHelpers
 {
     /**
      * @param string $exceptionClass

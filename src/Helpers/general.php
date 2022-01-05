@@ -285,7 +285,12 @@ if (! function_exists('cartTotalValueCalc')) {
 
             return $calculted_amount;
         } catch (\Exception $e) {
-            Log::info('discountCalc - helper error: '.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+            companionLogger(
+                'discountCalc - helper',
+                'error : '.$e->getMessage(),
+                'IP address : '.request()->ip(),
+                'browser : '.request()->header('User-Agent')
+            );
         }
     }
 }

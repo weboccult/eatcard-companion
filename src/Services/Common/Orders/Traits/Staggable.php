@@ -10,7 +10,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Traits;
 trait Staggable
 {
     /**
-     * @param array<string, array> $callables
+     * @param array $callables
      * @param bool $higherStage
      *
      * @return array|void|null

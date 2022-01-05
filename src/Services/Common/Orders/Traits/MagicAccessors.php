@@ -18,8 +18,8 @@ use InvalidArgumentException;
  * @method void setCommonRules(array $array)
  * @method array getSystemSpecificRules()
  * @method void setSystemSpecificRules(array $array)
- * @method mixed beforeCheckObserver(string $method)
- * @method mixed afterCheckObserver(string $method)
+ * @method mixed getDumpDieValue()
+ * @method void setDumpDieValue($data)
  *
  * @author Darshit Hedpara
  */

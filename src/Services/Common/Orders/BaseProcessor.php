@@ -3,8 +3,10 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage0BasicDatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11CreateProcess;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage12PaymentProcess;
@@ -20,13 +22,13 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage6preparePostVa
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage7ValidatePostValidationRules;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage8PrepareAdvanceData;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9PerformOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
-use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\ManualAccessors;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\Staggable;
 
 /**
  * @mixin MagicAccessors
- * @mixin ManualAccessors
+ * @mixin AttributeHelpers
  *
  * @author Darshit Hedpara
  */
@@ -34,7 +36,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 {
     use Staggable;
     use MagicAccessors;
-    use ManualAccessors;
+    use AttributeHelpers;
+    use Stage0BasicDatabaseInteraction;
     use Stage1PrepareValidationRules;
     use Stage2ValidateValidations;
     use Stage3PrepareBasicData;
@@ -57,24 +60,38 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected array $cart = [];
 
+    /** @var Product|null|object */
+    protected $productData = null;
+
     protected string $system = 'none';
 
+    /** @var Store|null|object */
     protected ?Store $store;
 
-    protected ?StoreReservation $storeReservation;
+    /** @var StoreReservation|null|object */
+    protected $storeReservation = null;
 
-    protected ?KioskDevice $device;
+    /** @var KioskDevice|null|object */
+    protected $device = null;
 
     protected array $commonRules = [];
 
     protected array $systemSpecificRules = [];
 
-    protected array $orderData = [];
+    /** @var array */
+    protected $orderData = [];
 
     protected ?array $dumpDieValue = null;
 
     /** @var array<array> */
     protected $orderItemsData = [];
+
+    protected $settings = [
+        'additional_fee' => [
+            'status' => false,
+            'value' => null,
+        ],
+    ];
 
     public function __construct()
     {
@@ -86,7 +103,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     public function dispatch()
     {
         return $this->stageIt([
-            fn () => $this->stag1_PrepareValidationRules(),
+            fn () => $this->stage0_BasicDatabaseInteraction(),
+            fn () => $this->stage1_PrepareValidationRules(),
             fn () => $this->stage2_ValidateValidations(),
             fn () => $this->stage3_PrepareBasicData(),
             fn () => $this->stage4_EnabledSettings(),
@@ -107,7 +125,16 @@ abstract class BaseProcessor implements BaseProcessorContract
     // Document and Developer guides
     // postFix Prepare = prepare array values into protected variable in the class
     // postFix Data = fetch data from the database and set values into protected variable in the class
-    private function stag1_PrepareValidationRules()
+    private function stage0_BasicDatabaseInteraction()
+    {
+        $this->stageIt([
+            fn () => $this->setStoreData(),
+            fn () => $this->setDeviceData(),
+            fn () => $this->setReservationData(),
+        ]);
+    }
+
+    private function stage1_PrepareValidationRules()
     {
         $this->stageIt([
             fn () => $this->overridableCommonRule(),
@@ -115,7 +142,6 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->setDeliveryZipCodeValidation(),
             fn () => $this->setDeliveryRadiusValidation(),
         ]);
-        dd($this);
     }
 
     private function stage2_ValidateValidations()
@@ -138,6 +164,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareSavedOrderIdData(),
             fn () => $this->prepareReservationDetails(),
         ]);
+        // dd($this);
     }
 
     private function stage4_EnabledSettings()
@@ -153,11 +180,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage5_DatabaseInteraction()
     {
         $this->stageIt([
-            fn () => $this->setStoreData(),
-            fn () => $this->setDeviceData(),
             fn () => $this->setProductData(),
             fn () => $this->setSupplementData(),
-            fn () => $this->setReservationData(),
         ]);
     }
 
