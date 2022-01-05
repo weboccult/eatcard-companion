@@ -34,24 +34,4 @@ trait Stage4EnableSettings
     protected function enableNewLetterSubscription()
     {
     }
-
-    protected function disableAdditionalFees()
-    {
-        $this->settings['additional_fee'] = [
-            'status' => false,
-            'value'  => null,
-        ];
-    }
-
-    protected function disableDeliveryFees()
-    {
-    }
-
-    protected function disableStatiegeDeposite()
-    {
-    }
-
-    protected function disableNewLetterSubscription()
-    {
-    }
 }

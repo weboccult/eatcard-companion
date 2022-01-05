@@ -93,6 +93,14 @@ abstract class BaseProcessor implements BaseProcessorContract
         ],
     ];
 
+    /**
+     * @var array
+     * @description It will check and perform after order creation process
+     */
+    protected $afterEffects = [];
+
+    protected $discountData = [];
+
     public function __construct()
     {
     }
@@ -170,9 +178,9 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage4_EnabledSettings()
     {
         $this->stageIt([
-            fn () => $this->enabledAdditionalFees(),
-            fn () => $this->enabledDeliveryFees(),
-            fn () => $this->enabledStatiegeDeposite(),
+            fn () => $this->enableAdditionalFees(),
+            fn () => $this->enableDeliveryFees(),
+            fn () => $this->enableStatiegeDeposite(),
             fn () => $this->enableNewLetterSubscription(),
         ]);
     }
@@ -188,8 +196,9 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage6_PrepareValidationRulesAfterDatabaseInteraction()
     {
         $this->stageIt([
-            fn () => $this->storeExistValidation(),
+            // fn () => $this->storeExistValidation(),
             fn () => $this->reservationAlreadyCheckoutValidation(),
+            fn () => $this->duplicateProductDetectedOnCart(),
         ]);
     }
 
@@ -204,8 +213,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->prepareOrderDiscount(),
-            fn () => $this->preparePaymentDetails(),
             fn () => $this->preparePaymentMethod(),
+            fn () => $this->preparePaymentDetails(),
             fn () => $this->prepareOrderId(),
             fn () => $this->prepareOrderDetails(),
             fn () => $this->prepareSupplementDetails(),
