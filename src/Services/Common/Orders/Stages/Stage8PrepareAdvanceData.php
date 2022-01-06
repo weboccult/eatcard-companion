@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
+use function Weboccult\EatcardCompanion\Helpers\discountCalc;
 use function Weboccult\EatcardCompanion\Helpers\generatePOSOrderId;
 
 /**
@@ -24,6 +26,12 @@ trait Stage8PrepareAdvanceData
                 if (isset($this->storeReservation->discount_type) && isset($this->storeReservation->discount) && ! empty($this->storeReservation->discount) && (float) $this->storeReservation->discount > 0) {
                     $this->discountData['order_discount'] = $this->payload['order_discount'] = (float) $this->storeReservation->discount;
                     $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] = $this->storeReservation->discount_type == 'EURO' ? 1 : 0;
+                }
+            }
+            if (! empty($this->storeReservation)) {
+                if (isset($this->payload['order_discount']) && isset($this->payload['is_euro_discount'])) {
+                    $this->discountData['order_discount'] = (! empty($this->payload['order_discount']) && $this->payload['order_discount'] > 0) ? $this->payload['order_discount'] : null;
+                    $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ? 1 : 0;
                 }
             }
         }
@@ -61,7 +69,7 @@ trait Stage8PrepareAdvanceData
             if (isset($order_data['parent_id'])) {
                 $order = Order::query()->where('parent_id', $order_data['parent_id'])->first();
             }
-            $this->orderData['order_id'] = (! empty($order)) ? $order->order_id : generatePOSOrderId($order_data['store_id']);
+            $this->orderData['order_id'] = (! empty($order)) ? $order->order_id : generatePOSOrderId($this->store->id);
         }
     }
 
@@ -85,9 +93,250 @@ trait Stage8PrepareAdvanceData
 
     protected function prepareOrderItemsDetails()
     {
+        $normalOrder = (isset($this->payload['reservation_id']) && $this->payload['reservation_id'] != '' && ! empty($this->storeReservation)) ? 0 : 1;
+
+        $cart_original_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_amount']);
+
+        foreach ($this->getCart() as $key => $item) {
+            /*This variable used for checked product and it/s supplement price count or not in total price*/
+            $is_product_chargeable = true;
+            $is_euro_discount = isset($item['is_euro_discount']) ? (int) $item['is_euro_discount'] : 0;
+            $this->orderItemsData[$key]['unit_price'] = 0;
+            $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
+            $product = $this->productData->where('id', $item['id'])->first();
+            if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && ! empty($this->storeReservation)) {
+                $allYouCanEatPrice = 0;
+                if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $product->ayce_class->count() > 0 && $this->storeReservation->dineInPrice && isset($this->storeReservation->dineInPrice->dinein_category_id) && $this->storeReservation->dineInPrice->dinein_category_id != '') {
+                    $ayeClasses = $product->ayce_class->pluck('dinein_category_id')->toArray();
+                    if (! empty($ayeClasses) && in_array($this->storeReservation->dineInPrice->dinein_category_id, $ayeClasses)) {
+                        $allYouCanEatIndividualPrice = $product->ayce_class->where('dinein_category_id', $this->storeReservation->dineInPrice->dinein_category_id)
+                            ->pluck('price');
+                        if (isset($allYouCanEatIndividualPrice[0]) && $allYouCanEatIndividualPrice[0] > 0 && ! empty($allYouCanEatIndividualPrice[0]) && $product->all_you_can_eat_price >= 0) {
+                            $allYouCanEatPrice = $allYouCanEatIndividualPrice[0];
+                        } else {
+                            if (! empty($product->all_you_can_eat_price)) {
+                                $allYouCanEatPrice = $product->all_you_can_eat_price;
+                            }
+                        }
+                    }
+                } else {
+                    /*If res type is cart then get product price from pieces*/
+                    if (isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '' && $this->storeReservation->reservation_type != 'all_you_eat') {
+                        $allYouCanEatPrice = (float) $product->pieces_price;
+                        // set_product_pieces_in_name($product, $is_need_update);
+                        $this->orderItemsData[$key]['product_name'] = $product->name;
+                    }
+                }
+                companionLogger('Product ayce price', $allYouCanEatPrice);
+                if ($allYouCanEatPrice) {
+                    //if there is ayce price
+                    $product->price = $allYouCanEatPrice;
+                }
+            }
+            if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+                if (! $item['base_price']) {
+                    $product->price = 0;
+                    $is_product_chargeable = false;
+                }
+            } else {
+                // default case
+                $product->price = ((! empty($product->discount_price) && $product->discount_price > 0) && $product->discount_show) ? $product->discount_price : $product->price;
+            }
+            companionLogger('Product price', $product->price);
+            $supplement_total = 0;
+            $this->orderItemsData[$key]['void_id'] = $item['void_id'] ?? 0;
+            $this->orderItemsData[$key]['on_the_house'] = $item['on_the_house'] ?? 0;
+            $notVoided = ! (isset($item['void_id']) && $item['void_id'] != '');
+            $notOnTheHouse = ! (isset($item['on_the_house']) && $item['on_the_house'] == '1');
+            $this->orderItemsData[$key]['supplement_total'] = 0;
+            $productTax = (isset($product->tax) && $product->tax != '') ? $product->tax : $product->category->tax;
+            $this->orderItemsData[$key]['tax_percentage'] = $productTax;
+            if (isset($item['supplements'])) {
+                $finalSupplements = [];
+                foreach (collect($item['supplements']) as $i) {
+                    $isExist = collect($finalSupplements)->search(function ($item) use ($i) {
+                        return $item['id'] == $i['id'] && $item['val'] == $i['val'];
+                    });
+                    if ($isExist && $i['val'] == $finalSupplements[$isExist]['val']) {
+                        $finalSupplements[$isExist]['qty'] += 1;
+                        $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
+                    } else {
+                        $currentSup = collect($this->supplementData)->where('id', $i['id'])->first();
+                        $currentPreparedSupplement = [
+                            'id'         => $i['id'],
+                            'name'       => $i['name'],
+                            'val'        => $i['val'] ?? 0,
+                            'total_val'  => $i['val'] ?? 0,
+                            'qty'        => isset($i['qty']) && $i['qty'] ? $i['qty'] : 1,
+                            'categoryId' => isset($i['categoryId']) ? (int) $i['categoryId'] : null,
+                            'alt_name'   => isset($currentSup->alt_name) && ! empty($currentSup->alt_name) ? $currentSup->alt_name : null,
+                        ];
+                        $finalSupplements[] = $currentPreparedSupplement;
+                    }
+                }
+                $item['supplements'] = $finalSupplements;
+            } else {
+                $item['supplements'] = [];
+            }
+            foreach ($item['supplements'] as $supp) {
+                $currentSup = collect($this->supplementData)->where('id', $supp['id'])->first();
+                if ($supp['val'] != 0) {
+                    $this->orderItemsData[$key]['supplement_total'] += $currentSup->price * $supp['qty'];
+                    $supplement_total += $currentSup->price * $supp['qty'];
+                }
+            }
+            $size_total = 0;
+            if (isset($item['size']) && $item['size']) {
+                if ($item['size']['name'] == 'large') {
+                    $size_total = $product->large_price;
+                } elseif ($item['size']['name'] == 'regular') {
+                    $size_total = $product->regular_price;
+                }
+            } else {
+                $item['size'] = [];
+            }
+            $weight_total = $product->price;
+            if (isset($item['weight']) && $item['weight']) {
+                $weight_total = ((int) $item['weight'] * $product->price) / $product->weight;
+                $item['weight'] = [
+                    'item_weight'    => $item['weight'],
+                    'product_weight' => $product->weight,
+                ];
+            } else {
+                $item['weight'] = [];
+            }
+            if ($is_product_chargeable) {
+                $product_total = ($supplement_total + $size_total + $weight_total) * $item['quantity'];
+            } else {
+                $product_total = 0;
+            }
+            $this->orderItemsData[$key]['subtotal_inc_tax'] = $product_total;
+            $this->orderItemsData[$key]['total_tax_amount'] = 0;
+            $this->orderItemsData[$key]['normal_sub_total'] = 0;
+            $this->orderItemsData[$key]['alcohol_sub_total'] = 0;
+            if ($productTax == 21) {
+                //21% tax
+                $current_sub = ($product_total * $productTax / 121);
+                $this->orderItemsData[$key]['subtotal_wo_tax'] = $product_total - $current_sub;
+                $this->orderItemsData[$key]['alcohol_tax_amount'] = $current_sub;
+                $this->orderItemsData[$key]['total_tax_amount'] += $current_sub;
+                $this->orderItemsData[$key]['alcohol_sub_total'] = $product_total - $current_sub;
+                if ($notVoided && $notOnTheHouse) {
+                    $this->orderData['alcohol_sub_total'] += $product_total - $current_sub;
+                    if (isset($item['discount']) && (! isset($this->discountData['order_discount']) || ! $this->discountData['order_discount'] > 0)) {
+                        $this->orderData['total_alcohol_tax'] += ($current_sub - discountCalc($product_total, $current_sub, $is_euro_discount, $item['discount']));
+                    } else {
+                        $this->orderData['total_alcohol_tax'] += $current_sub;
+                    }
+                }
+            } else {
+                //9% tax
+                $current_sub = ($product_total * $productTax / 109);
+                $this->orderItemsData[$key]['normal_sub_total'] = $product_total - $current_sub;
+                $this->orderItemsData[$key]['subtotal_wo_tax'] = $product_total - $current_sub;
+                $this->orderItemsData[$key]['normal_tax_amount'] = $current_sub;
+                $this->orderItemsData[$key]['total_tax_amount'] += $current_sub;
+                if ($notVoided && $notOnTheHouse) {
+                    $this->orderData['normal_sub_total'] += $product_total - $current_sub;
+                    if (isset($item['discount']) && (! isset($this->discountData['order_discount']) || ! $this->discountData['order_discount'] > 0)) {
+                        $this->orderData['total_tax'] += ($current_sub - discountCalc($product_total, $current_sub, $is_euro_discount, $item['discount']));
+                    } else {
+                        $this->orderData['total_tax'] += $current_sub;
+                    }
+                }
+            }
+            if ($notVoided && $notOnTheHouse) {
+                $this->orderData['total_price'] += $product_total;
+            }
+            $this->orderItemsData[$key]['sub_total'] = $this->orderItemsData[$key]['normal_sub_total'] + $this->orderItemsData[$key]['alcohol_sub_total'];
+            $this->orderItemsData[$key]['unit_price'] = $product->price;
+            /*calculate discount for each product*/
+            $this->orderItemsData[$key]['discount'] = null;
+            $this->orderItemsData[$key]['discount_type'] = null;
+            $this->orderItemsData[$key]['discount_price'] = 0;
+            $this->orderItemsData[$key]['discount_amount_wo_tax'] = 0;
+            $this->orderItemsData[$key]['discount_inc_tax'] = 0;
+            if (isset($item['discount']) && (float) $item['discount'] > 0 && (! isset($this->discountData['order_discount']) || ! $this->discountData['order_discount'] > 0)) {
+                $this->orderItemsData[$key]['discount'] = $item['discount'];
+                $this->orderItemsData[$key]['discount_type'] = ($is_euro_discount == 1) ? 'EURO' : '%';
+                $this->orderItemsData[$key]['discount_price'] = discountCalc($product_total, ($product_total - $current_sub), $is_euro_discount, $item['discount']);
+                $this->orderItemsData[$key]['discount_amount_wo_tax'] = $this->orderItemsData[$key]['discount_price'];
+                $this->orderItemsData[$key]['discount_inc_tax'] = discountCalc($product_total, $product_total, $is_euro_discount, $item['discount']);
+                if ($notVoided && $notOnTheHouse) {
+                    $this->orderData['discount_inc_tax'] += $this->orderItemsData[$key]['discount_inc_tax'];
+                    $this->orderData['discount_amount'] += $this->orderItemsData[$key]['discount_price'];
+                }
+            } elseif (isset($this->discountData['order_discount']) && (float) $this->discountData['order_discount'] > 0) {
+                //order general discount add in all order items
+                if ($notVoided && $notOnTheHouse) {
+                    $this->orderItemsData[$key]['discount'] = ($this->discountData['is_euro_discount'] == 1) ? round(discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc), 2) : $this->discountData['order_discount'];
+                    $this->orderItemsData[$key]['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
+                    $this->orderItemsData[$key]['discount_price'] = discountCalc($product_total, ($product_total - $current_sub), $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc);
+                    $this->orderItemsData[$key]['discount_amount_wo_tax'] = $this->orderItemsData[$key]['discount_price'];
+                    $this->orderItemsData[$key]['discount_inc_tax'] = discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc);
+                    $this->orderData['discount_inc_tax'] += $this->orderItemsData[$key]['discount_inc_tax'];
+                }
+            }
+            $transferItems = [];
+            if (isset($item['isTransfer']) && $item['isTransfer'] == 1) {
+                $this->orderItemsData[$key]['transfer'] = 1;
+                $transferItems['isTransfer'] = $item['isTransfer'];
+                $transferItems['sourceReservationId'] = $item['sourceReservationId'] ?? null;
+                $transferItems['destinationReservationId'] = $item['destinationReservationId'] ?? null;
+                $transferItems['sourceTableId'] = $item['sourceTableId'] ?? null;
+                $transferItems['destinationTableId'] = $item['destinationTableId'] ?? null;
+                $transferItems['sourceTableName'] = $item['sourceTableName'] ?? null;
+                $transferItems['destinationTableName'] = $item['destinationTableName'] ?? null;
+                $transferItems['forRoundNumber'] = $item['forRoundNumber'] ?? null;
+            }
+            $this->orderItemsData[$key]['product_id'] = $product->id;
+            $this->orderItemsData[$key]['product_name'] = $product->name;
+            $this->orderItemsData[$key]['quantity'] = $item['quantity'];
+            $this->orderItemsData[$key]['extra'] = json_encode([
+                'serve_type'  => $item['serve_type'] ?? [],
+                'size'        => $item['size'] ?? [],
+                'supplements' => $item['supplements'] ?? [],
+                'weight'      => $item['weight'] ?? [],
+                'users'       => $item['user_name'] ?? [],
+                'transfer'    => $transferItems,
+            ]);
+            $this->orderItemsData[$key]['total_price'] = ($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) + (($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) * $this->orderItemsData[$key]['tax_percentage'] / 100);
+            if ($normalOrder && $notVoided && $notOnTheHouse) {
+                $deposit = $product->statiege_id_deposite ?? 0;
+                $this->orderItemsData[$key]['statiege_deposite_value'] = $deposit;
+                $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
+                $this->orderItemsData[$key]['total_price'] += $deposit * $item['quantity'];
+                $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
+            }
+            if (isset($item['status'])) {
+                $this->orderItemsData[$key]['status'] = $item['status'];
+            } else {
+                $this->orderItemsData[$key]['status'] = 'received';
+            }
+            if (isset($inputs['reservation_id']) && $inputs['reservation_id']) {
+                $this->orderItemsData[$key]['status'] = 'done';
+            }
+            $this->orderItemsData[$key]['comment'] = isset($item['comment']) && ! empty($item['comment']) ? $item['comment'] : null;
+        }
     }
 
-    protected function prepareAyceAmountDetails()
+    protected function calculateOrderDiscount()
+    {
+        if (isset($inputs['order_discount']) && $inputs['order_discount'] > 0) {
+            $order_data['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
+            $order_data['discount'] = $inputs['order_discount'];
+            $order_data['discount_amount'] = discountCalc($order_data['total_price'], $order_data['sub_total'], $is_euro_discount_order, $inputs['order_discount']);
+            $order_data['discount_inc_tax'] = discountCalc($order_data['total_price'], $order_data['total_price'], $is_euro_discount_order, $inputs['order_discount']);
+
+//                $order_data['total_tax'] = ($order_data['total_tax'] - (($order_data['total_tax'] * (int)$inputs['order_discount']) / 100));
+            $order_data['total_tax'] = ($order_data['total_tax'] - discountCalc($order_data['total_price'], $order_data['total_tax'], $is_euro_discount_order, $inputs['order_discount']));
+
+//                $order_data['total_alcohol_tax'] = ($order_data['total_alcohol_tax'] - (($order_data['total_alcohol_tax'] * (int)$inputs['order_discount']) / 100));
+            $order_data['total_alcohol_tax'] = ($order_data['total_alcohol_tax'] - discountCalc($order_data['total_price'], $order_data['total_alcohol_tax'], $is_euro_discount_order, $inputs['order_discount']));
+        }
+    }
+
+    protected function prepareAllYouCanEatAmountDetails()
     {
         if (isset($this->payload['ayce_amount']) && $this->payload['ayce_amount']) {
             $product_total = $this->payload['ayce_amount'];

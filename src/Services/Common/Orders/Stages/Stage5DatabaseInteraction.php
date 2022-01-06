@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Weboccult\EatcardCompanion\Models\Product;
+use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 
 /**
@@ -27,5 +28,9 @@ trait Stage5DatabaseInteraction
 
     protected function setSupplementData()
     {
+        $supplement_ids = collect($this->cart)->pluck('supplements')->each->pluck('id')->toArray();
+        companionLogger('Supplement ids extracted from cart', $supplement_ids);
+        $this->supplementData = Supplement::withTrashed()->whereIn('id', $supplement_ids)->get();
+        companionLogger('Supplement data fetched from database', $this->supplementData);
     }
 }

@@ -6,6 +6,7 @@ use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage0BasicDatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11CreateProcess;
@@ -63,6 +64,9 @@ abstract class BaseProcessor implements BaseProcessorContract
     /** @var Product|null|object */
     protected $productData = null;
 
+    /** @var Supplement|null|object */
+    protected $supplementData = null;
+
     protected string $system = 'none';
 
     /** @var Store|null|object */
@@ -88,6 +92,10 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected $settings = [
         'additional_fee' => [
+            'status' => false,
+            'value' => null,
+        ],
+        'delivery_fee' => [
             'status' => false,
             'value' => null,
         ],
@@ -219,7 +227,8 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareOrderDetails(),
             fn () => $this->prepareSupplementDetails(),
             fn () => $this->prepareOrderItemsDetails(),
-            fn () => $this->prepareAyceAmountDetails(),
+            fn () => $this->calculateOrderDiscount(),
+            fn () => $this->prepareAllYouCanEatAmountDetails(),
             fn () => $this->prepareEditOrderDetails(),
             fn () => $this->prepareUndoOrderDetails(),
             fn () => $this->prepareCouponDetails(),

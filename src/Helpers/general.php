@@ -251,26 +251,23 @@ if (! function_exists('getAycePrice')) {
     }
 }
 
-if (! function_exists('cartTotalValueCalc')) {
+if (! function_exists('discountCalc')) {
     /**
      * @param $total_value
      * @param $base_value
      * @param $discount_type
      * @param $discount
-     * @param $cart_total
+     * @param int $cart_total
      *
      * @return float|int|void
      */
-    function discountCalc($total_value, $base_value, $discount_type, $discount, $cart_total = 0)
+    function discountCalc($total_value, $base_value, $discount_type, $discount, int $cart_total = 0)
     {
         try {
-            $discount_per = 0;
-            $calculted_amount = 0;
+            $calculated_amount = 0;
             $discount = (float) $discount;
             if ($total_value == $base_value && $discount_type == 1 && $cart_total == 0) {
-                $calculted_amount = $discount;
-
-                return $calculted_amount;
+                return $discount;
             }
             if ($discount_type == 1 && $cart_total == 0) { // EURO (amount) discount
                 $discount_per = round(($discount * 100) / $total_value, 5);
@@ -280,10 +277,10 @@ if (! function_exists('cartTotalValueCalc')) {
                 $discount_per = $discount;
             }
             if ($discount_per > 0) {
-                $calculted_amount = ($base_value * $discount_per) / 100;
+                $calculated_amount = ($base_value * $discount_per) / 100;
             }
 
-            return $calculted_amount;
+            return $calculated_amount;
         } catch (\Exception $e) {
             companionLogger(
                 'discountCalc - helper',

@@ -16,7 +16,7 @@ trait Stage0BasicDatabaseInteraction
 {
     protected function setStoreData()
     {
-        if (isset($this->payload['store_id']) && ! empty($storeId)) {
+        if (isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
             $storeId = $this->payload['store_id'];
             $store = Cache::tags([
                 FLUSH_ALL,

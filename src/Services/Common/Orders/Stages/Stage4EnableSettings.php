@@ -25,6 +25,9 @@ trait Stage4EnableSettings
 
     protected function enableDeliveryFees()
     {
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            // logic goes here...
+        }
     }
 
     protected function enableStatiegeDeposite()
