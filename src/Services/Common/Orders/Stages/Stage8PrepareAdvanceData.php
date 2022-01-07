@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
@@ -85,6 +86,13 @@ trait Stage8PrepareAdvanceData
         $this->orderData['is_takeaway_mail_send'] = 0;
         $this->orderData['discount_inc_tax'] = 0;
         $this->orderData['statiege_deposite_total'] = 0;
+        $this->orderData['ayce_price'] = 0;
+
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+            if ($this->payload['ayce_amount'] && ! empty($this->payload['ayce_amount'])) {
+                $this->orderData['ayce_price'] = $this->payload['ayce_amount'];
+            }
+        }
     }
 
     protected function prepareSupplementDetails()
@@ -95,7 +103,7 @@ trait Stage8PrepareAdvanceData
     {
         $normalOrder = (isset($this->payload['reservation_id']) && $this->payload['reservation_id'] != '' && ! empty($this->storeReservation)) ? 0 : 1;
 
-        $cart_original_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_amount']);
+        $cart_original_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_price']);
 
         foreach ($this->getCart() as $key => $item) {
             /*This variable used for checked product and it/s supplement price count or not in total price*/
@@ -313,27 +321,27 @@ trait Stage8PrepareAdvanceData
             } else {
                 $this->orderItemsData[$key]['status'] = 'received';
             }
-            if (isset($inputs['reservation_id']) && $inputs['reservation_id']) {
+            if ($this->system == SystemTypes::POS && isset($this->payload['reservation_id']) && $this->payload['reservation_id']) {
                 $this->orderItemsData[$key]['status'] = 'done';
             }
             $this->orderItemsData[$key]['comment'] = isset($item['comment']) && ! empty($item['comment']) ? $item['comment'] : null;
         }
+
+        $this->orderData['sub_total'] = $this->orderData['normal_sub_total'] + $this->orderData['alcohol_sub_total'];
+        $this->orderData['total_price'] = $this->orderData['sub_total'] + $this->orderData['total_tax'] + $this->orderData['total_alcohol_tax'];
     }
 
     protected function calculateOrderDiscount()
     {
-        if (isset($inputs['order_discount']) && $inputs['order_discount'] > 0) {
-            $order_data['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
-            $order_data['discount'] = $inputs['order_discount'];
-            $order_data['discount_amount'] = discountCalc($order_data['total_price'], $order_data['sub_total'], $is_euro_discount_order, $inputs['order_discount']);
-            $order_data['discount_inc_tax'] = discountCalc($order_data['total_price'], $order_data['total_price'], $is_euro_discount_order, $inputs['order_discount']);
-
-//                $order_data['total_tax'] = ($order_data['total_tax'] - (($order_data['total_tax'] * (int)$inputs['order_discount']) / 100));
-            $order_data['total_tax'] = ($order_data['total_tax'] - discountCalc($order_data['total_price'], $order_data['total_tax'], $is_euro_discount_order, $inputs['order_discount']));
-
-//                $order_data['total_alcohol_tax'] = ($order_data['total_alcohol_tax'] - (($order_data['total_alcohol_tax'] * (int)$inputs['order_discount']) / 100));
-            $order_data['total_alcohol_tax'] = ($order_data['total_alcohol_tax'] - discountCalc($order_data['total_price'], $order_data['total_alcohol_tax'], $is_euro_discount_order, $inputs['order_discount']));
+        if (isset($this->discountData['order_discount']) && $this->discountData['order_discount'] > 0) {
+            $this->orderData['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
+            $this->orderData['discount'] = $this->discountData['order_discount'];
+            $this->orderData['discount_amount'] = discountCalc($this->orderData['total_price'], $this->orderData['sub_total'], $this->discountData['is_euro_discount'], $this->discountData['order_discount']);
+            $this->orderData['discount_inc_tax'] = discountCalc($this->orderData['total_price'], $this->orderData['total_price'], $this->discountData['is_euro_discount'], $this->discountData['order_discount']);
+            $this->orderData['total_tax'] = ($this->orderData['total_tax'] - discountCalc($this->orderData['total_price'], $this->orderData['total_tax'], $this->discountData['is_euro_discount'], $this->discountData['order_discount']));
+            $this->orderData['total_alcohol_tax'] = ($this->orderData['total_alcohol_tax'] - discountCalc($this->orderData['total_price'], $this->orderData['total_alcohol_tax'], $this->discountData['is_euro_discount'], $this->discountData['order_discount']));
         }
+        $this->orderData['total_price'] = $this->orderData['total_price'] - $this->orderData['discount_amount'];
     }
 
     protected function prepareAllYouCanEatAmountDetails()
@@ -345,6 +353,30 @@ trait Stage8PrepareAdvanceData
             $this->orderData['normal_sub_total'] += $product_total - $current_sub;
             $this->orderData['total_tax'] += $current_sub;
             $this->orderData['total_price'] += $product_total;
+        }
+    }
+
+    protected function calculateFees()
+    {
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            if ($this->settings['delivery_fee']['status']) {
+                $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
+            }
+            $this->orderData['total_price'] += $this->orderData['delivery_fee'];
+        }
+        if ($this->orderData['method'] != 'cash' && isset($store->storeSetting) && $store->storeSetting->is_pin == 1 && $store->storeSetting->additional_fee) {
+            $this->orderData['additional_fee'] = $store->storeSetting->additional_fee;
+            $this->orderData['total_price'] += $this->orderData['additional_fee'];
+        }
+    }
+
+    protected function calculateStatiegeDeposite()
+    {
+        if ($this->system == SystemTypes::POS) {
+            $normalOrder = (isset($this->payload['reservation_id']) && $this->payload['reservation_id'] != '' && ! empty($this->storeReservation)) ? 0 : 1;
+            if ($normalOrder) {
+                $this->orderData['total_price'] += $this->orderData['statiege_deposite_total'];
+            }
         }
     }
 
@@ -366,5 +398,29 @@ trait Stage8PrepareAdvanceData
 
     protected function prepareCouponDetails()
     {
+        $coupon_purchase = '';
+        $remaining_price = 0;
+        if (isset($this->payload['qr_code']) && $this->payload['qr_code']) {
+            $coupon_purchase = GiftPurchaseOrder::query()->where('qr_code', $this->payload['qr_code'])
+                ->where('status', 'paid')
+                ->where('remaining_price', '>', 0)
+                ->where('expire_at', '>=', Carbon::now()->format('Y-m-d'))
+                ->first();
+            if ($coupon_purchase) {
+                $this->orderData['gift_purchase_id'] = $coupon_purchase->id;
+                if ($coupon_purchase->remaining_price >= $this->orderData['total_price']) {
+                    $remaining_price = $coupon_purchase->remaining_price - $this->orderData['total_price'];
+                    $this->orderData['coupon_price'] = $this->orderData['total_price'];
+                    $this->orderData['total_price'] = 0;
+                } elseif ($coupon_purchase->remaining_price < $this->orderData['total_price']) {
+                    $remaining_price = 0;
+                    $this->orderData['coupon_price'] = $coupon_purchase->remaining_price;
+                    $this->orderData['total_price'] = $this->orderData['total_price'] - $coupon_purchase->remaining_price;
+                } else {
+                    $remaining_price = 0;
+                    $this->orderData['coupon_price'] = 0;
+                }
+            }
+        }
     }
 }

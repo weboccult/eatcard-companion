@@ -135,6 +135,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->stage13_Broadcasting(),
             fn () => $this->stage14_Notification(),
             fn () => $this->stage15_ExtraOperations(),
+            fn () => $this->stage16_Response(),
         ], true);
     }
 
@@ -227,8 +228,10 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareOrderDetails(),
             fn () => $this->prepareSupplementDetails(),
             fn () => $this->prepareOrderItemsDetails(),
-            fn () => $this->calculateOrderDiscount(),
             fn () => $this->prepareAllYouCanEatAmountDetails(),
+            fn () => $this->calculateOrderDiscount(),
+            fn () => $this->calculateFees(),
+            fn () => $this->calculateStatiegeDeposite(),
             fn () => $this->prepareEditOrderDetails(),
             fn () => $this->prepareUndoOrderDetails(),
             fn () => $this->prepareCouponDetails(),
@@ -301,6 +304,14 @@ abstract class BaseProcessor implements BaseProcessorContract
         $this->stageIt([
             fn () => $this->setNewLetterSubscriptionData(),
             fn () => $this->setKioskOrderAnswerChoiceLogic(),
+        ]);
+    }
+
+    private function stage16_Response()
+    {
+        $this->setDumpDieValue([
+            'order' => $this->orderData,
+            'order_items' => $this->orderItemsData,
         ]);
     }
 }

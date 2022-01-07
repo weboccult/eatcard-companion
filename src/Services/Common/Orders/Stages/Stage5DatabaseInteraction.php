@@ -28,7 +28,7 @@ trait Stage5DatabaseInteraction
 
     protected function setSupplementData()
     {
-        $supplement_ids = collect($this->cart)->pluck('supplements')->each->pluck('id')->toArray();
+        $supplement_ids = collect($this->cart)->pluck('supplements.id')->filter()->toArray();
         companionLogger('Supplement ids extracted from cart', $supplement_ids);
         $this->supplementData = Supplement::withTrashed()->whereIn('id', $supplement_ids)->get();
         companionLogger('Supplement data fetched from database', $this->supplementData);
