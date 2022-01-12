@@ -19,7 +19,11 @@
     "php": "^7.4 || ^8.0",
     "ext-bcmath": "*",
     "ext-json": "*",
+    "ext-openssl": "*",
+    "cmgmyr/messenger": "^2.22",
+    "guzzlehttp/guzzle": "^7.0.1",
     "illuminate/collections": "^8.0",
+    "illuminate/console": "^8.0",
     "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
     "nunomaduro/collision": "^5.0",
@@ -33,9 +37,10 @@
       "Weboccult\\EatcardCompanion\\": "src"
     },
     "files": [
+      "src/Helpers/UriHelper.php",
+      "src/Helpers/pacakgeHelper.php",
       "src/Helpers/general.php",
-      "src/Helpers/cacheTags.php",
-      "src/Helpers/pacakgeHelper.php"
+      "src/Helpers/cacheTags.php"
     ]
   },
   "autoload-dev": {
@@ -62,5 +67,7 @@
   "scripts": {
     "test": "vendor/bin/pest",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  },
+  "require-dev": {
   }
 }
