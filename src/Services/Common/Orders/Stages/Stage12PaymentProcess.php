@@ -140,10 +140,19 @@ trait Stage12PaymentProcess
 
             isset($response['ssai']) && $response['ssai'] ? $order->update(['worldline_ssai' => $response['ssai']]) : '';
 
-            $this->paymentResponse = [
+            $data = [
                 'pay_url'  => null,
                 'order_id' => $order['id'],
             ];
+
+            if ($this->isSubOrder) {
+                $this->paymentResponse = [
+                   'sub_order' => $this->createdOrder,
+                   'data'      => $data,
+               ];
+            } else {
+                $this->paymentResponse = $data;
+            }
         }
     }
 

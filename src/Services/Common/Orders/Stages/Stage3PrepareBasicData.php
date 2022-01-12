@@ -24,6 +24,41 @@ trait Stage3PrepareBasicData
         }
     }
 
+    protected function prepareDineInType()
+    {
+        $this->orderData['dine_in_type'] = '';
+        if ($this->system === SystemTypes::POS) {
+            if (isset($this->payload['dine_in_type']) && ! empty($this->payload['dine_in_type'])) {
+                $this->orderData['dine_in_type'] = $this->payload['dine_in_type'];
+            } else {
+                if (! empty($this->storeReservation)) {
+                    $this->orderData['dine_in_type'] = 'dine_in';
+                } else {
+                    $this->orderData['dine_in_type'] = 'take_out';
+                }
+            }
+        }
+    }
+
+    protected function prepareOrderType()
+    {
+        if ($this->system === SystemTypes::POS) {
+            $this->orderData['order_type'] = 'pos';
+            if (! empty($this->storeReservation) && ! empty($this->storeReservation->dinein_price_id)) {
+                $this->orderData['order_type'] = 'all_you_eat';
+            } else {
+                $this->orderData['order_type'] = 'dine_in';
+            }
+        }
+    }
+
+    protected function prepareCashPaid()
+    {
+        if ($this->system === SystemTypes::POS) {
+            $this->orderData['cash_paid'] = $this->payload['cash_paid'] ?? '';
+        }
+    }
+
     protected function prepareCreatedFrom()
     {
         if ($this->createdFrom != 'companion') {

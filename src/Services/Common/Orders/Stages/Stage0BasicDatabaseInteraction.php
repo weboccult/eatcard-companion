@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
@@ -37,6 +38,21 @@ trait Stage0BasicDatabaseInteraction
         }
     }
 
+    protected function setParentOrderData()
+    {
+        if (isset($this->payload['parent_order_id']) && ! empty($this->payload['parent_order_id'])) {
+            $orderId = $this->payload['parent_order_id'];
+            $parentOrder = Order::query()->with([
+                'orderItems',
+                'subOrders.subOrderItems',
+            ])->where('id', $orderId)->first();
+            if (! empty($parentOrder)) {
+                $this->parentOrder = $parentOrder;
+                $this->isSubOrder = true;
+            }
+        }
+    }
+
     protected function setDeviceData()
     {
         if (isset($this->payload['device_id']) && ! empty($this->payload['device_id']) && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
@@ -64,12 +80,13 @@ trait Stage0BasicDatabaseInteraction
     protected function setReservationData()
     {
         if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id'])) {
+            $reservationId = $this->isSubOrder ? $this->parentOrder->parent_id : $this->payload['reservation_id'];
             $reservation = StoreReservation::with([
                 'dineInPrice' => function ($q1) {
                     $q1->withTrashed();
                 },
                 'tables.table',
-            ])->where('id', $this->payload['reservation_id'])->first();
+            ])->where('id', $reservationId)->first();
             if (! empty($reservation)) {
                 $this->storeReservation = $reservation;
             }

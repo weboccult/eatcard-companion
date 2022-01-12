@@ -61,13 +61,12 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['method'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
                 $this->orderData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
             }
-            if ($this->system == SystemTypes::POS) {
-                if (isset($this->payload['is_split_payment']) && $this->payload['is_split_payment'] == 1) {
-                    $this->orderData['status'] = 'pending';
-                    $this->orderData['paid_on'] = null;
-                }
-            }
         }
+    }
+
+    protected function prepareSplitPaymentDetails()
+    {
+        // it will be override in PosSubProcessor...
     }
 
     protected function prepareOrderId()

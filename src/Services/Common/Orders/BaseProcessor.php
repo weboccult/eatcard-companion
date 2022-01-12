@@ -11,6 +11,7 @@ use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage0BasicDatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
@@ -79,6 +80,9 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected bool $isSubOrder = false;
 
+    /** @var Order|null|object */
+    protected $parentOrder = null;
+
     /** @var Store|null|object */
     protected ?Store $store;
 
@@ -114,7 +118,7 @@ abstract class BaseProcessor implements BaseProcessorContract
         ],
     ];
 
-    /** @var Order|OrderHistory|null|object */
+    /** @var Order|OrderHistory|SubOrder|null|object */
     protected $createdOrder = null;
 
     /** @var array<array> */
@@ -177,6 +181,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->setStoreData(),
+            fn () => $this->setParentOrderData(),
             fn () => $this->setDeviceData(),
             fn () => $this->setReservationData(),
         ]);
@@ -206,6 +211,10 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->prepareUserId(),
+            fn () => $this->prepareCreatedBy(),
+            fn () => $this->prepareDineInType(),
+            fn () => $this->prepareOrderType(),
+            fn () => $this->prepareCashPaid(),
             fn () => $this->prepareCreatedFrom(),
             fn () => $this->prepareOrderStatus(),
             fn () => $this->prepareOrderBasicDetails(),
@@ -254,6 +263,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareOrderDiscount(),
             fn () => $this->preparePaymentMethod(),
             fn () => $this->preparePaymentDetails(),
+            fn () => $this->prepareSplitPaymentDetails(),
             fn () => $this->prepareOrderId(),
             fn () => $this->prepareOrderDetails(),
             fn () => $this->prepareSupplementDetails(),
@@ -347,7 +357,7 @@ abstract class BaseProcessor implements BaseProcessorContract
                     'id'   => $this->createdOrder->id,
                     'success'  => 'success',
                 ]);
-            } elseif ($this->device->payment_type == 'ccv' || $this->device->payment_type == 'wipay') {
+            } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
                 $this->setDumpDieValue($this->paymentResponse);
             } else {
                 companionLogger('Not supported method found.!');
