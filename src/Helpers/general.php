@@ -5,9 +5,14 @@ namespace Weboccult\EatcardCompanion\Helpers;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Weboccult\EatcardCompanion\Models\Message;
+use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
+use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
+use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\Supplement;
+use Illuminate\Support\Facades\Redis as LRedis;
 
 if (! function_exists('eatcardSayHello')) {
     /**
@@ -428,5 +433,305 @@ if (! function_exists('changePriceFormat')) {
     function changePriceFormat($val): string
     {
         return ($val) ? number_format((float) $val, 2, ',', '') : '0,00';
+    }
+}
+
+if (! function_exists('sendResWebNotification')) {
+    /**
+     * @param $id
+     * @param $store_id
+     * @param string $channel
+     * @param array $oldTables
+     * @param int $reload
+     *
+     * @return bool|void
+     */
+    function sendResWebNotification($id, $store_id, string $channel = '', array $oldTables = [], int $reload = 1)
+    {
+        try {
+            /*web notification*/
+            $reservation = ReservationTable::whereHas('reservation', function ($q) use ($store_id) {
+                $q/*->whereHas('meal')*/ ->where('status', 'approved');
+            })->with([
+                'reservation' => function ($q) use ($store_id) {
+                    $q->with([
+                        'meal:id,name,time_limit',
+                        'tables.table',
+                        'user' => function ($q2) use ($store_id) {
+                            $q2->select('id', 'profile_img')->with([
+                                'card' => function ($q3) use ($store_id) {
+                                    $q3->select('id', 'customer_id', 'total_points')
+                                        ->where('store_id', $store_id)
+                                        ->where('status', 'active');
+                                },
+                            ]);
+                        },
+                    ])->where('status', 'approved')->where(function ($q1) {
+                        $q1->whereIn('payment_status', [
+                            'paid',
+                            '',
+                        ])->orWhere('total_price', null);
+                    });
+                },
+            ])->where('reservation_id', $id)->first();
+            if ($reservation && $reservation->reservation) {
+                $reservation->reservation->end = 120;
+                if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
+                    $orders = Order::with('orderItems.product:id,image,sku')
+                        ->where('status', 'paid')
+                        ->where('parent_id', $reservation->reservation->id)
+                        ->orderBy('id', 'desc')
+                        ->get()
+                        ->toArray();
+                    foreach ($orders as $key => $order) {
+                        $orders[$key]['dutch_order_status'] = __('messages.'.$order['order_status']);
+                    }
+                    $reservation->reservation->orders = $orders;
+                }
+                if ($reservation->reservation->end_time) {
+                    if ($reservation->reservation->end_time == '00:00') {
+                        $reservation->reservation->end_time = '24:00';
+                    }
+                    $start = Carbon::parse($reservation->reservation->from_time)->format('H:i');
+                    $reservation->reservation->end = Carbon::parse($reservation->reservation->end_time)
+                        ->diffInMinutes($start);
+                } elseif (isset($reservation->reservation->meal)) {
+                    $reservation->reservation->end = $reservation->reservation->meal->time_limit;
+                }
+                if (isset($reservation->reservation->user) && $reservation->reservation->user != null && isset($reservation->reservation->user->profile_img) && file_exists(public_path($reservation->reservation->user->profile_img))) {
+                    $reservation->reservation->user_profile_image = isset($reservation->reservation->user->profile_img) ? asset($reservation->reservation->user->profile_img) : asset('asset_new/app/media/img/users/user4.jpg');
+                }
+                if ($reservation->reservation->voornaam || $reservation->reservation->achternaam) {
+                    $reservation->reservation->img_name = strtoupper(mb_substr($reservation->reservation->voornaam, 0, 1).mb_substr($reservation->reservation->achternaam, strrpos($reservation->reservation->achternaam, ' '), 1));
+                } else {
+                    $reservation->reservation->img_name = 'G';
+                }
+                /*get unread message threads of the logged in user*/
+                $threadIds = \Cmgmyr\Messenger\Models\Thread::forUserWithNewMessages(auth()->id())
+                    ->latest('updated_at')
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+                $reservation->reservation->unread_msg = false;
+                if (in_array($reservation->reservation->thread_id, $threadIds)) {
+                    $reservation->reservation->unread_msg = true;
+                }
+                $reservation->reservation->messages = Message::select('id', 'body', 'created_at', 'user_id')
+                    ->where('thread_id', $reservation->reservation->thread_id)
+                    ->get();
+                if ($reservation->reservation->group_id) {
+                    $all_tables = $reservation->reservation->tables->pluck('table.name')->toArray();
+                    $reservation->reservation->all_tables = $all_tables;
+                }
+                if (isset($reservation->reservation->tables) && $reservation->reservation->tables->count() > 0) {
+                    $tables = [];
+                    foreach ($reservation->reservation->tables as $table) {
+                        if ($table->table) {
+                            $tables[] = $table->table->name;
+                        }
+                    }
+                    $reservation->reservation->table_names = isset($tables) ? implode('  ', $tables) : '';
+                }
+                unset($reservation->reservation->tables);
+                $temp_orders = [];
+                if ($reservation->is_dine_in == 1) {
+                    $temp_orders = Order::with('orderItems.product:id,image,sku')
+                        ->where('status', 'paid')
+                        ->where('parent_id', $id)
+                        ->orderBy('id', 'desc')
+                        ->get()
+                        ->toArray();
+                }
+                if ($reservation->is_dine_in == 0) {
+                    $orders = ReservationOrderItem::query()
+                        ->where('reservation_id', $id)
+                        ->orderBy('round', 'desc')
+                        ->get()
+                        ->toArray();
+                    $temp_orders = collect($orders)->map(function ($item) {
+                        $item['cart'] = json_decode($item['cart']);
+
+                        return $item;
+                    })->toArray();
+                }
+                $reservation->reservation->orders = $temp_orders;
+                $last_message = Message::query()->where('thread_id', $reservation->reservation->thread_id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                if ($last_message) {
+                    $reservation->reservation->last_message = $last_message->body;
+                } else {
+                    $reservation->reservation->last_message = null;
+                }
+                if ($reservation->is_dine_in == 1) {
+                    $temp_orders = Order::with('orderItems.product:id,image,sku')
+                        ->where('status', 'paid')
+                        ->where('parent_id', $id)
+                        ->orderBy('id', 'desc')
+                        ->get()
+                        ->toArray();
+                }
+                if ($reservation->is_dine_in == 0) {
+                    $orders = ReservationOrderItem::query()
+                        ->where('reservation_id', $id)
+                        ->orderBy('round', 'desc')
+                        ->get()
+                        ->toArray();
+                    $temp_orders = collect($orders)->map(function ($item) {
+                        $item['cart'] = json_decode($item['cart']);
+
+                        return $item;
+                    })->toArray();
+                }
+                $reservation->reservation->orders = $temp_orders;
+                $tempReservation = $reservation->toArray();
+                $tempReservation['reservation']['reservation_date'] = $reservation->reservation->getRawOriginal('res_date');
+                companionLogger('new booking web notification', $tempReservation);
+                $dinein_area_id = '';
+                $table = ReservationTable::with(['table'])->where('reservation_id', $id)->first();
+                $current_reservation_table = ReservationTable::query()
+                    ->where('reservation_id', $id)
+                    ->pluck('table_id')
+                    ->toArray();
+                if ($table && $table['table']) {
+                    $dinein_area_id = $table['table']->dining_area_id;
+                }
+                $additionalData = json_encode([
+                    'reservation'    => $tempReservation,
+                    'is_reload'      => $reload,
+                    'reservation_id' => $reservation->reservation->id,
+                    'old_tables'     => $oldTables,
+                    'dinein_area_id' => $dinein_area_id,
+                    'table_ids'      => $current_reservation_table,
+                ]);
+                $redis = LRedis::connection();
+                $redis->publish('reservation_booking', json_encode([
+                    'store_id'        => $store_id,
+                    'channel'         => $channel ? $channel : 'new_booking',
+                    'notification_id' => 0,
+                    'additional_data' => $additionalData,
+                ]));
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            companionLogger('new booking web notification error', 'error : '.$e->getMessage(), 'file : '.$e->getFile(), 'line : '.$e->getLine(), );
+        }
+    }
+}
+
+if (! function_exists('getChatMsgDateTimeFormat')) {
+    /**
+     * @param $date
+     *
+     * @return string
+     */
+    function getChatMsgDateTimeFormat($date): string
+    {
+        $dutchDayNames = [
+            'Sunday'    => 'zondag',
+            'Monday'    => 'maandag',
+            'Tuesday'   => 'dinsdag',
+            'Wednesday' => 'woensdag',
+            'Thursday'  => 'donderdag',
+            'Friday'    => 'vrijdag',
+            'Saturday'  => 'zaterdag',
+        ];
+        $monthNames = [
+            'January'   => 'januari',
+            'February'  => 'februari',
+            'March'     => 'maart',
+            'April'     => 'april',
+            'May'       => 'mei',
+            'June'      => 'juni',
+            'July'      => 'juli',
+            'August'    => 'augustus',
+            'September' => 'september',
+            'October'   => 'oktober',
+            'November'  => 'november',
+            'December'  => 'december',
+        ];
+        $dutchDate = Carbon::parse($date)->format('d').' '.$monthNames[Carbon::parse($date)->format('F')];
+
+        return $dutchDate.' | '.Carbon::parse($date)->format('H:i ');
+    }
+}
+
+if (! function_exists('sendWebNotification')) {
+    function sendWebNotification($store, $order, $data, $is_last_payment = 0, $force_refresh = 0)
+    {
+        try {
+            $notification = Notification::query()->create([
+                'store_id'        => $order['store_id'],
+                'notification'    => __('messages.new_order_notification', [
+                    'order_id' => $order['order_id'],
+                    'username' => $order['full_name'],
+                ]),
+                'type'            => 'order',
+                'additional_data' => json_encode([
+                    'id'                    => $order['id'],
+                    'order_id'              => $order['order_id'],
+                    'order_date'            => $order['order_date'],
+                    'order_time'            => $order['order_time'],
+                    'total_price'           => $order['total_price'],
+                    'order_type'            => $order['order_type'] ?? 'pos',
+                    'full_name'             => $order['full_name'],
+                    'contact_no'            => $order['contact_no'],
+                    'order_status'          => $order['order_status'],
+                    'table_name'            => $order['table_name'],
+                    'dutch_order_status'    => __('messages.'.$order['order_status']),
+                    'date'                  => $data['orderDate'],
+                    'delivery_address'      => $order['delivery_address'],
+                    'method'                => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? '' : $order['method'],
+                    'dutch_date'            => appDutchDate($data['orderDate']),
+                    'is_auto_print'         => (/*$store->app_pos_print &&*/ $store->is_auto_print_takeaway),
+                    'is_notification'       => ($data['is_notification']),
+                    'thusibezorgd_order_id' => $order['thusibezorgd_order_id'] ?? '',
+                    'uber_eats_order_id'    => $order['uber_eats_order_id'] ?? '',
+                    'status'                => $order['status'] ?? '',
+                    'is_last_payment'       => $is_last_payment,
+                    'is_split_payment'      => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? 1 : 0,
+                    'parent_order_id'       => $order['parent_order_id'] ?? '',
+                    'force_refresh'         => $force_refresh,
+                ]),
+                'read_at'         => Carbon::now()->format('Y-m-d H:i:s'),
+            ]);
+
+            return [
+                'store_id'        => $order['store_id'],
+                'notification_id' => $notification->id,
+                'additional_data' => $notification->additional_data,
+            ];
+        } catch (\Exception $e) {
+            companionLogger('takeaway - web notification', 'error : '.$e->getMessage(), 'file : '.$e->getFile(), 'line : '.$e->getLine(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'), );
+        }
+
+        return [];
+    }
+}
+
+if (! function_exists('phpEncrypt')) {
+
+    /**
+     * @param string $simple_string
+     *
+     * @return string
+     * @Description encrypt simple string
+     */
+    function phpEncrypt(string $simple_string): string
+    {
+        // Store cipher method
+        $ciphering = 'AES-256-CBC';
+        // Use OpenSSl encryption method
+        // $iv_length = openssl_cipher_iv_length($ciphering);
+        $options = 0;
+        // Use random_bytes() function which gives
+        // randomly 16 digit values
+        $encryption_iv = '@eatcard--kiosk@';
+        // Alternatively, we can use any 16 digit
+        // characters or numeric for iv
+        $encryption_key = '!$@#eatcard_kiosk_device_encrypt#@$!';
+        // Encryption of string process starts
+        return base64_encode(openssl_encrypt($simple_string, $ciphering, $encryption_key, $options, $encryption_iv));
     }
 }

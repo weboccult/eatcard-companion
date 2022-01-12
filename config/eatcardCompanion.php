@@ -11,6 +11,7 @@ return [
     */
 
     'logger' => [
+
         /*
         |--------------------------------------------------------------------------
         | Companion Logger
@@ -19,6 +20,7 @@ return [
         | Global setting to turn on or off logger module.
         |
         */
+
         'enabled' => env('COMPANION_LOGGER_STATUS', true),
 
         /*
@@ -32,6 +34,55 @@ return [
         | Supported: "FILE" , "CLOUDWATCH"
         |
         */
-        'driver' => env('COMPANION_LOGGER_DRIVER', Weboccult\EatcardCompanion\Enums\LoggerTypes::FILE),
+
+        'driver'  => env('COMPANION_LOGGER_DRIVER', Weboccult\EatcardCompanion\Enums\LoggerTypes::FILE),
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | System Endpoints
+    |--------------------------------------------------------------------------
+    |
+    | Different system's endpoint will be managed from here
+    |
+    */
+
+    'system_endpoints' => [
+        'pos' => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manage Payment
+    |--------------------------------------------------------------------------
+    |
+    | Setting, webhook, URLs and more.
+    |
+    */
+
+    'payment' => [
+        'gateway' => [
+            'ccv' => [
+                'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
+                'production' => 'https://redirect.jforce.be/api/v1',
+                'endpoints'  => [
+                    'debit' => '/api/2.0/json/debit',
+                ],
+            ],
+            'wipay' => [
+                'staging'    => 'https://wipayacc.worldline.nl',
+                'production' => 'https://wipay.worldline.nl',
+            ],
+        ],
+        'webhook' => [
+            'pos' => [
+                'order'     => '/pos/webhook/<%id%>/<%store_id%>',
+                'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
+            ],
+        ],
+        'returnUrl' => [
+            'pos' => '/pos',
+        ],
     ],
 ];

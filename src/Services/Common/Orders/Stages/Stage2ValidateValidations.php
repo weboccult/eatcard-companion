@@ -9,6 +9,8 @@ use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 
 /**
  * @description Stag 2
+ *
+ * @author Darshit Hedpara
  */
 trait Stage2ValidateValidations
 {

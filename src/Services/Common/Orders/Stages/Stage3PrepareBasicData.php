@@ -7,12 +7,21 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 
 /**
  * @description Stag 3
+ *
+ * @author Darshit Hedpara
  */
 trait Stage3PrepareBasicData
 {
     protected function prepareUserId()
     {
         $this->orderData['user_id'] = auth()->id();
+    }
+
+    protected function prepareCreatedBy()
+    {
+        if ($this->system === SystemTypes::POS) {
+            $this->orderData['created_by'] = $this->payload['pos_user_id'] ?? '';
+        }
     }
 
     protected function prepareCreatedFrom()

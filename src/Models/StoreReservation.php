@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
@@ -54,5 +55,13 @@ class StoreReservation extends Model
     public function tables2(): BelongsToMany
     {
         return $this->belongsToMany(Table::class, 'reservation_tables', 'reservation_id', 'table_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function activeServeRequests(): HasMany
+    {
+        return $this->hasMany(ReservationServeRequest::class, 'reservation_id')->where('is_served', '<>', 1);
     }
 }

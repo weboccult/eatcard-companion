@@ -1,7 +1,5 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Helpers;
-
 if (! defined('')) {
     define('CACHING_TIME', 600);
 }

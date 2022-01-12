@@ -2,11 +2,16 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Carbon\Carbon;
+use Weboccult\EatcardCompanion\Enums\AfterEffectOrderTypes;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 
 /**
  * @description Stag 9
+ *
+ * @author Darshit Hedpara
  */
 trait Stage9PerformOperations
 {
@@ -53,16 +58,37 @@ trait Stage9PerformOperations
                 $this->orderData['order_id'] = $first_order->order_id;
                 $this->orderData['ref_id'] = $last_order->id;
                 $this->orderData['is_base_order'] = 1;
-                $this->afterEffects = ['undo_operation_requested' => true];
+
+                $this->setEffect(AfterEffectOrderTypes::UNDO_OPERATION_REQUESTED_EFFECTS);
             }
         }
     }
 
     protected function couponOperation()
     {
-    }
-
-    protected function deductCouponAmountFromPurchaseOrderOperation()
-    {
+        $this->couponRemainingPrice = 0;
+        if (isset($this->payload['qr_code']) && $this->payload['qr_code']) {
+            $this->coupon = GiftPurchaseOrder::query()
+                ->where('qr_code', $this->payload['qr_code'])
+                ->where('status', 'paid')
+                ->where('remaining_price', '>', 0)
+                ->where('expire_at', '>=', Carbon::now()->format('Y-m-d'))
+                ->first();
+            if ($this->coupon) {
+                $this->orderData['gift_purchase_id'] = $this->coupon->id;
+                if ($this->coupon->remaining_price >= $this->orderData['total_price']) {
+                    $this->couponRemainingPrice = $this->coupon->remaining_price - $this->orderData['total_price'];
+                    $this->orderData['coupon_price'] = $this->orderData['total_price'];
+                    $this->orderData['total_price'] = 0;
+                } elseif ($this->coupon->remaining_price < $this->orderData['total_price']) {
+                    $this->couponRemainingPrice = 0;
+                    $this->orderData['coupon_price'] = $this->coupon->remaining_price;
+                    $this->orderData['total_price'] = $this->orderData['total_price'] - $this->coupon->remaining_price;
+                } else {
+                    $this->couponRemainingPrice = 0;
+                    $this->orderData['coupon_price'] = 0;
+                }
+            }
+        }
     }
 }

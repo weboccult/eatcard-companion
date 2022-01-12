@@ -20,6 +20,8 @@ use InvalidArgumentException;
  * @method void setSystemSpecificRules(array $array)
  * @method mixed getDumpDieValue()
  * @method void setDumpDieValue($data)
+ * @method array getAfterEffects()
+ * @method void setAfterEffects(array $effects)
  *
  * @author Darshit Hedpara
  */

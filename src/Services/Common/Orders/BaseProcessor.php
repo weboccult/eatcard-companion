@@ -2,7 +2,12 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders;
 
+use Exception;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -26,6 +31,7 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9PerformOperat
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\Staggable;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @mixin MagicAccessors
@@ -55,6 +61,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     use Stage14Notification;
     use Stage15ExtraOperations;
 
+    protected array $config;
+
     protected string $createdFrom = 'companion';
 
     protected array $payload = [];
@@ -69,6 +77,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected string $system = 'none';
 
+    protected bool $isSubOrder = false;
+
     /** @var Store|null|object */
     protected ?Store $store;
 
@@ -78,14 +88,17 @@ abstract class BaseProcessor implements BaseProcessorContract
     /** @var KioskDevice|null|object */
     protected $device = null;
 
+    /** @var GiftPurchaseOrder|null|object */
+    protected $coupon = null;
+
+    protected $couponRemainingPrice = 0;
+
     protected array $commonRules = [];
 
     protected array $systemSpecificRules = [];
 
     /** @var array */
     protected $orderData = [];
-
-    protected ?array $dumpDieValue = null;
 
     /** @var array<array> */
     protected $orderItemsData = [];
@@ -101,16 +114,34 @@ abstract class BaseProcessor implements BaseProcessorContract
         ],
     ];
 
-    /**
-     * @var array
-     * @description It will check and perform after order creation process
-     */
-    protected $afterEffects = [];
+    /** @var Order|OrderHistory|null|object */
+    protected $createdOrder = null;
+
+    /** @var array<array> */
+    protected $createdOrderItems = [];
+
+    /** @var null|array|object */
+    protected $paymentResponse = null;
 
     protected $discountData = [];
 
+    /**
+     * @var array
+     * @description It will check and perform after effect order creation process
+     */
+    protected $afterEffects = [];
+
+    protected ?array $dumpDieValue = null;
+
+    /**
+     * @throws Exception
+     */
     public function __construct()
     {
+        if (! file_exists(config_path('eatcardCompanion.php'))) {
+            throw new Exception('eatcardCompanion.php not found in config folder you need publish it first.!');
+        }
+        $this->config = config('eatcardCompanion');
     }
 
     /**
@@ -181,7 +212,6 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareSavedOrderIdData(),
             fn () => $this->prepareReservationDetails(),
         ]);
-        // dd($this);
     }
 
     private function stage4_EnabledSettings()
@@ -232,9 +262,8 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->calculateOrderDiscount(),
             fn () => $this->calculateFees(),
             fn () => $this->calculateStatiegeDeposite(),
+            fn () => $this->calculateReservationPaidAmount(),
             fn () => $this->prepareEditOrderDetails(),
-            fn () => $this->prepareUndoOrderDetails(),
-            fn () => $this->prepareCouponDetails(),
         ]);
     }
 
@@ -244,7 +273,6 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->editOrderOperation(),
             fn () => $this->undoOperation(),
             fn () => $this->couponOperation(),
-            fn () => $this->deductCouponAmountFromPurchaseOrderOperation(),
         ]);
     }
 
@@ -258,9 +286,12 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     private function stage11_CreateProcess()
     {
+        dd($this->orderData);
         $this->stageIt([
             fn () => $this->createOrder(),
             fn () => $this->createOrderItems(),
+            fn () => $this->markOtherOrderAsIgnore(),
+            fn () => $this->deductCouponAmountFromPurchaseOrderOperation(),
             fn () => $this->markOrderAsFuturePrint(),
             fn () => $this->checkoutReservation(),
             fn () => $this->createDeliveryIntoDatabase(),
@@ -309,9 +340,24 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     private function stage16_Response()
     {
-        $this->setDumpDieValue([
-            'order' => $this->orderData,
-            'order_items' => $this->orderItemsData,
-        ]);
+        if ($this->system == SystemTypes::POS) {
+            if ($this->orderData['method'] == 'cash') {
+                $this->setDumpDieValue([
+                    'order_id' => $this->createdOrder->id,
+                    'id'   => $this->createdOrder->id,
+                    'success'  => 'success',
+                ]);
+            } elseif ($this->device->payment_type == 'ccv' || $this->device->payment_type == 'wipay') {
+                $this->setDumpDieValue($this->paymentResponse);
+            } else {
+                companionLogger('Not supported method found.!');
+            }
+        }
+
+        // anything you want
+        // $this->setDumpDieValue([
+        //     'order' => $this->orderData,
+        //     'order_items' => $this->orderItemsData,
+        // ]);
     }
 }

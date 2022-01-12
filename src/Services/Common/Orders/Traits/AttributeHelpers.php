@@ -99,4 +99,30 @@ trait AttributeHelpers
             ->reject(fn ($value, $key) => in_array($key, $rules))
             ->toArray());
     }
+
+    /**
+     * @param string $effect
+     *
+     * @return void
+     */
+    private function setEffect(string $effect)
+    {
+        if (! isset($this->afterEffects[$effect])) {
+            $this->afterEffects[$effect] = true;
+        }
+    }
+
+    /**
+     * @param string $effect
+     *
+     * @return void
+     */
+    private function removeEffect(string $effect)
+    {
+        if (! isset($this->afterEffects[$effect])) {
+            $this->afterEffects = collect($this->getAfterEffects())
+            ->reject(fn ($value, $key) => $key === $effect)
+            ->toArray();
+        }
+    }
 }

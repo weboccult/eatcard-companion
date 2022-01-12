@@ -7,6 +7,8 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
 /**
  * @description Stag 6
  * @mixin MagicAccessors
+ *
+ * @author Darshit Hedpara
  */
 trait Stage6preparePostValidationRulesAfterDatabaseInteraction
 {

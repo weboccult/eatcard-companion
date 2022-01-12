@@ -5,10 +5,13 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @description Stag 5
  * @mixin BaseProcessor
+ *
+ * @author Darshit Hedpara
  */
 trait Stage5DatabaseInteraction
 {

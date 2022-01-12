@@ -4,6 +4,8 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 /**
  * @description Stag 10
+ *
+ * @author Darshit Hedpara
  */
 trait Stage10PerformFeesCalculation
 {

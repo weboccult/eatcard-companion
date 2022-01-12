@@ -4,16 +4,18 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
-use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\discountCalc;
 use function Weboccult\EatcardCompanion\Helpers\generatePOSOrderId;
 
 /**
  * @description Stag 8
  * @mixin BaseProcessor
+ *
+ * @author Darshit Hedpara
  */
 trait Stage8PrepareAdvanceData
 {
@@ -41,6 +43,11 @@ trait Stage8PrepareAdvanceData
     protected function preparePaymentMethod()
     {
         $this->orderData['method'] = $this->payload['method'];
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+            if (isset($this->payload['manual_pin']) && $this->payload['manual_pin'] == 1) {
+                $this->orderData['method'] = 'manual_pin';
+            }
+        }
     }
 
     protected function preparePaymentDetails()
@@ -89,7 +96,7 @@ trait Stage8PrepareAdvanceData
         $this->orderData['ayce_price'] = 0;
 
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-            if ($this->payload['ayce_amount'] && ! empty($this->payload['ayce_amount'])) {
+            if (isset($this->payload['ayce_amount']) && ! empty($this->payload['ayce_amount'])) {
                 $this->orderData['ayce_price'] = $this->payload['ayce_amount'];
             }
         }
@@ -380,6 +387,18 @@ trait Stage8PrepareAdvanceData
         }
     }
 
+    protected function calculateReservationPaidAmount()
+    {
+        $reservationPaidAmount = 0;
+        if (isset($this->storeReservation) && $this->storeReservation && isset($this->storeReservation->payment_status) && $this->storeReservation->payment_status == 'paid') {
+            if ($this->storeReservation->total_price) {
+                $reservationPaidAmount = $this->storeReservation->total_price;
+            }
+        }
+        $this->orderData['total_price'] = $this->orderData['total_price'] - $reservationPaidAmount;
+        $this->orderData['reservation_paid'] = $reservationPaidAmount;
+    }
+
     protected function prepareEditOrderDetails()
     {
         if ($this->system == SystemTypes::POS) {
@@ -388,38 +407,6 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['edited_by'] = $this->payload['edited_by'] ?? '';
                 $this->orderData['ref_id'] = $this->payload['ref_id'] ?? '';
                 $this->orderData['is_base_order'] = 0;
-            }
-        }
-    }
-
-    protected function prepareUndoOrderDetails()
-    {
-    }
-
-    protected function prepareCouponDetails()
-    {
-        $coupon_purchase = '';
-        $remaining_price = 0;
-        if (isset($this->payload['qr_code']) && $this->payload['qr_code']) {
-            $coupon_purchase = GiftPurchaseOrder::query()->where('qr_code', $this->payload['qr_code'])
-                ->where('status', 'paid')
-                ->where('remaining_price', '>', 0)
-                ->where('expire_at', '>=', Carbon::now()->format('Y-m-d'))
-                ->first();
-            if ($coupon_purchase) {
-                $this->orderData['gift_purchase_id'] = $coupon_purchase->id;
-                if ($coupon_purchase->remaining_price >= $this->orderData['total_price']) {
-                    $remaining_price = $coupon_purchase->remaining_price - $this->orderData['total_price'];
-                    $this->orderData['coupon_price'] = $this->orderData['total_price'];
-                    $this->orderData['total_price'] = 0;
-                } elseif ($coupon_purchase->remaining_price < $this->orderData['total_price']) {
-                    $remaining_price = 0;
-                    $this->orderData['coupon_price'] = $coupon_purchase->remaining_price;
-                    $this->orderData['total_price'] = $this->orderData['total_price'] - $coupon_purchase->remaining_price;
-                } else {
-                    $remaining_price = 0;
-                    $this->orderData['coupon_price'] = 0;
-                }
             }
         }
     }

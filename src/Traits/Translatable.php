@@ -2,7 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Traits;
 
-use App\Models\Translate;
+use Weboccult\EatcardCompanion\Models\Translate;
 
 trait Translatable
 {

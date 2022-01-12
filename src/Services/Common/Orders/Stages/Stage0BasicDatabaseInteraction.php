@@ -11,6 +11,8 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 /**
  * @description Stag 0
  * @mixin BaseProcessor
+ *
+ * @author Darshit Hedpara
  */
 trait Stage0BasicDatabaseInteraction
 {

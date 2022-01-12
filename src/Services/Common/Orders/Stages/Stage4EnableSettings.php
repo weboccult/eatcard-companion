@@ -8,6 +8,8 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 /**
  * @description Stag 4
  * @mixin BaseProcessor
+ *
+ * @author Darshit Hedpara
  */
 trait Stage4EnableSettings
 {
