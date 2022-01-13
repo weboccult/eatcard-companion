@@ -12,4 +12,9 @@ class SystemTypes extends BaseEnum
     public const POS = 'POS';
     public const TAKEAWAY = 'TAKEAWAY';
     public const WAITRESS = 'WAITRESS';
+    public const CRON = 'CRON';
+    public const KDS = 'KDS';
+    public const INSIGHTS = 'INSIGHTS';
+    public const PLANNER = 'PLANNER';
+    public const ADMIN = 'ADMIN';
 }

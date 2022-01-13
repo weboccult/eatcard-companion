@@ -2,44 +2,105 @@
 
 namespace Weboccult\EatcardCompanion\Services\Core;
 
-use Exception;
-use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
-use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\ProtocolGenerator;
-use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SqsGenerator;
+use function Weboccult\EatcardCompanion\Helpers\extractRequestType;
 
 class EatcardPrint
 {
-    protected BaseGenerator $printGenerator;
+    protected BaseGenerator $generator;
+
+    /**
+     * @param string $printGenerator
+     *
+     * @return $this
+     */
+    public function generator(string $printGenerator): self
+    {
+        if (class_exists($printGenerator)) {
+            $this->generator = new $printGenerator();
+        } else {
+            throw new ClassNotFoundException($printGenerator);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param array $payload
+     *
+     * @return $this
+     */
+    public function payload(array $payload): self
+    {
+        //set generator based on payload request details for protocol print
+        if (isset($payload['request_type']) && ! empty($payload['request_type'])) {
+            $requestDetails = extractRequestType($payload['request_type']);
+            self::generator($requestDetails['generator']);
+            $this->generator->setPayloadRequestDetails($requestDetails);
+            self::method($requestDetails['printMethod']);
+            self::type($requestDetails['systemPrintType']);
+            self::system($requestDetails['systemType']);
+        }
+
+        $this->generator->setPayload($payload);
+
+        return $this;
+    }
+
+    /**
+     * @param string $printMethod
+     *
+     * @return $this
+     */
+    public function method(string $printMethod): self
+    {
+        $this->generator->setPrintMethod(strtoupper($printMethod));
+
+        return $this;
+    }
+
+//    /**
+//     * @param string $orderType
+//     *
+//     * @return $this
+//     */
+//    public function order(string $orderType): self
+//    {
+//        $this->generator->setOrderType(strtoupper($orderType));
+//
+//        return $this;
+//    }
 
     /**
      * @param string $printType
      *
-     * @throws Exception
-     *
-     * @return EatcardPrint
+     * @return $this
      */
-    public function via(string $printType): self
+    public function type(string $printType): self
     {
-        switch (strtoupper($printType)) {
-            case PrintTypes::SQS:
-                $this->printGenerator = new SqsGenerator();
+        $this->generator->setPrintType(strtoupper($printType));
 
-                return $this;
-            case PrintTypes::PROTOCOL:
-                $this->printGenerator = new ProtocolGenerator();
-
-                return $this;
-            default:
-                throw new Exception($printType.' - Print type not supported yet.!', 422);
-        }
+        return $this;
     }
 
     /**
-     * @return mixed|array
+     * @param string $printType
+     *
+     * @return $this
+     */
+    public function system(string $systemType): self
+    {
+        $this->generator->setSystemType(strtoupper($systemType));
+
+        return $this;
+    }
+
+    /**
+     * @return array
      */
     public function toJson()
     {
-        return $this->printGenerator->dispatch();
+        return $this->generator->dispatch();
     }
 }

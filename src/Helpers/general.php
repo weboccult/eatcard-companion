@@ -7,11 +7,18 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Weboccult\EatcardCompanion\Models\Message;
 use Weboccult\EatcardCompanion\Models\Notification;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\Supplement;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\RunningOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SaveOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SubOrderGenerator;
 use Illuminate\Support\Facades\Redis as LRedis;
 
 if (! function_exists('eatcardSayHello')) {
@@ -733,5 +740,115 @@ if (! function_exists('phpEncrypt')) {
         $encryption_key = '!$@#eatcard_kiosk_device_encrypt#@$!';
         // Encryption of string process starts
         return base64_encode(openssl_encrypt($simple_string, $ciphering, $encryption_key, $options, $encryption_iv));
+    }
+}
+
+if (! function_exists('set_discount_with_prifix')) {
+
+    /**
+     * @param $discount_type
+     * @param $discount
+     * @param int $only_return_sign
+     *
+     * @return string
+     */
+    function set_discount_with_prifix($discount_type, $discount, int $only_return_sign = 0)
+    {
+        $discount_with_prifix = '';
+        $discount_prifix = $discount_type == 1 ? 'eur' : '%';
+        if ($only_return_sign == 1) {
+            $discount_with_prifix = ' ('.$discount_prifix.')';
+
+            return $discount_with_prifix;
+        }
+        if ($discount > 0) {
+            $discount_with_prifix = ' ('.changePriceFormat($discount).' '.$discount_prifix.')';
+        }
+
+        return $discount_with_prifix;
+    }
+}
+
+if (! function_exists('extractRequestType')) {
+
+    /**
+     * @param $requestType
+     *
+     * @return mixed
+     */
+    function extractRequestType($requestType)
+    {
+        $deviceId = 0;
+        $generator = '';
+        $printType = '';
+        $systemPrintType = '';
+        $systemType = SystemTypes::POS;
+
+        $validProtocolRequestType = [
+            'receipt', // Reprint only main receipt / save order
+            'full_receipt', // Reprint all Main, Kitchen, Label
+            'receipt_pos', // Print default / Proforma print
+            'receipt_pos_order', // Reprint only main receipt
+            'receipt_pos_sub', // Print sub order default
+            'receipt_kiosk', // Print default for kiosk
+            'receipt_kitchen', // Reprint only kitchen and label from admin for paid orders
+        ];
+
+        if (strpos($requestType, '@') !== false) {
+            $pos_device_id = explode('@', $requestType);
+            $deviceId = $pos_device_id[1];
+            $requestType = $pos_device_id[0];
+        }
+        if ($requestType) {
+            $checkReservation = explode('-', $requestType);
+            if ($checkReservation[0] == 'res') {
+                $generator = RunningOrderGenerator::class;
+                $printType = 'reservation';
+                $deviceId = $checkReservation[1];
+                $requestType = $checkReservation[2];
+                $systemPrintType = PrintTypes::PROFORMA;
+            } elseif ($checkReservation[0] == 'saved_order') {
+                $generator = SaveOrderGenerator::class;
+                $requestType = isset($checkReservation[1]) ? $checkReservation[1] : 'receipt';
+                $printType = 'saved_order';
+                $systemPrintType = PrintTypes::DEFAULT;
+            } elseif ($requestType == 'receipt_pos_sub') {
+                $printType = 'receipt_pos_sub';
+                $generator = SubOrderGenerator::class;
+                $systemPrintType = PrintTypes::DEFAULT;
+            } elseif (in_array($requestType, $validProtocolRequestType) && empty($generator)) {
+                $generator = PaidOrderGenerator::class;
+                $printType = 'order';
+            } else {
+                $generator = $requestType;
+            }
+        }
+
+        if ($requestType == 'full_receipt') {
+            $systemPrintType = PrintTypes::MAIN_KITCHEN_LABEL;
+        } elseif ($requestType == 'receipt' && empty($systemPrintType)) {//Skip if SAVE ORDER print already set
+            $systemPrintType = PrintTypes::MAIN;
+        } elseif ($requestType == 'receipt_pos' && empty($systemPrintType)) { //Skip if PROFORMA print
+            $systemPrintType = PrintTypes::DEFAULT;
+        } elseif ($requestType == 'receipt_pos_order') {
+            $systemPrintType = PrintTypes::MAIN;
+        } elseif ($requestType == 'receipt_kitchen') {
+            $systemType = SystemTypes::ADMIN;
+            $systemPrintType = PrintTypes::KITCHEN_LABEL;
+        } elseif ($requestType == 'receipt_kiosk') {
+            $systemType = SystemTypes::KIOSK;
+            $systemPrintType = PrintTypes::DEFAULT;
+        }
+
+        return [
+            'generator' => $generator,
+            'requestType' => $requestType,
+            'deviceId' => $deviceId,
+            'printType' => $printType,
+            'printMethod' => PrintMethod::PROTOCOL,
+            'systemPrintType' => $systemPrintType,
+            'systemType' => $systemType,
+
+        ];
     }
 }
