@@ -43,11 +43,14 @@ trait Stage3PrepareBasicData
     protected function prepareOrderType()
     {
         if ($this->system === SystemTypes::POS) {
-            $this->orderData['order_type'] = 'pos';
-            if (! empty($this->storeReservation) && ! empty($this->storeReservation->dinein_price_id)) {
-                $this->orderData['order_type'] = 'all_you_eat';
+            if (empty($this->storeReservation)) {
+                $this->orderData['order_type'] = 'pos';
             } else {
-                $this->orderData['order_type'] = 'dine_in';
+                if (! empty($this->storeReservation->dinein_price_id)) {
+                    $this->orderData['order_type'] = 'all_you_eat';
+                } else {
+                    $this->orderData['order_type'] = 'dine_in';
+                }
             }
         }
     }

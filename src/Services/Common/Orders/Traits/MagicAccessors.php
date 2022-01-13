@@ -12,6 +12,8 @@ use InvalidArgumentException;
  * @method void setSystem(string $system)
  * @method array getCart()
  * @method void setCart(array $cart)
+ * @method array getOriginalCart()
+ * @method void setOriginalCart(array $cart)
  * @method array getPayload()
  * @method void setPayload(array $cart)
  * @method mixed getCommonRules()

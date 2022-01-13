@@ -67,12 +67,15 @@ return [
                 'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
                 'production' => 'https://redirect.jforce.be/api/v1',
                 'endpoints'  => [
-                    'debit' => '/api/2.0/json/debit',
+                    'debit' => '/payment',
                 ],
             ],
             'wipay' => [
                 'staging'    => 'https://wipayacc.worldline.nl',
                 'production' => 'https://wipay.worldline.nl',
+                'endpoints'  => [
+                    'debit' => '/api/2.0/json/debit',
+                ],
             ],
         ],
         'webhook' => [

@@ -24,17 +24,21 @@ trait Stage8PrepareAdvanceData
      */
     protected function prepareOrderDiscount()
     {
-        if ($this->system == SystemTypes::POS) {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
             if (! empty($this->storeReservation)) {
                 if (isset($this->storeReservation->discount_type) && isset($this->storeReservation->discount) && ! empty($this->storeReservation->discount) && (float) $this->storeReservation->discount > 0) {
                     $this->discountData['order_discount'] = $this->payload['order_discount'] = (float) $this->storeReservation->discount;
                     $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] = $this->storeReservation->discount_type == 'EURO' ? 1 : 0;
-                }
-            }
-            if (! empty($this->storeReservation)) {
-                if (isset($this->payload['order_discount']) && isset($this->payload['is_euro_discount'])) {
-                    $this->discountData['order_discount'] = (! empty($this->payload['order_discount']) && $this->payload['order_discount'] > 0) ? $this->payload['order_discount'] : null;
-                    $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ? 1 : 0;
+
+                    if ($this->isSubOrder) {
+                        $cart_original_total_for_euro_dis_calc = cartTotalValueCalc($this->getOriginalCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_price']);
+                        $current_split_cart_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_price']);
+
+                        // if same quantity is not in sub order then need to calculate euro discount dived it base on value
+                        if ($this->discountData['is_euro_discount'] == 1 & $this->discountData['order_discount'] > 0 && $cart_original_total_for_euro_dis_calc > 0 && $cart_original_total_for_euro_dis_calc != $current_split_cart_total_for_euro_dis_calc) {
+                            $this->discountData['order_discount'] = $this->payload['order_discount'] = round($this->discountData['order_discount'] * ($current_split_cart_total_for_euro_dis_calc / $cart_original_total_for_euro_dis_calc), 5);
+                        }
+                    }
                 }
             }
         }
@@ -66,7 +70,14 @@ trait Stage8PrepareAdvanceData
 
     protected function prepareSplitPaymentDetails()
     {
-        // it will be override in PosSubProcessor...
+        if ($this->system == SystemTypes::POS) {
+            if (isset($this->payload['is_split_payment']) && $this->payload['is_split_payment'] == 1) {
+                $this->orderData['payment_split_persons'] = $this->payload['payment_split_persons'] ?? '';
+                $this->orderData['payment_split_type'] = $this->payload['payment_split_type'] ?? '';
+                $this->orderData['status'] = 'pending';
+                $this->orderData['paid_on'] = null;
+            }
+        }
     }
 
     protected function prepareOrderId()
@@ -109,15 +120,31 @@ trait Stage8PrepareAdvanceData
     {
         $normalOrder = (isset($this->payload['reservation_id']) && $this->payload['reservation_id'] != '' && ! empty($this->storeReservation)) ? 0 : 1;
 
-        $cart_original_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_price']);
+        $current_cart_total_for_euro_dis_calc = cartTotalValueCalc($this->getCart(), $this->productData, $this->storeReservation, $this->orderData['ayce_price']);
 
         foreach ($this->getCart() as $key => $item) {
             /*This variable used for checked product and it/s supplement price count or not in total price*/
             $is_product_chargeable = true;
+
             $is_euro_discount = isset($item['is_euro_discount']) ? (int) $item['is_euro_discount'] : 0;
+
+            // original quantity will be used only for sub order.
+            $original_quantity = isset($item['original_quantity']) ? (int) $item['original_quantity'] : 0;
+            $item_quantity = isset($item['quantity']) ? (int) $item['quantity'] : 0;
+            $item_discount = isset($item['discount']) ? (float) $item['discount'] : 0;
+
+            if ($this->isSubOrder) {
+
+                // if same quantity is not in sub order then need to calculate euro discount
+                if ($is_euro_discount == 1 & $this->discountData['order_discount'] == 0 && $original_quantity > 0 && $original_quantity != $item_quantity) {
+                    $this->orderItemsData['discount'] = ($item_discount / $original_quantity) * $item_quantity;
+                }
+            }
+
             $this->orderItemsData[$key]['unit_price'] = 0;
             $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
             $product = $this->productData->where('id', $item['id'])->first();
+
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && ! empty($this->storeReservation)) {
                 $allYouCanEatPrice = 0;
                 if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $product->ayce_class->count() > 0 && $this->storeReservation->dineInPrice && isset($this->storeReservation->dineInPrice->dinein_category_id) && $this->storeReservation->dineInPrice->dinein_category_id != '') {
@@ -283,11 +310,11 @@ trait Stage8PrepareAdvanceData
             } elseif (isset($this->discountData['order_discount']) && (float) $this->discountData['order_discount'] > 0) {
                 //order general discount add in all order items
                 if ($notVoided && $notOnTheHouse) {
-                    $this->orderItemsData[$key]['discount'] = ($this->discountData['is_euro_discount'] == 1) ? round(discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc), 2) : $this->discountData['order_discount'];
+                    $this->orderItemsData[$key]['discount'] = ($this->discountData['is_euro_discount'] == 1) ? round(discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $current_cart_total_for_euro_dis_calc), 2) : $this->discountData['order_discount'];
                     $this->orderItemsData[$key]['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
-                    $this->orderItemsData[$key]['discount_price'] = discountCalc($product_total, ($product_total - $current_sub), $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc);
+                    $this->orderItemsData[$key]['discount_price'] = discountCalc($product_total, ($product_total - $current_sub), $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $current_cart_total_for_euro_dis_calc);
                     $this->orderItemsData[$key]['discount_amount_wo_tax'] = $this->orderItemsData[$key]['discount_price'];
-                    $this->orderItemsData[$key]['discount_inc_tax'] = discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $cart_original_total_for_euro_dis_calc);
+                    $this->orderItemsData[$key]['discount_inc_tax'] = discountCalc($product_total, $product_total, $this->discountData['is_euro_discount'], $this->discountData['order_discount'], $current_cart_total_for_euro_dis_calc);
                     $this->orderData['discount_inc_tax'] += $this->orderItemsData[$key]['discount_inc_tax'];
                 }
             }

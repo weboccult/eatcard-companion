@@ -49,6 +49,7 @@ trait Stage0BasicDatabaseInteraction
             if (! empty($parentOrder)) {
                 $this->parentOrder = $parentOrder;
                 $this->isSubOrder = true;
+                $this->orderData['parent_order_id'] = $orderId;
             }
         }
     }

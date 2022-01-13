@@ -24,7 +24,7 @@ trait Stage11CreateProcess
     protected function createOrderItems()
     {
         foreach ($this->orderItemsData as $key => $orderItem) {
-            $orderItem['sub_order_id'] = $this->createdOrder->id;
+            $orderItem['order_id'] = $this->createdOrder->id;
             $this->createdOrderItems[] = OrderItem::query()->insert($orderItem);
         }
     }

@@ -70,6 +70,9 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected array $cart = [];
 
+    /** @description It will be used in sub order only. */
+    protected array $originalCart = [];
+
     /** @var Product|null|object */
     protected $productData = null;
 
@@ -296,7 +299,6 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     private function stage11_CreateProcess()
     {
-        dd($this->orderData);
         $this->stageIt([
             fn () => $this->createOrder(),
             fn () => $this->createOrderItems(),
@@ -352,11 +354,18 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         if ($this->system == SystemTypes::POS) {
             if ($this->orderData['method'] == 'cash') {
-                $this->setDumpDieValue([
-                    'order_id' => $this->createdOrder->id,
-                    'id'   => $this->createdOrder->id,
-                    'success'  => 'success',
-                ]);
+                if ($this->isSubOrder) {
+                    $this->setDumpDieValue([
+                        'data'      => $this->parentOrder,
+                        'sub_order' => $this->createdOrder,
+                    ]);
+                } else {
+                    $this->setDumpDieValue([
+                        'order_id' => $this->createdOrder->id,
+                        'id'   => $this->createdOrder->id,
+                        'success'  => 'success',
+                    ]);
+                }
             } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
                 $this->setDumpDieValue($this->paymentResponse);
             } else {

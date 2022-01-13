@@ -4,7 +4,6 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Processors;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\PaymentSplitTypes;
-use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
@@ -22,17 +21,6 @@ class PosSubProcessor extends BaseProcessor
     public function __construct()
     {
         parent::__construct();
-    }
-
-    protected function prepareSplitPaymentDetails()
-    {
-        if ($this->system == SystemTypes::POS) {
-            if (isset($this->payload['is_split_payment']) && $this->payload['is_split_payment'] == 1) {
-                $this->orderData['payment_split_type'] = $this->payload['is_split_payment'] ?? '';
-                $this->orderData['status'] = 'pending';
-                $this->orderData['paid_on'] = null;
-            }
-        }
     }
 
     protected function prepareOrderDetails()
@@ -66,7 +54,7 @@ class PosSubProcessor extends BaseProcessor
     protected function createOrderItems()
     {
         foreach ($this->orderItemsData as $key => $orderItem) {
-            $orderItem['order_id'] = $this->createdOrder->id;
+            $orderItem['sub_order_id'] = $this->createdOrder->id;
             $this->createdOrderItems[] = SubOrderItem::query()->insert($orderItem);
         }
     }

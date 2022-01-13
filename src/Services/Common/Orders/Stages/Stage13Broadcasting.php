@@ -20,7 +20,7 @@ trait Stage13Broadcasting
             'is_notification' => 1,
         ];
         $force_refresh = 0;
-        if ($this->storeReservation->undo_checkout_count > 0) {
+        if (! empty($this->storeReservation) && $this->storeReservation->undo_checkout_count > 0) {
             $force_refresh = 1;
         }
         $socket_data = sendWebNotification($this->store, $this->createdOrder, $current_data, 0, $force_refresh);

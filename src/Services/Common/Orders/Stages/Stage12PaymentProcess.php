@@ -58,10 +58,14 @@ trait Stage12PaymentProcess
                 ],
             ];
             $client = new Client();
+
             $url = $this->device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
+            $debit = config('eatcardCompanion.payment.gateway.ccv.endpoints.debit');
+
             $kiosk_api_key = $this->device->environment == 'test' ? $this->device->test_api_key : $this->device->api_key;
             $api_key = base64_encode($kiosk_api_key.':');
-            $request = $client->request('POST', $url.'/payment', [
+
+            $request = $client->request('POST', $url.$debit, [
                 'headers' => [
                     'Authorization' => 'Basic '.$api_key,
                     'Content-Type'  => 'application/json;charset=UTF-8',

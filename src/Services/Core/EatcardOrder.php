@@ -38,6 +38,13 @@ class EatcardOrder
         return $this;
     }
 
+    public function originalCart(array $cart): self
+    {
+        $this->processor->setOriginalCart($cart);
+
+        return $this;
+    }
+
     public function payload(array $payload): self
     {
         $this->processor->setPayload($payload);
