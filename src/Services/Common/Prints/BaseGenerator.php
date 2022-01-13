@@ -15,7 +15,6 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage7PrepareAdvanc
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage8PrepareFinalJson;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\MagicAccessors;
-use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\Staggable;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
