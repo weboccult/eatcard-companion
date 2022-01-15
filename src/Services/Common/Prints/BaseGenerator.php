@@ -34,170 +34,8 @@ abstract class BaseGenerator implements BaseGeneratorContract
     use Stage7PrepareAdvanceData;
     use Stage8PrepareFinalJson;
 
-    protected array $itemFormat = [
-        'qty'                => '',
-        'itemname'           => '',
-        'itemaddons'         => [],
-        'kitchenitemaddons'  => [],
-        'printername'        => [],
-        'labelprintname'     => [],
-        'category'           => '',
-        'kitchendescription' => '',
-        'mainproductcomment' => '',
-        'price'              => '',
-        'original_price'     => 0,
-        'on_the_house'       => 0,
-        'void_id'            => 0,
-    ];
-
-    protected array $jsonFormatFullReceipt = [
-        'printername'            => [],
-        'kitchencomment'         => '',
-        'kitchensizeformat'      => 1,
-        'kitchenheaderspace'     => 0,
-        'kitchenheaderformat'    => 0,
-        'kitchensubheader'       => 0,
-        'printcategory'          => '0',
-        'printproduct'           => '0',
-        'doubleheight'           => '0',
-        'doublewidth'            => '0',
-        'productdoubleheight'    => '0',
-        'SeparatorLength'        => '',
-        'opendrawer'             => '0',
-        'title1'                 => '',
-        'title2'                 => '',
-        'title3'                 => '',
-        'title4'                 => '',
-        'title5'                 => '#',
-        'ordernumber'            => '#',
-        'title6'                 => '',
-        'titteTime'              => [
-            [
-                'key2'   => 'Besteldatum:',
-                'value2' => '',
-            ],
-        ],
-        'deliverytitle'          => '',
-        'deliveryaddress'        => '',
-        'deliveryfontsize'       => 0,
-        'kitchendeliveryaddress' => '',
-        'address'                => '',
-        'address1'               => '',
-        'address2'               => '',
-        'address3'               => '',
-        'address4'               => '',
-        'address5'               => '',
-        'phone'                  => '',
-        'email'                  => '',
-        'zipcode'                => '',
-        'websiteurl'             => '',
-        'kvknumber'              => '',
-        'btwnumber'              => '',
-        'pickuptime'             => '',
-        'logo'                   => '',
-        'eatcardlogo'            => '',
-        'showstorename'          => '',
-        'showeatcardname'        => '',
-        'kioskname'              => '',
-        'tablename'              => '',
-        'checkoutno'             => '',
-        'ordertype'              => '',
-        'typeorder'              => '',
-        'datetime'               => '',
-        'headertag'              => [],
-        'customercomments'       => '',
-        'customtext'             => '',
-        'fullreceipt'            => '0',
-        'kitchenreceipt'         => '1',
-        'itemsTitle'             => '',
-        'items'                  => [],
-        'summary'                => [],
-        'Total'                  => [
-            [
-                'key1'   => 'Totaal',
-                'value1' => '',
-            ],
-        ],
-        'receipt'                => [],
-        'thankyounote'           => [],
-        'footertag'              => [],
-        'categories_settings'    => [],
-    ];
-
-    protected array $jsonFormatKitchen = [
-        'printername'         => [],
-        'kitchencomment'      => '',
-        'kitchensizeformat'   => 1,
-        'kitchenheaderspace'  => 0,
-        'kitchenheaderformat' => 0,
-        'kitchensubheader'    => 0,
-        'printcategory'       => '0',
-        'printproduct'        => '0',
-        'doubleheight'        => '0',
-        'doublewidth'         => '0',
-        'productdoubleheight' => '0',
-        'SeparatorLength'     => '64',
-        'title1'              => '',
-        'title2'              => '',
-        'title3'              => '',
-        'title4'              => '',
-        'title5'              => '',
-        'ordernumber'         => '',
-        'title6'              => '',
-        'titteTime'           => [
-            [
-                'key2'   => 'Besteldatum:',
-                'value2' => '',
-            ],
-        ],
-        'deliverytitle'       => '',
-        'deliveryaddress'     => '',
-        'address'             => '',
-        'address1'            => '',
-        'address2'            => '',
-        'address3'            => '',
-        'address4'            => '',
-        'address5'            => '',
-        'zipcode'             => '',
-        'phone'               => '',
-        'email'               => '',
-        'websiteurl'          => '',
-        'kvknumber'           => '',
-        'btwnumber'           => '',
-        'pickuptime'          => '',
-        'logo'                => '',
-        'eatcardlogo'         => '',
-        'showstorename'       => '',
-        'showeatcardname'     => '',
-        'kioskname'           => '',
-        'tablename'           => '',
-        'checkoutno'          => '',
-        'ordertype'           => '',
-        'typeorder'           => '',
-        'datetime'            => '',
-        'headertag'           => [],
-        'customercomments'    => '',
-        'customtext'          => '',
-        'fullreceipt'         => '0',
-        'kitchenreceipt'      => '1',
-        'itemsTitle'          => '',
-        'items'               => [],
-        'summary'             => [],
-        'Total'               => [
-            [
-                'key1'   => 'Totaal',
-                'value1' => '',
-            ],
-        ],
-        'receipt'             => [],
-        'thankyounote'        => [],
-        'footertag'           => [
-            '',
-        ],
-        'categories_settings' => [],
-    ];
-
-    protected array $finalPrintFormat = [];
+    protected array $itemFormat = [];
+    protected array $jsonFormatFullReceipt = [];
 
     protected string $printGenerator = '';
     protected string $orderType = '';
@@ -206,108 +44,42 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected string $systemType = '';
 
     protected array $payload = [];
-
     protected int $globalOrderId = 0;
 
-    protected $orderWithItemProductPrinterCategory = [];
+    protected array $additionalSettings = [];
 
-    protected array $additionalSettings = [
-        'request_type'                          => '',
-        'current_device_id'                     => 0,
-        'is_print_from_device_setting_printer ' => false,
-        'show_supplement_kitchen_name'          => false,
-        'show_pcs_in_product_name'              => false,
-        'is_discount_type_amount'               => false,
-        //discount either in percentage or amount
-        'is_discount_on_cart'                   => false,
-        //discount either in item wise or in all cart
-        //reservation settings
-        'kitchen_comment' => '',
-        'show_supp_kitchen_name' => false,
-        'addon_print_categories' => [],
-        'show_no_of_pieces' => false,
-        'ayce_data' => [],
-
-        //store settings
-        'hide_free_product' => 0,
-        'hide_void_product' => 0,
-        'hide_onthehouse_product' => 0,
-        'show_product_comment_in_main_receipt' => 0,
-        'show_order_transaction_detail' => 0,
-        'is_print_exclude_email'         => 0,
-        'alternative_printer'         => '',
-        'default_printer_name'         => '',
-        'exclude_print_status'         => false,
-        'exclude_print_from_main_print'         => '',
-        'main_print_logo_hide'         => 0,
-        'double_height'         => '0',
-        'kitchenheaderspace'         => 0,
-        'kitchenheaderformat'         => 0,
-        'kitchensubheader'         => 0,
-        'is_print_category'         => '0',
-        'is_print_product'         => '0',
-        'double_width'         => '0',
-        'product_double_height'         => '0',
-        'print_separator_length'         => '',
-        'delivery_address_font_size'         => 0,
-        'show_delivery_address_in_kitchen_receipt'         => 0,
-        'print_custom_text'         => '',
-        'kiosk_data' => [],
-
-        //kiosk device settings
-        'kioskname' => '',
-        'cash_drawer_available' => 0,
-        'kiosk_printer_name' => '',
-        'is_print_cart_add' => 0,
-
-        //advance data
-        'thirdPartyName' => '',
-        'fullreceipt' => '0',
-        'kitchenreceipt' => '1',
-        'categories_settings' => [],
-        'dinein_guest_order' => false,
-
-    ];
-
-    protected array $advanceData = [
-        'tableName' => '',
-        'dynamicOrderNo' => '',
-
-        ];
-
+    protected array $advanceData = [];
     protected array $payloadRequestDetails = [];
 
-    protected $dumpDieValue = null;
     protected array $commonRules = [];
     protected array $generatorSpecificRules = [];
 
     protected ?Store $store;
 
     protected ?array $order = [];
+    protected ?array $orderItems = [];
     protected int $orderId = 0;
 
     protected ?array $subOrder = [];
+    protected ?array $subOrderItems = [];
     protected int $subOrderId = 0;
 
     protected ?array $saveOrder = [];
+    protected ?array $saveOrderItems = [];
     protected int $saveOrderId = 0;
+
+    protected ?StoreReservation $reservation = null;
+    protected ?array $reservationOrderItems = [];
+    protected int $reservationId = 0;
 
     protected ?KioskDevice $kiosk;
 
-    protected ?StoreReservation $reservation = null;
-    protected int $reservationId = 0;
-
-    protected ?array $orderItems;
-    protected ?array $subOrderItems;
-    protected ?array $saveOrderItems;
-    protected ?array $reservationOrderItems;
-
     protected $categories = null;
 
+    protected int $jsonItemsIndex = 0;
     protected array $jsonItems = [];
     protected array $jsonReceipt = [];
     protected array $jsonSummary = [];
-    protected int $jsonItemsIndex = 0;
 
     protected bool $skipMainPrint = false;
     protected bool $skipKitchenLabelPrint = false;
@@ -368,6 +140,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
      */
     private function stage3_PrepareBasicData()
     {
+        $this->prepareDefaultValue();
         $this->prepareRefOrderId();
         $this->prepareOrderData();
         $this->prepareReservationData();

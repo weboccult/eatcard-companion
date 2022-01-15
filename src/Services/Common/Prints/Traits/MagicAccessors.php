@@ -26,8 +26,6 @@ use InvalidArgumentException;
  * @method array getCommonRules()
  * @method void setGeneratorSpecificRules(array $array)
  * @method array getGeneratorSpecificRules()
- * @method mixed getDumpDieValue()
- * @method void setDumpDieValue($data)
  *
  * @author Darshit Hedpara
  */
