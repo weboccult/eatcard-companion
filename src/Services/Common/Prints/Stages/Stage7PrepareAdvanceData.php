@@ -119,6 +119,8 @@ trait Stage7PrepareAdvanceData
             $excludeSystemName = $this->additionalSettings['exclude_print_status'] ? 'pos' : '';
         } elseif ($this->systemType == SystemTypes::DINE_IN) {
             $excludeSystemName = 'dine_in';
+        } elseif ($this->systemType == SystemTypes::TAKEAWAY) {
+            $excludeSystemName = 'takeaway';
         }
 
         $excludePrintSystem = explode(',', $this->additionalSettings['exclude_print_from_main_print']);

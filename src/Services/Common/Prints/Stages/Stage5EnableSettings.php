@@ -54,6 +54,7 @@ trait Stage5EnableSettings
         $this->additionalSettings['delivery_address_font_size'] = (int) ($store->storeSetting->delivery_address_font_size ?? 0);
         $this->additionalSettings['show_delivery_address_in_kitchen_receipt'] = (int) ($store->storeSetting->show_delivery_address_in_kitchen_receipt ?? 0);
         $this->additionalSettings['print_custom_text'] = $store->storeSetting->print_custom_text ?? '';
+        $this->additionalSettings['no_of_prints'] = ''.($store->storeSetting->no_of_prints ?? '1');
     }
 
     protected function enableStoreTakeawaySetting()
@@ -63,7 +64,7 @@ trait Stage5EnableSettings
             return;
         }
 
-        $this->additionalSettings['print_dynamic_order_no'] = $store->takeawaySetting->print_dynamic_order_no ?? 0;
+        $this->additionalSettings['print_dynamic_order_no'] = $this->store->takeawaySetting->print_dynamic_order_no ?? 0;
     }
 
     protected function enableDeviceSettings()

@@ -90,6 +90,7 @@ trait Stage3PrepareBasicData
                 'customtext'             => '',
                 'fullreceipt'            => '0',
                 'kitchenreceipt'         => '1',
+                'noofprints'             => '1',
                 'itemsTitle'             => '',
                 'items'                  => [],
                 'summary'                => [],
@@ -148,6 +149,7 @@ trait Stage3PrepareBasicData
                 'show_delivery_address_in_kitchen_receipt'         => 0,
                 'print_custom_text'         => '',
                 'kiosk_data' => [],
+                'no_of_prints' => '1',
 
                 //kiosk device settings
                 'kioskname' => '',

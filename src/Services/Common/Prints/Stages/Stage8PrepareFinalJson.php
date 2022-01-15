@@ -189,7 +189,7 @@ trait Stage8PrepareFinalJson
         }
 
         $phone = $this->store->store_phone ?? '';
-        $email = $this->store->store_email ?? '';
+        $email = $this->store->store_email && ! $this->additionalSettings['is_print_exclude_email'] ? $this->store->store_email : '';
         $zipcode = $this->store->zipcode ?? '';
         $websiteurl = $this->store->website_url ?? '';
         $kvknumber = $this->store->kvk_number ? 'KVK-'.$this->store->kvk_number : '';
@@ -274,6 +274,7 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['Total'][0]['value1'] = $total;
         $this->jsonFormatFullReceipt['thankyounote'][] = __('messages.thank_you_line_2');
         $this->jsonFormatFullReceipt['categories_settings'] = $this->additionalSettings['categories_settings'];
+        $this->jsonFormatFullReceipt['noofprints'] = $this->additionalSettings['no_of_prints'];
     }
 
     protected function setItems()
