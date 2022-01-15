@@ -8,6 +8,7 @@ use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
+use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -32,6 +33,10 @@ trait Stage7PrepareAdvanceData
                 $tables = $this->reservation['tables2']->pluck('name')->toArray();
                 $tableName = implode(',', $tables);
             }
+
+            if ($this->additionalSettings['dinein_guest_order'] && isset($this->order['table_name']) && !empty($this->order['table_name'])) {
+                $tableName = ($this->order['table_name']) ? __('messages.table_name') . ' ' . $this->order['table_name'] : '';
+            }
         }
 
         $this->advanceData['tableName'] = $tableName;
@@ -48,7 +53,7 @@ trait Stage7PrepareAdvanceData
             }
         }
 
-        $this->advanceData['dynamicOrderNo'] = $dynamicOrderNo;
+        $this->advanceData['dynamicOrderNo'] = trim($dynamicOrderNo);
     }
 
     protected function processOrderData()
@@ -76,6 +81,12 @@ trait Stage7PrepareAdvanceData
                 }
                 $this->order['delivery_address'] = implode(', ', $delivery_address);
             }
+
+            //update order type for Dine-in store-qr orders
+            if (empty($this->reservation) && isset($this->order['order_type']) && $this->order['order_type'] == 'dine_in') {
+                $this->order['order_type'] = 'qr_code_type';
+            }
+
         }
     }
 
@@ -98,18 +109,21 @@ trait Stage7PrepareAdvanceData
 
     public function prepareFullReceiptFlag()
     {
-        $fullReceipt = '1';
-        $excludeSystemName = '';
-        if (in_array($this->printType, [PrintTypes::KITCHEN_LABEL, PrintTypes::KITCHEN, PrintTypes::LABEL])) {
+        if ($this->skipMainPrint) {
             return;
         }
 
+        $fullReceipt = '1';
+        $excludeSystemName = '';
+
         if ($this->systemType == SystemTypes::POS) {
-            $excludeSystemName = 'pos';
+            $excludeSystemName = $this->additionalSettings['exclude_print_status'] ? 'pos' : '';
+        } elseif ($this->systemType == SystemTypes::DINE_IN) {
+            $excludeSystemName = 'dine_in';
         }
 
         $excludePrintSystem = explode(',', $this->additionalSettings['exclude_print_from_main_print']);
-        if (! empty($excludePrintSystem) && in_array($excludeSystemName, $excludePrintSystem) && $this->additionalSettings['exclude_print_status']) {
+        if (! empty($excludePrintSystem) && in_array($excludeSystemName, $excludePrintSystem)) {
             $fullReceipt = '0';
         }
 
@@ -118,6 +132,11 @@ trait Stage7PrepareAdvanceData
 
     public function prepareAYCEItems()
     {
+        // no need to prepare ayce item if main print will not print
+        if ($this->skipMainPrint) {
+            return;
+        }
+
         $all_you_eat_data = [];
         //return if no ayce data found
         if (empty($this->additionalSettings['ayce_data'])) {
@@ -498,7 +517,7 @@ trait Stage7PrepareAdvanceData
                                 $temp = '+ '.$selected_sup->name.((isset($selected_sup->qty) && $selected_sup->qty > 1) ? ' ('.$selected_sup->qty.'x)' : '');
                                 $newItem['itemaddons'][] = $temp;
                                 $newItem['kitchenitemaddons'][] = $temp;
-                                if (isset($show_supp_kitchen_name) && $show_supp_kitchen_name && isset($selected_sup->id)) {
+                                if ($this->additionalSettings['show_supplement_kitchen_name'] && isset($selected_sup->id)) {
                                     $supplement_kitchen_name = Supplement::withTrashed()->where('id', $selected_sup->id)->first();
                                     if (! empty($supplement_kitchen_name) && $supplement_kitchen_name->alt_name != null && $supplement_kitchen_name->alt_name != '') {
                                         $newItem['kitchenitemaddons'][] = '  '.$supplement_kitchen_name->alt_name;
@@ -511,7 +530,7 @@ trait Stage7PrepareAdvanceData
                             $temp = '+ '.$sup->name.((isset($sup->qty) && $sup->qty > 1) ? ' ('.$sup->qty.'x)' : '');
                             $newItem['itemaddons'][] = $temp;
                             $newItem['kitchenitemaddons'][] = $temp;
-                            if (isset($show_supp_kitchen_name) && $show_supp_kitchen_name && isset($sup->id)) {
+                            if ($this->additionalSettings['show_supplement_kitchen_name'] && isset($sup->id)) {
                                 $supplement_kitchen_name = Supplement::withTrashed()->where('id', $sup->id)->first();
                                 if (! empty($supplement_kitchen_name) && $supplement_kitchen_name->alt_name != null && $supplement_kitchen_name->alt_name != '') {
                                     $newItem['kitchenitemaddons'][] = '  '.$supplement_kitchen_name->alt_name;
@@ -542,22 +561,28 @@ trait Stage7PrepareAdvanceData
             $label = [];
             $device_id = 0;
             $isPrintAddon = false;
-            $skipKitchenLabelPrint = false;
             $saveOrderId = $order['saved_order_id'] ?? '';
+            $skipKitchenLabelPrint = false;
 
             // no need to print if order is already saved
-            if ($this->printType == PrintTypes::DEFAULT && ! empty($saveOrderId)) {
+            if ($this->skipKitchenLabelPrint){
+                $skipKitchenLabelPrint = true;
+            } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($saveOrderId)) {
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printType == PrintTypes::MAIN) {
                 // no need to print if only wat to reprint main print or kitchen print already printed
                 $skipKitchenLabelPrint = true;
-            } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($order['parent_id'])) {
+            } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($order['parent_id']) && $this->additionalSettings['dinein_guest_order'] == false) {
                 // no need to print for round orders
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printType == PrintTypes::DEFAULT && $this->additionalSettings['is_print_cart_add'] == 1 && in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories'])) {
                 // no need to print if printed already
                 $skipKitchenLabelPrint = true;
             }
+            //            if ($item['product']['category_id'] == '2373') {
+//                dd($skipKitchenLabelPrint, PrintTypes::DEFAULT , $this->additionalSettings['is_print_cart_add']
+//                    , $item['product']['category_id'], $this->additionalSettings['addon_print_categories'],in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories']));
+//            }
 
             if ($skipKitchenLabelPrint == false) {
                 if ($item['product']['printers']) {
@@ -689,6 +714,9 @@ trait Stage7PrepareAdvanceData
 
     protected function preparePaymentReceipt()
     {
+        if ($this->skipMainPrint) {
+            return;
+        }
 
         //return if setting is off
         if ($this->additionalSettings['show_order_transaction_detail'] == 0) {
@@ -732,6 +760,10 @@ trait Stage7PrepareAdvanceData
 
     protected function prepareSummary()
     {
+        if ($this->skipMainPrint) {
+            return;
+        }
+
         $summary = [];
 
         $sub_total = 0;
@@ -759,7 +791,7 @@ trait Stage7PrepareAdvanceData
             $order_discount = $this->order['discount'] ?? 0;
             $is_euro_discount_order = $this->order['discount_type'] == 'EURO' ? 1 : 0;
             $discount_amount = $this->order['discount_amount'] ?? 0;
-            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $discount_amount) : '';
+            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
 
             $total_tax = $this->order['total_tax'] ?? 0;
             $total_alcohol_tax = $this->order['total_alcohol_tax'] ?? 0;

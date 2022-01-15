@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 
@@ -73,11 +74,14 @@ trait Stage5EnableSettings
         }
 
         $kiosk = $this->kiosk;
-        $this->additionalSettings['addon_print_categories'] = isset($kiosk->settings->add_print_categories) && ! empty($kiosk->settings->add_print_categories) ? json_decode($kiosk->settings->add_print_categories, true) : [];
         $this->additionalSettings['cash_drawer_available'] = (int) ($kiosk->settings->cash_drawer_available ?? 0);
         $this->additionalSettings['kioskname'] = $kiosk->kioskname ?? '';
         $this->additionalSettings['kiosk_printer_name'] = $kiosk->printer_name ?? '';
         $this->additionalSettings['is_print_cart_add'] = $kiosk->settings->is_print_cart_add ?? 0;
+
+        if ($this->systemType == SystemTypes::POS) {
+            $this->additionalSettings['addon_print_categories'] = isset($kiosk->settings->add_print_categories) && ! empty($kiosk->settings->add_print_categories) ? json_decode($kiosk->settings->add_print_categories, true) : [];
+        }
     }
 
     protected function enableStoreReservationSettings()
@@ -92,5 +96,17 @@ trait Stage5EnableSettings
         $this->additionalSettings['kitchen_comment'] = $reservation->kitchen_comment ?? '';
         $this->additionalSettings['show_no_of_pieces'] = isset($reservation->reservation_type) && $reservation->reservation_type == 'cart';
         $this->additionalSettings['ayce_data'] = isset($reservation->all_you_eat_data) && ! empty($reservation->all_you_eat_data) ? json_decode($reservation->all_you_eat_data, true) : [];
+        $this->additionalSettings['dinein_guest_order'] = isset($this->reservation->is_dine_in) && $this->reservation->is_dine_in == 1;
+
+    }
+
+    protected function enableGlobalSettings()
+    {
+
+        //skip main print for kitchen related prints
+        if (in_array($this->printType,[PrintTypes::KITCHEN, PrintTypes::LABEL, PrintTypes::KITCHEN_LABEL])) {
+            $this->skipMainPrint = true;
+        }
+
     }
 }

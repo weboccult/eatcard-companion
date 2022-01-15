@@ -88,4 +88,15 @@ return [
             'pos' => '/pos',
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | System Endpoints
+    |--------------------------------------------------------------------------
+    |
+    | Different system's endpoint will be managed from here
+    |
+    */
+
+    'aws_url' => env('AWS_URL', 'https://eatcard.s3.eu-central-1.amazonaws.com/'),
 ];

@@ -178,7 +178,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         'headertag'           => [],
         'customercomments'    => '',
         'customtext'          => '',
-        'fullreceipt'         => 0,
+        'fullreceipt'         => '0',
         'kitchenreceipt'      => '1',
         'itemsTitle'          => '',
         'items'               => [],
@@ -265,6 +265,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         'fullreceipt' => '0',
         'kitchenreceipt' => '1',
         'categories_settings' => [],
+        'dinein_guest_order' => false,
 
     ];
 
@@ -307,6 +308,9 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected array $jsonReceipt = [];
     protected array $jsonSummary = [];
     protected int $jsonItemsIndex = 0;
+
+    protected bool $skipMainPrint = false;
+    protected bool $skipKitchenLabelPrint = false;
 
     public function __construct()
     {
@@ -393,6 +397,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->enableStoreTakeawaySetting();
         $this->enableDeviceSettings();
         $this->enableStoreReservationSettings();
+        $this->enableGlobalSettings();
     }
 
     private function stage6_DatabaseInteraction()

@@ -18,6 +18,11 @@ trait Stage8PrepareFinalJson
 {
     protected function setMainPrinter()
     {
+        //no need to set printer name if setting is enable
+        if ($this->skipMainPrint) {
+            return;
+        }
+
         $printer_name = [];
         //set printer as per system setting
         if ($this->systemType == SystemTypes::KIOSK && ! empty($this->additionalSettings['kiosk_printer_name'])) {
@@ -74,7 +79,7 @@ trait Stage8PrepareFinalJson
 
     protected function setOpenCashDrawer()
     {
-        if ($this->systemType == SystemTypes::POS && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
+        if ($this->systemType == SystemTypes::POS && $this->printType == PrintTypes::DEFAULT && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             if (isset($this->order['method']) && isset($this->order['total_price']) && $this->order['method'] == 'cash') {
                 $this->jsonFormatFullReceipt['opendrawer'] = (int) $this->order['total_price'] > 0 ? '1' : '0';
             }
@@ -111,7 +116,7 @@ trait Stage8PrepareFinalJson
             }
 
             if (! empty($this->advanceData['dynamicOrderNo'])) {
-                $orderNo = '# '.$this->advanceData['dynamicOrderNo'];
+                $orderNo = '#'.$this->advanceData['dynamicOrderNo'];
             }
 
             $title6 = __('messages.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').
@@ -176,17 +181,17 @@ trait Stage8PrepareFinalJson
         $addressArray = explode(',', ($this->store->address ?? ''));
         $address = $this->store->company_name ?? '';
         if (! empty($addressArray)) {
-            $address1 = $addressArray[0] ?? '';
-            $address2 = $addressArray[1] ?? '';
-            $address3 = $addressArray[2] ?? '';
-            $address4 = $addressArray[3] ?? '';
-            $address5 = $addressArray[4] ?? '';
+            $address1 = trim($addressArray[0] ?? '');
+            $address2 = $addressArray[1] ? ($this->store->zipcode ? $this->store->zipcode . ', ' : '') . trim($addressArray[1]) : '';
+            $address3 = trim($addressArray[2] ?? '');
+            $address4 = trim($addressArray[3] ?? '');
+            $address5 = trim($addressArray[4] ?? '');
         }
 
         $phone = $this->store->store_phone ?? '';
         $email = $this->store->store_email ?? '';
         $zipcode = $this->store->zipcode ?? '';
-        $websiteurl = $this->store->websiteurl ?? '';
+        $websiteurl = $this->store->website_url ?? '';
         $kvknumber = $this->store->kvk_number ? 'KVK-'.$this->store->kvk_number : '';
         $btwnumber = $this->store->btw_number ? 'BTW-'.$this->store->btw_number : '';
 
@@ -219,7 +224,7 @@ trait Stage8PrepareFinalJson
             $showEatcardName = 'Eatcard';
         } else {
             $logo = $this->additionalSettings['kiosk_data']['kiosk_logo'] ?? ($this->store->page_logo ?? '');
-            $eatcardLogo = config('app.eatcard_url').'assets/eatcard-logo-print.png';
+            $eatcardLogo = config('eatcardCompanion.aws_url').'assets/eatcard-logo-print.png';
         }
 
         $this->jsonFormatFullReceipt['logo'] = ! empty($logo) ? ImageFilters::applyFilter('StorePrintLogoImage', $logo) : '';
@@ -232,6 +237,7 @@ trait Stage8PrepareFinalJson
     {
         $checkoutNo = '';
         $typeOrder = '';
+        $orderType = '';
         $dateTime = '';
         $customerComments = '';
         $total = '0,00';
@@ -246,12 +252,17 @@ trait Stage8PrepareFinalJson
             $customerComments = $this->order['comment'] ?? '';
 
             $total = ''.changePriceFormat($this->order['total_price'] ?? '0');
+
+            if ($this->systemType == SystemTypes::DINE_IN) {
+                $orderType =  ($this->order['dine_in_type']) ? __('messages.' . $this->order['dine_in_type']) : '';
+            }
+
         }
 
         $this->jsonFormatFullReceipt['kioskname'] = $this->kiosk->name ?? '';
-        $this->jsonFormatFullReceipt['tablename'] = ''; //not in use
+        $this->jsonFormatFullReceipt['tablename'] = $this->advanceData['tableName'];
         $this->jsonFormatFullReceipt['checkoutno'] = $checkoutNo;
-        $this->jsonFormatFullReceipt['ordertype'] = ''; //not in use
+        $this->jsonFormatFullReceipt['ordertype'] = $orderType;
         $this->jsonFormatFullReceipt['typeorder'] = $typeOrder;
         $this->jsonFormatFullReceipt['datetime'] = $dateTime;
         $this->jsonFormatFullReceipt['headertag'] = []; //not in use
