@@ -10,7 +10,8 @@ use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
  */
 trait Stage3PrepareBasicData
 {
-    protected function prepareDefaultValue() {
+    protected function prepareDefaultValue()
+    {
 
         // format of item
         $this->itemFormat = [
@@ -169,10 +170,6 @@ trait Stage3PrepareBasicData
                 'dynamicOrderNo' => '',
 
                 ];
-
-
-
-
     }
 
     protected function prepareRefOrderId()
