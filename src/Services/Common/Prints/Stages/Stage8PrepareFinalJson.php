@@ -182,7 +182,7 @@ trait Stage8PrepareFinalJson
         $address = $this->store->company_name ?? '';
         if (! empty($addressArray)) {
             $address1 = trim($addressArray[0] ?? '');
-            $address2 = $addressArray[1] ? ($this->store->zipcode ? $this->store->zipcode . ', ' : '') . trim($addressArray[1]) : '';
+            $address2 = $addressArray[1] ? ($this->store->zipcode ? $this->store->zipcode.', ' : '').trim($addressArray[1]) : '';
             $address3 = trim($addressArray[2] ?? '');
             $address4 = trim($addressArray[3] ?? '');
             $address5 = trim($addressArray[4] ?? '');
@@ -254,9 +254,8 @@ trait Stage8PrepareFinalJson
             $total = ''.changePriceFormat($this->order['total_price'] ?? '0');
 
             if ($this->systemType == SystemTypes::DINE_IN) {
-                $orderType =  ($this->order['dine_in_type']) ? __('messages.' . $this->order['dine_in_type']) : '';
+                $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
             }
-
         }
 
         $this->jsonFormatFullReceipt['kioskname'] = $this->kiosk->name ?? '';

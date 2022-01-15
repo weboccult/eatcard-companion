@@ -97,16 +97,14 @@ trait Stage5EnableSettings
         $this->additionalSettings['show_no_of_pieces'] = isset($reservation->reservation_type) && $reservation->reservation_type == 'cart';
         $this->additionalSettings['ayce_data'] = isset($reservation->all_you_eat_data) && ! empty($reservation->all_you_eat_data) ? json_decode($reservation->all_you_eat_data, true) : [];
         $this->additionalSettings['dinein_guest_order'] = isset($this->reservation->is_dine_in) && $this->reservation->is_dine_in == 1;
-
     }
 
     protected function enableGlobalSettings()
     {
 
         //skip main print for kitchen related prints
-        if (in_array($this->printType,[PrintTypes::KITCHEN, PrintTypes::LABEL, PrintTypes::KITCHEN_LABEL])) {
+        if (in_array($this->printType, [PrintTypes::KITCHEN, PrintTypes::LABEL, PrintTypes::KITCHEN_LABEL])) {
             $this->skipMainPrint = true;
         }
-
     }
 }

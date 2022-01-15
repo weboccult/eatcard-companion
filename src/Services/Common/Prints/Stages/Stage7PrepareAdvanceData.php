@@ -34,8 +34,8 @@ trait Stage7PrepareAdvanceData
                 $tableName = implode(',', $tables);
             }
 
-            if ($this->additionalSettings['dinein_guest_order'] && isset($this->order['table_name']) && !empty($this->order['table_name'])) {
-                $tableName = ($this->order['table_name']) ? __('messages.table_name') . ' ' . $this->order['table_name'] : '';
+            if ($this->additionalSettings['dinein_guest_order'] && isset($this->order['table_name']) && ! empty($this->order['table_name'])) {
+                $tableName = ($this->order['table_name']) ? __('messages.table_name').' '.$this->order['table_name'] : '';
             }
         }
 
@@ -86,7 +86,6 @@ trait Stage7PrepareAdvanceData
             if (empty($this->reservation) && isset($this->order['order_type']) && $this->order['order_type'] == 'dine_in') {
                 $this->order['order_type'] = 'qr_code_type';
             }
-
         }
     }
 
@@ -565,7 +564,7 @@ trait Stage7PrepareAdvanceData
             $skipKitchenLabelPrint = false;
 
             // no need to print if order is already saved
-            if ($this->skipKitchenLabelPrint){
+            if ($this->skipKitchenLabelPrint) {
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($saveOrderId)) {
                 $skipKitchenLabelPrint = true;
