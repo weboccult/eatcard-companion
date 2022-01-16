@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Weboccult\EatcardCompanion\Classes\ImageFilters;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
@@ -34,7 +35,10 @@ trait Stage8PrepareFinalJson
         }
 
         // set default print if printer not set yet
-        if (empty($printer_name) && ! empty($this->additionalSettings['default_printer_name'])) {
+        if ($this->printMethod == PrintMethod::PROTOCOL && $this->systemType == SystemTypes::KIOSK && empty($printer_name)) {
+            //not set default printer, skip for protocol print of kiosk
+            $printer_name = [];
+        } elseif (empty($printer_name) && ! empty($this->additionalSettings['default_printer_name'])) {
             $printer_name[] = $this->additionalSettings['default_printer_name'];
         }
 
@@ -253,7 +257,7 @@ trait Stage8PrepareFinalJson
 
             $total = ''.changePriceFormat($this->order['total_price'] ?? '0');
 
-            if ($this->systemType == SystemTypes::DINE_IN) {
+            if (in_array($this->systemType, [SystemTypes::DINE_IN, SystemTypes::KIOSK])) {
                 $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
             }
         }

@@ -38,9 +38,12 @@ trait Stage5EnableSettings
         $this->additionalSettings['exclude_print_from_main_print'] = $store->storeSetting->exclude_print_from_main_print ?? '';
         $this->additionalSettings['main_print_logo_hide'] = $store->storeSetting->main_print_logo_hide ?? 0;
         $this->additionalSettings['kiosk_data'] = $this->store->kiosk_data ? json_decode($this->store->kiosk_data, true) : [];
+        $this->additionalSettings['double_height'] = ''.($store->storeSetting->double_height ?? '0');
 
-        if ($this->systemType != SystemTypes::KIOSK) {
-            $this->additionalSettings['double_height'] = ''.($store->storeSetting->double_height ?? '0');
+        if ($this->systemType == SystemTypes::KIOSK) {
+            $this->additionalSettings['print_separator_length'] = ''.($store->storeSetting->kiosk_separator_length ?? ($store->storeSetting->print_separator_length ?? ''));
+        } else {
+            $this->additionalSettings['print_separator_length'] = ''.($store->storeSetting->print_separator_length ?? '');
         }
 
         $this->additionalSettings['kitchenheaderspace'] = (int) ($store->storeSetting->kitchenheaderspace ?? 0);
@@ -50,7 +53,6 @@ trait Stage5EnableSettings
         $this->additionalSettings['is_print_product'] = ''.($store->storeSetting->is_print_product ?? '0');
         $this->additionalSettings['double_width'] = ''.($store->storeSetting->double_width ?? '0');
         $this->additionalSettings['product_double_height'] = ''.($store->storeSetting->product_double_height ?? '0');
-        $this->additionalSettings['print_separator_length'] = ''.($store->storeSetting->print_separator_length ?? '');
         $this->additionalSettings['delivery_address_font_size'] = (int) ($store->storeSetting->delivery_address_font_size ?? 0);
         $this->additionalSettings['show_delivery_address_in_kitchen_receipt'] = (int) ($store->storeSetting->show_delivery_address_in_kitchen_receipt ?? 0);
         $this->additionalSettings['print_custom_text'] = $store->storeSetting->print_custom_text ?? '';

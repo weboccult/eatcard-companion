@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
@@ -121,6 +122,9 @@ trait Stage7PrepareAdvanceData
             $excludeSystemName = 'dine_in';
         } elseif ($this->systemType == SystemTypes::TAKEAWAY) {
             $excludeSystemName = 'takeaway';
+        } elseif ($this->systemType == SystemTypes::KIOSK) {
+            //If kiosk is selected in exclude print then remove kiosk print in POS protocol print
+            $excludeSystemName = ! $this->additionalSettings['exclude_print_status'] ? 'kiosk' : '';
         }
 
         $excludePrintSystem = explode(',', $this->additionalSettings['exclude_print_from_main_print']);
@@ -567,6 +571,9 @@ trait Stage7PrepareAdvanceData
 
             // no need to print if order is already saved
             if ($this->skipKitchenLabelPrint) {
+                $skipKitchenLabelPrint = true;
+            } elseif ($this->printMethod == PrintMethod::PROTOCOL && $this->systemType == SystemTypes::KIOSK) {
+                //skip kitchen print for protocol print, It will be print in sqs print of pos
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($saveOrderId)) {
                 $skipKitchenLabelPrint = true;
