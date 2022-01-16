@@ -1,6 +1,6 @@
 <?php
 
-if (! defined('')) {
+if (! defined('CACHING_TIME')) {
     define('CACHING_TIME', 600);
 }
 if (! defined('FLUSH_ALL')) {

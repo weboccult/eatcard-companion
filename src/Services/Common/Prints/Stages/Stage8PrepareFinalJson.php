@@ -227,7 +227,8 @@ trait Stage8PrepareFinalJson
             $showStoreName = $this->store->company_name ?? '';
             $showEatcardName = 'Eatcard';
         } else {
-            $logo = $this->additionalSettings['kiosk_data']['kiosk_logo'] ?? ($this->store->page_logo ?? '');
+            $logo = isset($this->additionalSettings['kiosk_data']['kiosk_logo']) && ! empty($this->additionalSettings['kiosk_data']['kiosk_logo'])
+                    ? $this->additionalSettings['kiosk_data']['kiosk_logo'] : ($this->store->page_logo ?? '');
             $eatcardLogo = config('eatcardCompanion.aws_url').'assets/eatcard-logo-print.png';
         }
 
@@ -257,7 +258,7 @@ trait Stage8PrepareFinalJson
 
             $total = ''.changePriceFormat($this->order['total_price'] ?? '0');
 
-            if (in_array($this->systemType, [SystemTypes::DINE_IN, SystemTypes::KIOSK])) {
+            if (! in_array($this->systemType, [SystemTypes::POS])) {
                 $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
             }
         }

@@ -95,11 +95,14 @@ trait Stage7PrepareAdvanceData
         $thirdPartyName = '';
 
         if ($this->orderType == OrderTypes::PAID) {
-            if (isset($this->order['thusibezorgd_order_id']) && empty($this->order['thusibezorgd_order_id'])) {
+            if (isset($this->order['thusibezorgd_order_id']) && ! empty($this->order['thusibezorgd_order_id'])) {
+                $this->systemType = SystemTypes::THUSIBEZORGD;
                 $thirdPartyName = 'Thuisbezorgd: ';
-            } elseif (isset($this->order['uber_eats_order_id']) && empty($this->order['uber_eats_order_id'])) {
+            } elseif (isset($this->order['uber_eats_order_id']) && ! empty($this->order['uber_eats_order_id'])) {
+                $this->systemType = SystemTypes::UBEREATS;
                 $thirdPartyName = 'Uber: ';
-            } elseif (isset($this->order['deliveroo_order_id']) && empty($this->order['deliveroo_order_id'])) {
+            } elseif (isset($this->order['deliveroo_order_id']) && ! empty($this->order['deliveroo_order_id'])) {
+                $this->systemType = SystemTypes::DELIVEROO;
                 $thirdPartyName = 'Deliveroo: ';
             }
         }
@@ -125,6 +128,12 @@ trait Stage7PrepareAdvanceData
         } elseif ($this->systemType == SystemTypes::KIOSK) {
             //If kiosk is selected in exclude print then remove kiosk print in POS protocol print
             $excludeSystemName = ! $this->additionalSettings['exclude_print_status'] ? 'kiosk' : '';
+        } elseif ($this->systemType == SystemTypes::THUSIBEZORGD) {
+            $excludeSystemName = 'thusibezorgd';
+        } elseif ($this->systemType == SystemTypes::UBEREATS) {
+            $excludeSystemName = 'ubereats';
+        } elseif ($this->systemType == SystemTypes::DELIVEROO) {
+            $excludeSystemName = 'deliveroo';
         }
 
         $excludePrintSystem = explode(',', $this->additionalSettings['exclude_print_from_main_print']);
@@ -606,7 +615,7 @@ trait Stage7PrepareAdvanceData
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-device-printers-'.$item['product']['category']['takeaway_printer_id'], caching_time, function () use ($item) {
+                        ->remember('{eat-card}-device-printers-'.$item['product']['category']['takeaway_printer_id'], CACHING_TIME, function () use ($item) {
                             return DevicePrinter::query()->where('id', $item['product']['category']['takeaway_printer_id'])
                                 ->first();
                         });
@@ -619,7 +628,7 @@ trait Stage7PrepareAdvanceData
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-device-printers-'.$item['product']['category']['printer_id'], caching_time, function () use ($item) {
+                        ->remember('{eat-card}-device-printers-'.$item['product']['category']['printer_id'], CACHING_TIME, function () use ($item) {
                             return DevicePrinter::query()->where('id', $item['product']['category']['printer_id'])
                                 ->first();
                         });
@@ -640,7 +649,7 @@ trait Stage7PrepareAdvanceData
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-device-printer-kitchen-'.$device_id, caching_time, function () use ($item, $device_id) {
+                        ->remember('{eat-card}-device-printer-kitchen-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
                             return DevicePrinter::query()->where('store_device_id', $device_id)
                                 ->where('printer_type', 'kitchen')
                                 ->get();
@@ -651,7 +660,7 @@ trait Stage7PrepareAdvanceData
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-device-printer-label-'.$device_id, caching_time, function () use ($item, $device_id) {
+                        ->remember('{eat-card}-device-printer-label-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
                             return DevicePrinter::query()->where('store_device_id', $device_id)
                                 ->where('printer_type', 'label')
                                 ->get();

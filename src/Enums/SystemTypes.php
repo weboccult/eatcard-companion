@@ -17,4 +17,7 @@ class SystemTypes extends BaseEnum
     public const INSIGHTS = 'INSIGHTS';
     public const PLANNER = 'PLANNER';
     public const ADMIN = 'ADMIN';
+    public const UBEREATS = 'UBEREATS';
+    public const THUSIBEZORGD = 'THUSIBEZORGD';
+    public const DELIVEROO = 'DELIVEROO';
 }

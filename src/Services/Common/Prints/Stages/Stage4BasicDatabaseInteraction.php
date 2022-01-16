@@ -163,7 +163,7 @@ trait Stage4BasicDatabaseInteraction
                                 KIOSK_DEVICES,
                                 STORE_POS_SETTING,
                             ])
-                                ->remember('{eat-card}-kiosk-device-with-settings'.$deviceId, caching_time, function () use ($deviceId) {
+                                ->remember('{eat-card}-kiosk-device-with-settings'.$deviceId, CACHING_TIME, function () use ($deviceId) {
                                     return KioskDevice::with('settings')->where('id', $deviceId)->first();
                                 });
         companionLogger('--Eatcard companion Kiosk Device details : ', $kiosk);

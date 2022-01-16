@@ -41,7 +41,7 @@ trait Stage5EnableSettings
         $this->additionalSettings['double_height'] = ''.($store->storeSetting->double_height ?? '0');
 
         if ($this->systemType == SystemTypes::KIOSK) {
-            $this->additionalSettings['print_separator_length'] = ''.($store->storeSetting->kiosk_separator_length ?? ($store->storeSetting->print_separator_length ?? ''));
+            $this->additionalSettings['print_separator_length'] = ''.(isset($store->storeSetting->kiosk_separator_length) && ! empty($store->storeSetting->kiosk_separator_length) ? $store->storeSetting->kiosk_separator_length : ($store->storeSetting->print_separator_length ?? ''));
         } else {
             $this->additionalSettings['print_separator_length'] = ''.($store->storeSetting->print_separator_length ?? '');
         }
