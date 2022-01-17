@@ -3,10 +3,12 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Illuminate\Support\Facades\Cache;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 
 /**
@@ -34,6 +36,25 @@ trait Stage0BasicDatabaseInteraction
             if (! empty($store)) {
                 $this->store = $store;
                 $this->orderData['store_id'] = $this->store->id;
+            }
+        }
+    }
+
+    protected function setTakeawaySettingData()
+    {
+        if ($this->system === SystemTypes::TAKEAWAY && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
+            $storeId = $this->payload['store_id'];
+            $takeawaySetting = Cache::tags([
+                FLUSH_ALL,
+                FLUSH_TAKEAWAY,
+                EP_POST_ORDER,
+                FLUSH_STORE_BY_ID.$storeId,
+                TAKEAWAY_SETTING.$storeId,
+            ])->remember('{eat-card}-takeaway-setting-'.$storeId, CACHING_TIME, function () use ($storeId) {
+                return TakeawaySetting::query()->where('store_id', $storeId)->first();
+            });
+            if (! empty($takeawaySetting)) {
+                $this->takeawaySetting = $takeawaySetting;
             }
         }
     }

@@ -46,11 +46,14 @@ trait Stage8PrepareAdvanceData
 
     protected function preparePaymentMethod()
     {
-        $this->orderData['method'] = $this->payload['method'];
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+            $this->orderData['method'] = $this->payload['method'];
             if (isset($this->payload['manual_pin']) && $this->payload['manual_pin'] == 1) {
                 $this->orderData['method'] = 'manual_pin';
             }
+        }
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['payment_method_type'] = $this->payload['type'];
         }
     }
 

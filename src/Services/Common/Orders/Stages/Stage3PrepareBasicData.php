@@ -53,6 +53,10 @@ trait Stage3PrepareBasicData
                 }
             }
         }
+
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['is_takeaway'] = true;
+        }
     }
 
     protected function prepareCashPaid()
@@ -83,12 +87,30 @@ trait Stage3PrepareBasicData
             $this->orderData['order_status'] = 'done';
             $this->orderData['is_picked_up'] = 1;
         }
+
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['order_status'] = 'received';
+            if (isset($this->payload['order_time']) && $this->payload['order_time'] == 'asap') {
+                $this->orderData['order_time'] = date('H:i');
+                $this->orderData['is_asap'] = 1;
+            }
+        }
     }
 
     protected function prepareOrderBasicDetails()
     {
         if ($this->system === SystemTypes::POS) {
             $this->orderData['created_by'] = $this->payload['pos_user_id'];
+        }
+
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            if ($this->payload['order_type'] == 'pickup') {
+                $this->orderData['delivery_address'] = '';
+                $this->orderData['delivery_postcode'] = '';
+                $this->orderData['delivery_place'] = '';
+            } else {
+                $this->orderData['delivery_address'] = $this->payload['delivery_street'].' '.($this->payload['house_number'] ?? '').', '.$this->payload['delivery_place'].', Netherlands';
+            }
         }
     }
 

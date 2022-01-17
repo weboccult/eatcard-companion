@@ -42,22 +42,45 @@ use Weboccult\EatcardCompanion\Traits\TRAIT_NAME;
 use function Weboccult\EatcardCompanion\Helpers\{FUNCTION1, FUNCTION2};
 ```
 
-## Available Traits
+## Available Services
 
-- Precisionable : To handle precision for database fields
+- Order : To handle common order creation logic
+- Print : To generate common json for all type of prints - SQS | Protocol | Label | Full Receipt | Performa Receipt 
+  | Kitchen print.
 
-## Available Helper Functions
+Please check [ORDER_SERVICE_USAGE.md](Docs/ORDER_SERVICE_USAGE.md) & [PRINT_SERVICE_USAGE.md](Docs/PRINT_SERVICE_USAGE.md) for more details
 
-- eatcardSayHello : test function
-- splitDigits : to split digits from specific position
+## Companion Config
+
+here's how you can use publish companion config file to manage numerous settings
+
+```php
+php artisan eatcardcompanion:publish --type=config
+```
+It will publish eatcardCompanion.php to your parent project
+
+Please check [EATCARD_COMPANION.md](Docs/EATCARD_COMPANION.md) for more details
+
+## Translation Support
+
+Please check [TRANSLATION_USAGE.md](Docs/TRANSLATION_USAGE.md) for more details
+
+## Traits
+
+- Please check [TRAITS.md](Docs/TRAITS.md) for more details
+
+## Helper Functions
+
+- Please check [HELPERS.md](Docs/HELPERS.md) for more details
+
 
 ## Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+Please see [CHANGELOG.md](CHANGELOG.md) for more information on what has changed recently.
 
 ## Contributing
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Credits
 

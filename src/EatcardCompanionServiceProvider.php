@@ -3,7 +3,7 @@
 namespace Weboccult\EatcardCompanion;
 
 use Illuminate\Support\ServiceProvider;
-use Weboccult\EatcardCompanion\Commands\EatcardCompanionConfigPublishCommand;
+use Weboccult\EatcardCompanion\Commands\EatcardCompanionPublishCommand;
 
 /**
  * @author Darshit Hedpara
@@ -18,9 +18,15 @@ class EatcardCompanionServiceProvider extends ServiceProvider
             ], 'eatcardcompanion-config');
             // Registering package commands.
             $this->commands([
-                EatcardCompanionConfigPublishCommand::class,
+                EatcardCompanionPublishCommand::class,
             ]);
+
+            $this->publishes([
+                __DIR__.'/../resources/lang' => resource_path('lang/vendor/eatcard-companion'),
+            ], 'eatcardcompanion-translations');
         }
+
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
     }
 
     public function register()

@@ -13,6 +13,7 @@ use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Models\Supplement;
+use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage0BasicDatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage11CreateProcess;
@@ -88,6 +89,9 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     /** @var Store|null|object */
     protected ?Store $store;
+
+    /** @var TakeawaySetting|null|object */
+    protected ?TakeawaySetting $takeawaySetting;
 
     /** @var StoreReservation|null|object */
     protected $storeReservation = null;
@@ -184,6 +188,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->setStoreData(),
+            fn () => $this->setTakeawaySettingData(),
             fn () => $this->setParentOrderData(),
             fn () => $this->setDeviceData(),
             fn () => $this->setReservationData(),
