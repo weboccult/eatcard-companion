@@ -2,8 +2,10 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubOrder;
@@ -31,14 +33,13 @@ trait Stage12PaymentProcess
                 $webhook_url = reverseRouteGenerator('payment.webhook.pos.sub_order', [
                     'id'       => $this->createdOrder->id,
                     'store_id' => $this->store->id,
-                    // 'is_last_payment' => $this->payload['is_last_payment'] ?? 0
-                ], SystemTypes::POS);
+                ], ['is_last_payment' => $this->payload['is_last_payment'] ?? 0], SystemTypes::POS);
                 $meta_data = "{'parent_order': '".$this->createdOrder->parent_order_id."','sub_order': '".$this->createdOrder->id."'}";
             } else {
                 $webhook_url = reverseRouteGenerator('payment.webhook.pos.order', [
                     'id'       => $this->createdOrder->id,
                     'store_id' => $this->store->id,
-                ], SystemTypes::POS);
+                ], [], SystemTypes::POS);
                 $meta_data = "{'order': '".$this->createdOrder->order_id."'}";
             }
             $inputs = [
@@ -162,6 +163,52 @@ trait Stage12PaymentProcess
 
     protected function molliePayment()
     {
+        try {
+            Mollie::api()->setApiKey($this->store->mollie_api_key);
+            $redirectUrl = reverseRouteGenerator('payment.returnUrl.takeaway', [
+                'id'       => $this->createdOrder->id,
+                'store_id' => $this->store->id,
+            ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+
+            $webhookUrl = reverseRouteGenerator('payment.webhook.takeaway', [
+                'id'       => $this->createdOrder->id,
+                'store_id' => $this->store->id,
+            ], [], SystemTypes::TAKEAWAY);
+
+            $payment = Mollie::api()->payments()->create([
+                'amount'      => [
+                    'currency' => 'EUR',
+                    'value'    => ''.number_format($this->createdOrder->total_price, 2, '.', ''),
+                ],
+                'method'      => $this->orderData['method'],
+                'description' => 'Order #'.$this->createdOrder->order_id,
+                'redirectUrl' => $redirectUrl,
+                'webhookUrl'  => $webhookUrl,
+                'metadata'    => [
+                    'order_id' => $this->createdOrder->order_id,
+                ],
+            ]);
+            $this->createdOrder->update(['mollie_payment_id' => $payment->id]);
+            $this->paymentResponse = [
+                'payment_link' => $payment->_links->checkout->href,
+            ];
+        } catch (Exception $e) {
+            if ($e->getCode() > 400) {
+                if (strpos($e->getMessage(), 'The amount is lower than the minimum')) {
+                    $this->paymentResponse = [
+                        'mollie_error' => 'Something went wrong from the payment gateway | Error : The amount is lower than the minimum.',
+                    ];
+                } else {
+                    $this->paymentResponse = [
+                        'mollie_error' => 'Something went wrong from the payment gateway',
+                    ];
+                }
+            } else {
+                $this->paymentResponse = [
+                    'mollie_error' => 'Something went wrong from the payment gateway',
+                ];
+            }
+        }
     }
 
     protected function multiSafePayment()

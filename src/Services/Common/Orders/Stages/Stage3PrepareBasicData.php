@@ -38,6 +38,9 @@ trait Stage3PrepareBasicData
                 }
             }
         }
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['order_type'] = $this->payload['order_type'];
+        }
     }
 
     protected function prepareOrderType()
@@ -111,6 +114,10 @@ trait Stage3PrepareBasicData
             } else {
                 $this->orderData['delivery_address'] = $this->payload['delivery_street'].' '.($this->payload['house_number'] ?? '').', '.$this->payload['delivery_place'].', Netherlands';
             }
+            $this->orderData['first_name'] = trim($this->payload['first_name']);
+            $this->orderData['last_name'] = trim($this->payload['last_name']);
+            $this->orderData['email'] = trim($this->payload['email']);
+            $this->orderData['contact_no'] = trim($this->payload['contact_no']);
         }
     }
 

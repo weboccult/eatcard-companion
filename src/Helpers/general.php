@@ -3,8 +3,11 @@
 namespace Weboccult\EatcardCompanion\Helpers;
 
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Weboccult\EatcardCompanion\Models\Device;
+use Weboccult\EatcardCompanion\Models\GeneralNotification;
 use Weboccult\EatcardCompanion\Models\Message;
 use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
@@ -20,6 +23,8 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\RunningOrderGen
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SaveOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SubOrderGenerator;
 use Illuminate\Support\Facades\Redis as LRedis;
+use GuzzleHttp\Client;
+use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 
 if (! function_exists('eatcardSayHello')) {
     /**
@@ -173,6 +178,30 @@ if (! function_exists('getS3File')) {
         } else {
             return env('AWS_URL').'assets/no_image.png';
         }
+    }
+}
+
+if (! function_exists('generateTakeawayOrderId')) {
+    /**
+     * @param $store_id
+     *
+     * @return int|string
+     */
+    function generateTakeawayOrderId($store_id)
+    {
+        $order_id = Carbon::now()->format('y').'0000001';
+        $exit = Order::query()->where('store_id', $store_id)
+            ->where('order_id', 'LIKE', Carbon::now()->format('y').'00%')
+            ->where('created_at', '>', '2020-06-24 08:30:00')
+            ->where('order_type', '<>', 'pos')
+            ->whereNull('thusibezorgd_order_id')
+            ->orderBy('order_id', 'desc')
+            ->first();
+        if ($exit) {
+            $order_id = $exit->order_id + 1;
+        }
+
+        return $order_id;
     }
 }
 
@@ -717,6 +746,279 @@ if (! function_exists('sendWebNotification')) {
     }
 }
 
+if (! function_exists('getDistance')) {
+    /**
+     * @param $from
+     * @param $to
+     *
+     * @return float|int|string
+     */
+    function getDistance($from, $to)
+    {
+        $from = urlencode($from);
+        $to = urlencode($to);
+        $data = file_get_contents("https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=$from&destinations=$to&key=".config('app.google_map_api_key'));
+        $data = json_decode($data);
+        $time = 0;
+        $distance = 0;
+        companionLogger('distance between store and location : ', json_encode($data), 'IP address :'.request()->ip().', browser', 'Browser : '.request()->header('User-Agent'));
+        foreach ($data->rows[0]->elements as $road) {
+            if (isset($road->status) && $road->status == 'ZERO_RESULTS') {
+                return 'ZERO_RESULTS';
+            }
+            if (isset($road->distance)) {
+                $time += $road->duration->value;
+                $distance += $road->distance->value;
+            }
+        }
+
+        return $distance / 1000;
+    }
+}
+
+if (! function_exists('checkRadiusDistance')) {
+    /**
+     * @param $store_address
+     * @param $address
+     * @param $setting
+     * @param $total
+     *
+     * @return array
+     */
+    function checkRadiusDistance($store_address, $address, $setting, $total): array
+    {
+        $distance = getDistance($store_address, $address);
+        companionLogger('Distance data fetched if delivery radius is on : ', $distance);
+        if ($distance === 'ZERO_RESULTS') {
+            return [
+                'distance_not_found_error' => 'error',
+            ];
+        }
+        if ($distance > 20) {
+            return [
+                'distance_error' => 'error',
+                'distance'       => $distance,
+            ];
+        }
+        /*check distance and amount related calculation*/
+        if ($setting) {
+            if ($distance <= 1 && $setting->is_delivery_fee_0_1) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_0_1 || $setting->delivery_free_amount_0_1 > $total) ? $setting->delivery_fee_0_1 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_0_1;
+            } elseif ($distance > 1 && $distance <= 2 && $setting->is_delivery_fee_1_2) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_1_2 || $setting->delivery_free_amount_1_2 > $total) ? $setting->delivery_fee_1_2 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_1_2;
+            } elseif ($distance > 2 && $distance <= 4 && $setting->is_delivery_fee_2_4) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_2_4 || $setting->delivery_free_amount_2_4 > $total) ? $setting->delivery_fee_2_4 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_2_4;
+            } elseif ($distance > 4 && $distance <= 6 && $setting->is_delivery_fee_4_6) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_4_6 || $setting->delivery_free_amount_4_6 > $total) ? $setting->delivery_fee_4_6 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_4_6;
+            } elseif ($distance > 6 && $distance <= 10 && $setting->is_delivery_fee_6_10) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_6_10 || $setting->delivery_free_amount_6_10 > $total) ? $setting->delivery_fee_6_10 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_6_10;
+            } elseif ($distance > 10 && $distance <= 15 && $setting->is_delivery_fee_10_15) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_10_15 || $setting->delivery_free_amount_10_15 > $total) ? $setting->delivery_fee_10_15 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_10_15;
+            } elseif ($distance > 15 && $distance <= 20 && $setting->is_delivery_fee_15_20) {
+                $takeaway_data['distance'] = $distance;
+                $takeaway_data['delivery'] = (! $setting->delivery_free_amount_15_20 || $setting->delivery_free_amount_15_20 > $total) ? $setting->delivery_fee_15_20 : 0;
+                $takeaway_data['delivery_minimum_amount'] = $setting->is_delivery_min_amount_15_20;
+            } else {
+                $takeaway_data['error'] = $distance;
+            }
+
+            return $takeaway_data;
+        } else {
+            return [
+                'error' => 'Setting is not available',
+            ];
+        }
+    }
+}
+
+if (! function_exists('latterToNumber')) {
+    /**
+     * @param $letters
+     *
+     * @return float|int|mixed
+     */
+    function latterToNumber($letters)
+    {
+        $alphabet = range('a', 'z');
+        $number = 0;
+        foreach (str_split(strrev($letters)) as $key => $char) {
+            $number = $number + (array_search($char, $alphabet) + 1) * pow(count($alphabet), $key);
+        }
+
+        return $number;
+    }
+}
+
+if (! function_exists('checkZipCodeRange')) {
+    /**
+     * @param $user_zip_code
+     * @param $from_zip_code
+     * @param $to_zip_code
+     *
+     * @return bool
+     */
+    function checkZipCodeRange($user_zip_code, $from_zip_code, $to_zip_code): bool
+    {
+        $user_zip_code = str_split($user_zip_code, 1);
+        $from_zip_code = str_split($from_zip_code, 1);
+        $to_zip_code = str_split($to_zip_code, 1);
+        $user_zip_code_string = '';
+        $from_zip_code_string = '';
+        $to_zip_code_string = '';
+        if (($from_zip_code == $user_zip_code || $to_zip_code == $user_zip_code)) {
+            return true;
+        }
+        if (count($user_zip_code) == count($from_zip_code) && count($user_zip_code) == count($to_zip_code)) {
+            for ($j = 0; $j < count($user_zip_code); $j++) {
+                $user_zip_code_string .= (is_numeric($user_zip_code[$j])) ? 'N' : 'A';
+                $from_zip_code_string .= (isset($from_zip_code[$j]) && is_numeric($from_zip_code[$j])) ? 'N' : 'A';
+                $to_zip_code_string .= (isset($to_zip_code[$j]) && is_numeric($to_zip_code[$j])) ? 'N' : 'A';
+            }
+            /*If zip code format is same then check zipcode in given range*/
+            if ($user_zip_code_string == $from_zip_code_string && $user_zip_code_string == $to_zip_code_string) {
+                $user_zip_code_arr = [];
+                $from_zip_code_arr = [];
+                $to_zip_code_arr = [];
+                for ($i = 0; $i < count($user_zip_code); $i++) {
+                    if (empty($user_zip_code_arr)) {
+                        $user_zip_code_arr[] = $user_zip_code[$i];
+                        $from_zip_code_arr[] = $from_zip_code[$i];
+                        $to_zip_code_arr[] = $to_zip_code[$i];
+                    } else {
+                        if (is_numeric($user_zip_code_arr[count($user_zip_code_arr) - 1]) && is_numeric($user_zip_code[$i])) {
+                            $user_zip_code_arr[count($user_zip_code_arr) - 1] .= $user_zip_code[$i];
+                            $from_zip_code_arr[count($from_zip_code_arr) - 1] .= $from_zip_code[$i];
+                            $to_zip_code_arr[count($to_zip_code_arr) - 1] .= $to_zip_code[$i];
+                        }
+                        if (! is_numeric($user_zip_code_arr[count($user_zip_code_arr) - 1]) && ! is_numeric($user_zip_code[$i])) {
+                            $user_zip_code_arr[count($user_zip_code_arr) - 1] .= $user_zip_code[$i];
+                            $from_zip_code_arr[count($from_zip_code_arr) - 1] .= $from_zip_code[$i];
+                            $to_zip_code_arr[count($to_zip_code_arr) - 1] .= $to_zip_code[$i];
+                        }
+                        if (is_numeric($user_zip_code_arr[count($user_zip_code_arr) - 1]) && ! is_numeric($user_zip_code[$i])) {
+                            $user_zip_code_arr[] = $user_zip_code[$i];
+                            $from_zip_code_arr[] = $from_zip_code[$i];
+                            $to_zip_code_arr[] = $to_zip_code[$i];
+                        }
+                        if (! is_numeric($user_zip_code_arr[count($user_zip_code_arr) - 1]) && is_numeric($user_zip_code[$i])) {
+                            $user_zip_code_arr[] = $user_zip_code[$i];
+                            $from_zip_code_arr[] = $from_zip_code[$i];
+                            $to_zip_code_arr[] = $to_zip_code[$i];
+                        }
+                    }
+                }
+                $from_zipcode_greater_than_user_zipcode = true;
+                $same_from_user_value = true;
+                for ($i = 0; $i < count($user_zip_code_arr); $i++) {
+                    if ($same_from_user_value) {
+                        if (! is_numeric($user_zip_code_arr[$i])) {
+                            $from_value = latterToNumber($from_zip_code_arr[$i]);
+                            $user_value = latterToNumber($user_zip_code_arr[$i]);
+                        } else {
+                            $from_value = $from_zip_code_arr[$i];
+                            $user_value = $user_zip_code_arr[$i];
+                        }
+                        if ($from_value < $user_value && $same_from_user_value) {
+                            $from_zipcode_greater_than_user_zipcode = true;
+                            $same_from_user_value = false;
+                        } elseif ($from_value == $user_value && $same_from_user_value) {
+                            $from_zipcode_greater_than_user_zipcode = true;
+                            $same_from_user_value = true;
+                        } elseif ($from_value > $user_value && $same_from_user_value) {
+                            $from_zipcode_greater_than_user_zipcode = false;
+                            $same_from_user_value = false;
+                        }
+                    }
+                }
+                if ($from_zipcode_greater_than_user_zipcode) {
+                    $to_zipcode_greater_than_user_zipcode = true;
+                    $same_to_user_value = true;
+                    for ($i = 0; $i < count($user_zip_code_arr); $i++) {
+                        if ($same_to_user_value) {
+                            if (! is_numeric($user_zip_code_arr[$i])) {
+                                $to_value = latterToNumber($to_zip_code_arr[$i]);
+                                $user_value = latterToNumber($user_zip_code_arr[$i]);
+                            } else {
+                                $to_value = $to_zip_code_arr[$i];
+                                $user_value = $user_zip_code_arr[$i];
+                            }
+                            if ($to_value > $user_value && $same_to_user_value) {
+                                $to_zipcode_greater_than_user_zipcode = true;
+                                $same_to_user_value = false;
+                            } elseif ($to_value == $user_value && $same_to_user_value) {
+                                $to_zipcode_greater_than_user_zipcode = true;
+                                $same_to_user_value = true;
+                            } elseif ($to_value < $user_value && $same_to_user_value) {
+                                $same_to_user_value = false;
+                                $to_zipcode_greater_than_user_zipcode = false;
+                            }
+                        }
+                    }
+                    if ($to_zip_code == $user_zip_code) {
+                        $to_zipcode_greater_than_user_zipcode = true;
+                    }
+                    if ($to_zipcode_greater_than_user_zipcode && $from_zipcode_greater_than_user_zipcode) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+}
+
+if (! function_exists('getDistanceBetweenTwoPoints')) {
+    /**
+     * Calculates the great-circle distance between two points, with
+     * the Haversine formula.
+     *
+     * @param $lat1
+     * @param $lon1
+     * @param $lat2
+     * @param $lon2
+     * @param string $unit
+     *
+     * @return float Distance between points in [m] (same as earthRadius)
+     */
+    function getDistanceBetweenTwoPoints($lat1, $lon1, $lat2, $lon2, $unit = '')
+    {
+        $data = [];
+        try {
+            $client = new Client();
+            $request = $client->request('GET', 'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins='.$lat1.','.$lon1.'&destinations='.$lat2.','.$lon2.'&key='.env('GOOGLE_MAP_API_KEY'));
+            $statusCode = $request->getStatusCode();
+            $request->getHeaderLine('content-type');
+            $response = json_decode($request->getBody()->getContents(), true);
+
+            if ($statusCode == 200) {
+                $data = $response;
+            }
+        } catch (Exception | GuzzleException $e) {
+        }
+
+        return $data;
+    }
+}
+
 if (! function_exists('phpEncrypt')) {
 
     /**
@@ -740,6 +1042,79 @@ if (! function_exists('phpEncrypt')) {
         $encryption_key = '!$@#eatcard_kiosk_device_encrypt#@$!';
         // Encryption of string process starts
         return base64_encode(openssl_encrypt($simple_string, $ciphering, $encryption_key, $options, $encryption_iv));
+    }
+}
+
+if (! function_exists('sendAppNotificationHelper')) {
+    /**
+     * @param $order
+     * @param $store
+     *
+     * @return array|void
+     * @description send web notification to user after payment
+     */
+    function sendAppNotificationHelper($order, $store)
+    {
+        $name = '';
+        if ($order['first_name'] || $order['last_name']) {
+            $name = '| '.$order['first_name'].' '.$order['last_name'];
+        }
+        $desc_title = $store->store_name.' '.$name;
+        $desc = $order['order_date'].' | '.$order['order_time'].' | €'.changePriceFormat($order['total_price']);
+        $notification_data = [
+            'type'              => 'takeaway',
+            'description'       => $desc,
+            'description_title' => $desc_title,
+        ];
+        $notification_data['additional_data'] = [
+            'order_id'   => $order['id'],
+            'order_date' => $order['order_date'],
+        ];
+        $notification_data['additional_data'] = json_encode($notification_data['additional_data']);
+        try {
+            $new_notification = GeneralNotification::create([
+                'type'            => $notification_data['type'],
+                'notification'    => $notification_data['description'],
+                'additional_data' => $notification_data['additional_data'],
+            ]);
+            $user_ids = [];
+            if ($store->store_manager) {
+                $user_ids[] = $store->store_manager->user_id;
+            }
+            if ($store->store_owner) {
+                $user_ids[] = $store->store_owner->user_id;
+            }
+            $one_signal_user_devices_ods = [];
+            if ($new_notification && $user_ids) {
+                $new_notification->users()->attach($user_ids);
+                $devices = Device::query()->whereIn('user_id', $user_ids)->get();
+                if (count($devices) > 0) {
+                    $one_signal_user_devices_ods = $devices->pluck('onesignal_id')->toArray();
+                }
+                $push_notification_data = [
+                    'title'             => 'Eatcard',
+                    'text'              => $notification_data['description'],
+                    'type'              => $notification_data['type'],
+                    'description_title' => (! empty($notification_data['description_title'])) ? $notification_data['description_title'] : '',
+                    'additional_data'   => $notification_data['additional_data'],
+                    'player_ids'        => $one_signal_user_devices_ods,
+                    'store_id'          => $order['store_id'],
+                ];
+                try {
+                    $is_send_push = OneSignal::sendPushNotification($push_notification_data);
+                    if ($is_send_push) {
+                        $new_notification->users()->detach($user_ids);
+                        $new_notification->delete();
+                    }
+                } catch (\Exception $exception) {
+                    $takeaway_data['exception'] = json_encode($exception);
+
+                    return $takeaway_data;
+                }
+            }
+        } catch (\Exception $e) {
+            companionLogger('reservation status change push notification error :', 'Error : '.$e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+        }
     }
 }
 

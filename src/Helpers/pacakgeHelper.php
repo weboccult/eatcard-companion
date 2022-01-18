@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Helpers;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Stringable;
 use Weboccult\EatcardCompanion\Enums\LoggerTypes;

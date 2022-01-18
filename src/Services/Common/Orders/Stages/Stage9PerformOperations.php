@@ -3,10 +3,14 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Session;
 use Weboccult\EatcardCompanion\Enums\AfterEffectOrderTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\TakeawaySetting;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @description Stag 9
@@ -67,9 +71,16 @@ trait Stage9PerformOperations
     protected function couponOperation()
     {
         $this->couponRemainingPrice = 0;
-        if (isset($this->payload['qr_code']) && $this->payload['qr_code']) {
+        $qrCode = '';
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+            $qrCode = isset($this->payload['qr_code']) && $this->payload['qr_code'] ? $this->payload['qr_code'] : null;
+        }
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $qrCode = isset($this->payload['gift_card_code']) && $this->payload['gift_card_code'] ? $this->payload['gift_card_code'] : null;
+        }
+        if (! empty($qrCode)) {
             $this->coupon = GiftPurchaseOrder::query()
-                ->where('qr_code', $this->payload['qr_code'])
+                ->where('qr_code', $qrCode)
                 ->where('status', 'paid')
                 ->where('remaining_price', '>', 0)
                 ->where('expire_at', '>=', Carbon::now()->format('Y-m-d'))
@@ -87,6 +98,40 @@ trait Stage9PerformOperations
                 } else {
                     $this->couponRemainingPrice = 0;
                     $this->orderData['coupon_price'] = 0;
+                }
+            }
+        }
+    }
+
+    protected function asapOrderOperation()
+    {
+        if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData = $this->payload['is_asap'] ?? 0;
+            if (! isset($this->payload['is_asap'])) {
+                $store_takeaway_setting = TakeawaySetting::query()
+                    ->where('store_id', $this->store->id)
+                    ->first();
+                $store_time_slots = json_decode($store_takeaway_setting->pickup_delivery_days, true);
+                $current_day = Carbon::parse($this->orderData['order_date'])->dayOfWeekIso - 1;
+                if (isset($store_time_slots[$current_day]['is_max_order_per_slot']) &&
+                    $store_time_slots[$current_day]['is_max_order_per_slot'] == '1' &&
+                    $store_time_slots[$current_day]['max_order_per_slot'] != null &&
+                    (int) $store_time_slots[$current_day]['max_order_per_slot'] > 0) {
+                    companionLogger('working sleep function');
+                    if (Session::has('order_create_'.$this->orderData['store_id'])) {
+                        sleep(5);
+                    }
+                    Session::push('order_create_'.$this->orderData['store_id'], 'Create takeaway order');
+                    $max_number_of_order = $store_time_slots[$current_day]['max_order_per_slot'];
+                    $same_time_slot_order = Order::where('order_time', $this->orderData['order_time'])
+                        ->where('store_id', $this->orderData['store_id'])
+                        ->where('order_date', $this->orderData['order_date'])
+                        ->where('created_from', 'takeaway')
+                        ->whereIn('status', ['pending', 'paid', 'initialized'])
+                        ->count();
+                    if ($max_number_of_order <= $same_time_slot_order) {
+                        $this->setDumpDieValue(['maximum_order_limit' => 'Maximum order limit reach. Please select another time slot.']);
+                    }
                 }
             }
         }

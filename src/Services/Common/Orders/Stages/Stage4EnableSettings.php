@@ -23,12 +23,35 @@ trait Stage4EnableSettings
                 ];
             }
         }
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
+                $this->settings['delivery_fee'] = [
+                    'status' => true,
+                    'value'  => $this->store->storeSetting->additional_fee ?? 0,
+                ];
+            }
+        }
     }
 
     protected function enableDeliveryFees()
     {
         if ($this->system == SystemTypes::TAKEAWAY) {
-            // logic goes here...
+            $this->settings['delivery_fee'] = [
+                'status' => true,
+                'value'  => $this->payload['delivery_fee'] ?? 0,
+            ];
+        }
+    }
+
+    protected function enablePlasticBagFees()
+    {
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee) {
+                $this->settings['plastic_bag_fee'] = [
+                    'status' => true,
+                    'value'  => $this->payload['delivery_fee'] ?? 0,
+                ];
+            }
         }
     }
 
@@ -38,5 +61,10 @@ trait Stage4EnableSettings
 
     protected function enableNewLetterSubscription()
     {
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            $this->settings['news_letter'] = [
+                'status' => isset($this->payload['is_subscribe']),
+            ];
+        }
     }
 }

@@ -50,6 +50,25 @@ return [
 
     'system_endpoints' => [
         'pos' => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
+        'takeaway' => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manage Push Notification
+    |--------------------------------------------------------------------------
+    |
+    | Setting, URLs and more.
+    |
+    */
+    'push_notification' => [
+        'one_signal' => [
+            'api_url' => 'https://onesignal.com/api/v1',
+            'create_device_url' => '/players/<%onesignal_id%>?app_id=<%device_id%>',
+            'send_notification_url' => '/notifications',
+            'app_id' => env('ONE_SIGNAL_APP_ID', ''),
+            'rest_api_key' => env('ONE_SIGNAL_REST_API_KEY', ''),
+        ],
     ],
 
     /*
@@ -83,9 +102,11 @@ return [
                 'order'     => '/pos/webhook/<%id%>/<%store_id%>',
                 'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
             ],
+            'takeaway' => '/orders-success/<%id%>/<%store_id%>',
         ],
         'returnUrl' => [
             'pos' => '/pos',
+            'takeaway' => '/webhook/<%id%>/<%store_id%>',
         ],
     ],
 

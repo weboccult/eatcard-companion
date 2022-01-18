@@ -21,6 +21,7 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage12PaymentProce
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage13Broadcasting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage14Notification;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage15ExtraOperations;
+use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage16PrepareResponse;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage1PrepareValidationRules;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage2ValidateValidations;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage3PrepareBasicData;
@@ -33,7 +34,6 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9PerformOperat
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\Staggable;
-use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @mixin MagicAccessors
@@ -62,6 +62,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     use Stage13Broadcasting;
     use Stage14Notification;
     use Stage15ExtraOperations;
+    use Stage16PrepareResponse;
 
     protected array $config;
 
@@ -123,6 +124,10 @@ abstract class BaseProcessor implements BaseProcessorContract
             'status' => false,
             'value' => null,
         ],
+        'plastic_bag_fee' => [
+            'status' => false,
+            'value' => null,
+        ],
     ];
 
     /** @var Order|OrderHistory|SubOrder|null|object */
@@ -160,6 +165,8 @@ abstract class BaseProcessor implements BaseProcessorContract
      */
     public function dispatch()
     {
+        dd(__('eatcard-companion::takeaway.pickup_delivery_not_available'));
+
         return $this->stageIt([
             fn () => $this->stage0_BasicDatabaseInteraction(),
             fn () => $this->stage1_PrepareValidationRules(),
@@ -200,8 +207,8 @@ abstract class BaseProcessor implements BaseProcessorContract
         $this->stageIt([
             fn () => $this->overridableCommonRule(),
             fn () => $this->overridableSystemSpecificRules(),
-            fn () => $this->setDeliveryZipCodeValidation(),
-            fn () => $this->setDeliveryRadiusValidation(),
+            fn () => $this->setTakeawayPickupValidation(),
+            fn () => $this->setTakeawayDeliveryValidation(),
         ]);
     }
 
@@ -236,6 +243,7 @@ abstract class BaseProcessor implements BaseProcessorContract
         $this->stageIt([
             fn () => $this->enableAdditionalFees(),
             fn () => $this->enableDeliveryFees(),
+            fn () => $this->enablePlasticBagFees(),
             fn () => $this->enableStatiegeDeposite(),
             fn () => $this->enableNewLetterSubscription(),
         ]);
@@ -280,6 +288,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->calculateOrderDiscount(),
             fn () => $this->calculateFees(),
             fn () => $this->calculateStatiegeDeposite(),
+            fn () => $this->calculateOriginOrderTotal(),
             fn () => $this->calculateReservationPaidAmount(),
             fn () => $this->prepareEditOrderDetails(),
         ]);
@@ -291,15 +300,17 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->editOrderOperation(),
             fn () => $this->undoOperation(),
             fn () => $this->couponOperation(),
+            fn () => $this->asapOrderOperation(),
         ]);
     }
 
     private function stage10_PerformFeesCalculation()
     {
-        $this->stageIt([
+        // no need, already added in stage 8...
+        /*$this->stageIt([
             fn () => $this->setAdditionalFees(),
             fn () => $this->setDeliveryFees(),
-        ]);
+        ]);*/
     }
 
     private function stage11_CreateProcess()
@@ -307,11 +318,12 @@ abstract class BaseProcessor implements BaseProcessorContract
         $this->stageIt([
             fn () => $this->createOrder(),
             fn () => $this->createOrderItems(),
+            fn () => $this->forgetSessions(),
             fn () => $this->markOtherOrderAsIgnore(),
+            fn () => $this->createDeliveryIntoDatabase(),
             fn () => $this->deductCouponAmountFromPurchaseOrderOperation(),
             fn () => $this->markOrderAsFuturePrint(),
             fn () => $this->checkoutReservation(),
-            fn () => $this->createDeliveryIntoDatabase(),
         ]);
     }
 
@@ -358,24 +370,11 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage16_Response()
     {
         if ($this->system == SystemTypes::POS) {
-            if ($this->orderData['method'] == 'cash') {
-                if ($this->isSubOrder) {
-                    $this->setDumpDieValue([
-                        'data'      => $this->parentOrder,
-                        'sub_order' => $this->createdOrder,
-                    ]);
-                } else {
-                    $this->setDumpDieValue([
-                        'order_id' => $this->createdOrder->id,
-                        'id'   => $this->createdOrder->id,
-                        'success'  => 'success',
-                    ]);
-                }
-            } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
-                $this->setDumpDieValue($this->paymentResponse);
-            } else {
-                companionLogger('Not supported method found.!');
-            }
+            $this->posResponse();
+        }
+
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            $this->takeawayResponse();
         }
 
         // anything you want
