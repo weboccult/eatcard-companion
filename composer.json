@@ -18,6 +18,7 @@
   "require": {
     "php": "^7.4 || ^8.0",
     "ext-bcmath": "*",
+    "ext-curl": "*",
     "ext-json": "*",
     "ext-openssl": "*",
     "cmgmyr/messenger": "^2.22",
@@ -26,11 +27,12 @@
     "illuminate/console": "^8.0",
     "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
+    "mollie/laravel-mollie": "^2.17",
     "nunomaduro/collision": "^5.0",
     "pestphp/pest": "^1.0",
-    "phpunit/phpunit": "^9.0"
+    "phpunit/phpunit": "^9.0",
+    "spatie/laravel-newsletter": "^4.11"
   },
-  "require-dev": {},
   "minimum-stability": "dev",
   "prefer-stable": true,
   "autoload": {
@@ -56,12 +58,14 @@
     "laravel": {
       "aliases": {
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
-        "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint"
+        "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
+        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider"
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider"
       ]
     }
   },
