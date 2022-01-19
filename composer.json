@@ -62,8 +62,8 @@
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
         "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
-        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal",
-        "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe"
+        "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
+        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
