@@ -714,7 +714,12 @@ trait Stage7PrepareAdvanceData
 
     protected function prepareRunningOrderItems()
     {
-        // code in generator file
+        // code in individual generator file
+    }
+
+    protected function prepareSaveOrderItems()
+    {
+        // code in individual generator file
     }
 
     protected function sortItems()

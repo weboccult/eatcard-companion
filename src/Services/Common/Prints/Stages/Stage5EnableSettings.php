@@ -39,7 +39,12 @@ trait Stage5EnableSettings
         $this->additionalSettings['exclude_print_from_main_print'] = $store->storeSetting->exclude_print_from_main_print ?? '';
         $this->additionalSettings['main_print_logo_hide'] = $store->storeSetting->main_print_logo_hide ?? 0;
         $this->additionalSettings['kiosk_data'] = $this->store->kiosk_data ? json_decode($this->store->kiosk_data, true) : [];
+
         $this->additionalSettings['double_height'] = ''.($store->storeSetting->double_height ?? '0');
+//        if ($this->orderType != OrderTypes::SAVE) {
+//        } else {
+//            $this->additionalSettings['double_height'] = '0';
+//        }
 
         if ($this->systemType == SystemTypes::KIOSK) {
             $this->additionalSettings['print_separator_length'] = ''.(isset($store->storeSetting->kiosk_separator_length) && ! empty($store->storeSetting->kiosk_separator_length) ? $store->storeSetting->kiosk_separator_length : ($store->storeSetting->print_separator_length ?? ''));

@@ -16,6 +16,7 @@ use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
+use Weboccult\EatcardCompanion\Models\OrderReceipt;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -169,6 +170,18 @@ trait Stage4BasicDatabaseInteraction
         if ($this->orderType != OrderTypes::SAVE) {
             return;
         }
+
+        if (empty($this->saveOrderId)) {
+            throw new OrderIdEmptyException();
+        }
+
+        $saveOrder = OrderReceipt::query()->where('id', $this->saveOrderId)->first();
+
+        if (empty($saveOrder)) {
+            throw new OrderIdEmptyException();
+        }
+
+        $this->saveOrder = $saveOrder;
     }
 
     protected function setStoreData()
@@ -200,12 +213,12 @@ trait Stage4BasicDatabaseInteraction
             $deviceId = (int) $this->additionalSettings['current_device_id'];
         } elseif ($this->orderType == OrderTypes::PAID) {
             $deviceId = $this->order['kiosk_id'];
-//        } elseif ($this->order == OrderTypes::RUNNING) {
+        //        } elseif ($this->order == OrderTypes::RUNNING) {
             // for reservation order device id must set on additional setting wia protocol
         } elseif ($this->orderType == OrderTypes::SUB) {
             $deviceId = $this->order['kiosk_id'];
         } elseif ($this->orderType == OrderTypes::SAVE) {
-            $deviceId = $this->order['device_id'];
+            $deviceId = $this->saveOrder['device_id'];
         }
         $kiosk = /*Cache::tags([
                                 FLUSH_ALL,

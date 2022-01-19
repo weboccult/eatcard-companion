@@ -115,7 +115,7 @@ trait Stage8PrepareFinalJson
 
             $title5 = '#'.($this->order['order_id'] ?? '');
 
-            if (! empty($this->advanceData['tableName'])) {
+            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
                 $orderNo = 'Table '.$this->advanceData['tableName'];
             } else {
                 $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
@@ -161,6 +161,24 @@ trait Stage8PrepareFinalJson
 
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $titleTime = '';
+            }
+        }
+
+        if ($this->orderType == OrderTypes::SAVE) {
+            $title2 = $this->saveOrder['name'] ?? '';
+            $title3 = $this->saveOrder['phone'] ?? '';
+            $title5 = isset($this->saveOrder['random_id']) && ! empty($this->saveOrder['random_id']) ? '#'.$this->saveOrder['random_id'] : '';
+            $title6 = $this->saveOrder['order_time'] ?? '';
+            $orderNo = '';
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $title1 = '';
+                $title2 = '';
+                $title3 = '';
+                $title4 = '';
+                $title6 = date('Y-m-d').' om '.date('H:i');
+                $orderNo = $title5;
+                $pickupTime = '';
             }
         }
 
@@ -315,19 +333,35 @@ trait Stage8PrepareFinalJson
         }
 
         if ($this->orderType == OrderTypes::RUNNING) {
-            $dateTime = date('Y-m-d').' om '.date('H:i');
-
             if (! empty($this->reservationOrderItems)) {
                 $itemTitle = 'Table #'.($this->reservationOrderItems->table->name ?? '');
             }
 
             if ($this->systemType == SystemTypes::KDS) {
+                $dateTime = date('Y-m-d').' om '.date('H:i');
                 $typeOrder = 'Dine-in';
             }
 
             if ($this->printType == PrintTypes::PROFORMA && isset($this->total_price)) {
                 $total = $this->total_price;
                 $tableName = '';
+            }
+        }
+
+        if ($this->orderType == OrderTypes::SAVE) {
+            if (! empty($this->saveOrderItemCartId)) {
+                $dateTime = $this->saveOrder['order_time'] ?? '';
+            }
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $dateTime = date('Y-m-d').' om '.date('H:i');
+                $typeOrder = 'POS';
+                $itemTitle = isset($this->saveOrder['random_id']) && ! empty($this->saveOrder['random_id']) ? '#'.$this->saveOrder['random_id'] : '';
+                $tableName = $itemTitle;
+            }
+
+            if (isset($this->total_price)) {
+                $total = $this->total_price;
             }
         }
 

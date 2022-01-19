@@ -34,7 +34,10 @@ trait Stage6DatabaseInteraction
         } elseif ($this->orderType == OrderTypes::SUB) {
             //coming soon
         } elseif ($this->orderType == OrderTypes::SAVE) {
-            //coming soon
+            if (isset($this->saveOrderProducts) && ! empty($this->saveOrderProducts)) {
+                $categoriesIds = collect($this->saveOrderProducts)->pluck('category');
+                $categoriesIds = collect($categoriesIds)->pluck('id')->toArray();
+            }
         }
 
         $categories = Category::withTrashed()->select(['*', \DB::raw('IF(`order` IS NOT NULL, `order`, 1000000) `order`')])

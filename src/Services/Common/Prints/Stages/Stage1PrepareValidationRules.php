@@ -33,5 +33,10 @@ trait Stage1PrepareValidationRules
         if ($this->orderType == OrderTypes::RUNNING) {
             $this->addRuleToGeneratorSpecificRules(PrintTypeNotSupportedException::class, ! in_array($this->printType, [PrintTypes::PROFORMA, PrintTypes::DEFAULT, PrintTypes::KITCHEN_LABEL, PrintTypes::KITCHEN, PrintTypes::LABEL]));
         }
+
+        if ($this->orderType == OrderTypes::SAVE) {
+            //kitchen, proforma print not supported for save orders
+            $this->addRuleToGeneratorSpecificRules(PrintTypeNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
+        }
     }
 }

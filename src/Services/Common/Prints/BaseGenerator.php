@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\OrderReceipt;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -71,7 +72,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected ?array $subOrderItems = [];
     protected int $subOrderId = 0;
 
-    protected ?array $saveOrder = [];
+    protected ?OrderReceipt $saveOrder = null;
     protected ?array $saveOrderItems = [];
     protected int $saveOrderId = 0;
     protected int $saveOrderItemCartId = 0;
@@ -201,6 +202,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->prepareAYCEItems();
         $this->preparePaidOrderItems();
         $this->prepareRunningOrderItems();
+        $this->prepareSaveOrderItems();
         $this->sortItems();
         $this->preparePaymentReceipt();
         $this->prepareSummary();
