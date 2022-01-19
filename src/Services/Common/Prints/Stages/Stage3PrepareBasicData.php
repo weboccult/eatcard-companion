@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 
 /**
@@ -123,6 +124,7 @@ trait Stage3PrepareBasicData
                 'addon_print_categories' => [],
                 'show_no_of_pieces' => false,
                 'ayce_data' => [],
+                'is_until' => false,
 
                 //store settings
                 'hide_free_product' => 0,
@@ -174,7 +176,7 @@ trait Stage3PrepareBasicData
                 ];
     }
 
-    protected function prepareRefOrderId()
+    protected function preparePayloadData()
     {
         $globalOrderId = $this->payload['order_id'];
         if (strpos($globalOrderId, 'pos') !== false) {
@@ -188,19 +190,38 @@ trait Stage3PrepareBasicData
         if (empty($this->globalOrderId)) {
             throw new OrderIdEmptyException();
         }
+
+        if (isset($this->payload['item_id']) && ! empty($this->payload['item_id'])) {
+            $this->globalItemId = $this->payload['item_id'];
+        }
+
+        if (isset($this->payload['kds_user_id']) && ! empty($this->payload['kds_user_id'])) {
+            $this->kdsUserId = $this->payload['kds_user_id'];
+        }
     }
 
     protected function prepareOrderData()
     {
         if ($this->orderType == OrderTypes::PAID) {
             $this->orderId = $this->globalOrderId;
+            $this->orderItemId = ! empty($this->globalItemId) ? $this->globalItemId : 0;
         }
     }
 
     protected function prepareReservationData()
     {
-        if ($this->orderType == OrderTypes::RUNNING) {
+        if ($this->orderType == OrderTypes::RUNNING && $this->printType == PrintTypes::PROFORMA) {
             $this->reservationId = $this->globalOrderId;
+        }
+    }
+
+    protected function prepareReservationOrderItemData()
+    {
+        if ($this->orderType == OrderTypes::RUNNING && in_array($this->printType, [PrintTypes::DEFAULT,
+                                                                                  PrintTypes::KITCHEN_LABEL,
+                                                                                  PrintTypes::KITCHEN, PrintTypes::LABEL, ])) {
+            $this->reservationOrderItemId = $this->globalOrderId;
+            $this->reservationOrderItemCartId = ! empty($this->globalItemId) ? $this->globalItemId : '';
         }
     }
 
@@ -215,6 +236,7 @@ trait Stage3PrepareBasicData
     {
         if ($this->orderType == OrderTypes::SAVE) {
             $this->saveOrderId = $this->globalOrderId;
+            $this->saveOrderItemCartId = ! empty($this->globalItemId) ? $this->globalItemId : 0;
         }
     }
 

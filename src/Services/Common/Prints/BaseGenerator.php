@@ -2,7 +2,9 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
+use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage1PrepareValidationRules;
@@ -45,6 +47,10 @@ abstract class BaseGenerator implements BaseGeneratorContract
 
     protected array $payload = [];
     protected int $globalOrderId = 0;
+    protected int $globalItemId = 0;
+
+    protected ?KdsUser $kdsUser = null;
+    protected int $kdsUserId = 0;
 
     protected array $additionalSettings = [];
 
@@ -59,6 +65,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected ?array $order = [];
     protected ?array $orderItems = [];
     protected int $orderId = 0;
+    protected int $orderItemId = 0;
 
     protected ?array $subOrder = [];
     protected ?array $subOrderItems = [];
@@ -67,10 +74,13 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected ?array $saveOrder = [];
     protected ?array $saveOrderItems = [];
     protected int $saveOrderId = 0;
+    protected int $saveOrderItemCartId = 0;
 
     protected ?StoreReservation $reservation = null;
-    protected ?array $reservationOrderItems = [];
+    protected ?ReservationOrderItem $reservationOrderItems = null;
     protected int $reservationId = 0;
+    protected int $reservationOrderItemId = 0;
+    protected string $reservationOrderItemCartId = '';
 
     protected ?KioskDevice $kiosk;
 
@@ -119,7 +129,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     private function stage1_PrepareValidationRules()
     {
         $this->overridableCommonRule();
-        $this->overridableSystemSpecificRules();
+        $this->overridableGeneratorSpecificRules();
     }
 
     /**
@@ -141,9 +151,10 @@ abstract class BaseGenerator implements BaseGeneratorContract
     private function stage3_PrepareBasicData()
     {
         $this->prepareDefaultValue();
-        $this->prepareRefOrderId();
+        $this->preparePayloadData();
         $this->prepareOrderData();
         $this->prepareReservationData();
+        $this->prepareReservationOrderItemData();
         $this->prepareSubOrderData();
         $this->prepareSaveOrderData();
         $this->prepareDeviceId();
@@ -157,11 +168,13 @@ abstract class BaseGenerator implements BaseGeneratorContract
     private function stage4_BasicDatabaseInteraction()
     {
         $this->setSubOrderData();
+        $this->setReservationOrderItemData();
         $this->setOrderData();
         $this->setReservationData();
         $this->setSaveOrderData();
         $this->setStoreData();
         $this->setDeviceData();
+        $this->setKDSUserData();
     }
 
     private function stage5_EnableSettings()
@@ -180,13 +193,14 @@ abstract class BaseGenerator implements BaseGeneratorContract
 
     private function stage7_PrepareAdvanceData()
     {
-        $this->prepareTableName();
         $this->prepareDynamicOrderNo();
+        $this->prepareTableName();
         $this->processOrderData();
         $this->setThirdPartyName();
         $this->prepareFullReceiptFlag();
         $this->prepareAYCEItems();
         $this->preparePaidOrderItems();
+        $this->prepareRunningOrderItems();
         $this->sortItems();
         $this->preparePaymentReceipt();
         $this->prepareSummary();
@@ -208,5 +222,16 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setItems();
         $this->setReceipt();
         $this->setSummary();
+    }
+
+    //global functions
+
+    /**
+     * @param $item
+     *
+     * @return void
+     */
+    protected function itemPricesCalculate($item, $isAYCEProduct = false)
+    {
     }
 }

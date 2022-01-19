@@ -21,28 +21,6 @@ use function Weboccult\EatcardCompanion\Helpers\set_discount_with_prifix;
  */
 trait Stage7PrepareAdvanceData
 {
-    protected function prepareTableName()
-    {
-        $tableName = '';
-
-        if ($this->orderType == OrderTypes::PAID) {
-            $tableName = $this->order['table_name'] ?? '';
-        }
-
-        if (in_array($this->orderType, [OrderTypes::PAID, OrderTypes::RUNNING]) && ! empty($this->reservation)) {
-            if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 0) {
-                $tables = $this->reservation['tables2']->pluck('name')->toArray();
-                $tableName = implode(',', $tables);
-            }
-
-            if ($this->additionalSettings['dinein_guest_order'] && isset($this->order['table_name']) && ! empty($this->order['table_name'])) {
-                $tableName = ($this->order['table_name']) ? __('messages.table_name').' '.$this->order['table_name'] : '';
-            }
-        }
-
-        $this->advanceData['tableName'] = $tableName;
-    }
-
     protected function prepareDynamicOrderNo()
     {
         $dynamicOrderNo = '';
@@ -57,6 +35,32 @@ trait Stage7PrepareAdvanceData
         $this->advanceData['dynamicOrderNo'] = trim($dynamicOrderNo);
     }
 
+    protected function prepareTableName()
+    {
+        $tableName = '';
+        if ($this->orderType == OrderTypes::PAID) {
+            $tableName = $this->order['table_name'] ?? '';
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $tableName = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+            } elseif ($this->additionalSettings['dinein_guest_order'] && ! empty($tableName)) {
+                $tableName = ($this->order['table_name']) ? __('messages.table_name').' '.$this->order['table_name'] : '';
+            }
+        }
+
+        if (! empty($this->reservation)) {
+            if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 0) {
+                $tables = $this->reservation['tables2']->pluck('name')->toArray();
+                $tableName = implode(',', $tables);
+            }
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservationOrderItems)) {
+            $tableName = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+        }
+        $this->advanceData['tableName'] = $tableName;
+    }
+
     protected function processOrderData()
     {
         if ($this->orderType == OrderTypes::PAID) {
@@ -67,10 +71,6 @@ trait Stage7PrepareAdvanceData
             if (isset($this->order['order_date'])) {
                 $this->order['order_date'] = Carbon::parse($this->order['order_date'])->format('d-m-Y');
             }
-
-//            if (isset($this->order['ccv_customer_receipt'])) {
-//                $this->order['ccv_customer_receipt'] = json_decode($this->order['ccv_customer_receipt'], true);
-//            }
 
             //update address postcode
             $delivery_address = $this->order['delivery_address'] ?? '';
@@ -87,6 +87,10 @@ trait Stage7PrepareAdvanceData
             if (empty($this->reservation) && isset($this->order['order_type']) && $this->order['order_type'] == 'dine_in') {
                 $this->order['order_type'] = 'qr_code_type';
             }
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservation)) {
+            $this->reservation['order_date'] = Carbon::parse($this->reservation->getRawOriginal('res_date'))->format('d-m-Y');
         }
     }
 
@@ -113,6 +117,13 @@ trait Stage7PrepareAdvanceData
     public function prepareFullReceiptFlag()
     {
         if ($this->skipMainPrint) {
+            return;
+        }
+
+        //skip exclude print for profoma print
+        if ($this->printType == PrintTypes::PROFORMA) {
+            $this->additionalSettings['fullreceipt'] = '1';
+
             return;
         }
 
@@ -181,6 +192,7 @@ trait Stage7PrepareAdvanceData
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
 
+            $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
             $this->jsonItemsIndex += 1;
         }
@@ -201,6 +213,7 @@ trait Stage7PrepareAdvanceData
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
 
+            $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
             $this->jsonItemsIndex += 1;
         }
@@ -228,6 +241,7 @@ trait Stage7PrepareAdvanceData
                             $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * ($kid - $all_you_eat_data['dinein_price']['min_age'] + 1);
                         }
 
+                        $this->itemPricesCalculate($item, true);
                         $this->jsonItems[$this->jsonItemsIndex] = $item;
                         $this->jsonItemsIndex += 1;
                     }
@@ -248,6 +262,7 @@ trait Stage7PrepareAdvanceData
                 $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids']);
                 $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids'];
 
+                $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
                 $this->jsonItemsIndex += 1;
             }
@@ -271,6 +286,7 @@ trait Stage7PrepareAdvanceData
                     $item['on_the_house'] = 0;
                     $item['void_id'] = 0;
 
+                    $this->itemPricesCalculate($item, true);
                     $this->jsonItems[$this->jsonItemsIndex] = $item;
                     $this->jsonItemsIndex += 1;
                 }
@@ -294,6 +310,7 @@ trait Stage7PrepareAdvanceData
                 $item['on_the_house'] = 1;
                 $item['void_id'] = 0;
 
+                $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
                 $this->jsonItemsIndex += 1;
             }
@@ -313,6 +330,7 @@ trait Stage7PrepareAdvanceData
                 $item['on_the_house'] = 1;
                 $item['void_id'] = 0;
 
+                $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
                 $this->jsonItemsIndex += 1;
             }
@@ -338,6 +356,7 @@ trait Stage7PrepareAdvanceData
                                 $item['original_price'] = 0;
                             }
 
+                            $this->itemPricesCalculate($item, true);
                             $this->jsonItems[$this->jsonItemsIndex] = $item;
                             $this->jsonItemsIndex += 1;
                         }
@@ -358,6 +377,7 @@ trait Stage7PrepareAdvanceData
                     $item['on_the_house'] = 1;
                     $item['void_id'] = 0;
 
+                    $this->itemPricesCalculate($item, true);
                     $this->jsonItems[$this->jsonItemsIndex] = $item;
                     $this->jsonItemsIndex += 1;
                 }
@@ -380,6 +400,7 @@ trait Stage7PrepareAdvanceData
                         $item['on_the_house'] = 1;
                         $item['void_id'] = 0;
 
+                        $this->itemPricesCalculate($item, true);
                         $this->jsonItems[$this->jsonItemsIndex] = $item;
                         $this->jsonItemsIndex += 1;
                     }
@@ -405,21 +426,22 @@ trait Stage7PrepareAdvanceData
         $order = $this->order;
 
         //sort order items as per categories sequence
-        $sortedOrderItems = [];
+        $sortedItems = [];
         if (! empty($this->categories)) {
             foreach ($this->categories as $category) {
                 foreach ($order['order_items'] as $order_key => $order_item) {
                     if ($category->id == $order_item['product']['category_id']) {
-                        $sortedOrderItems[] = $order_item;
+                        $sortedItems[] = $order_item;
                         unset($order['order_items'][$order_key]);
                     }
                 }
             }
         }
 
-        $order['order_items'] = $sortedOrderItems;
+        $order['order_items'] = $sortedItems;
         $order_discount = (float) ($order['discount'] ?? 0);
         $categories = [];
+        $category_settings = [];
 
         foreach ($order['order_items'] as $key => $item) {
 
@@ -570,6 +592,7 @@ trait Stage7PrepareAdvanceData
             }
 
             /*set kitchen and label printer for each product*/
+            $kds_Kitchen = [];
             $pro_kitchen = [];
             $kitchen = [];
             $label = [];
@@ -578,8 +601,17 @@ trait Stage7PrepareAdvanceData
             $saveOrderId = $order['saved_order_id'] ?? '';
             $skipKitchenLabelPrint = false;
 
+            //if kds user set then overwrite all settings
+            if (! empty($this->kdsUser)) {
+                $kds_Kitchen = [($this->kdsUser->printer_name ?? '')];
+                //set final kitchen and label printer
+                $newItem['printername'] = $kds_Kitchen;
+                $newItem['labelprintname'] = [];
+                $skipKitchenLabelPrint = true;
+            }
+
             // no need to print if order is already saved
-            if ($this->skipKitchenLabelPrint) {
+            if ($this->skipKitchenLabelPrint || $skipKitchenLabelPrint) {
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printMethod == PrintMethod::PROTOCOL && $this->systemType == SystemTypes::KIOSK) {
                 //skip kitchen print for protocol print, It will be print in sqs print of pos
@@ -596,10 +628,6 @@ trait Stage7PrepareAdvanceData
                 // no need to print if printed already
                 $skipKitchenLabelPrint = true;
             }
-            //            if ($item['product']['category_id'] == '2373') {
-//                dd($skipKitchenLabelPrint, PrintTypes::DEFAULT , $this->additionalSettings['is_print_cart_add']
-//                    , $item['product']['category_id'], $this->additionalSettings['addon_print_categories'],in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories']));
-//            }
 
             if ($skipKitchenLabelPrint == false) {
                 if ($item['product']['printers']) {
@@ -650,7 +678,8 @@ trait Stage7PrepareAdvanceData
                         DEVICE_PRINTERS.$this->store->id,
                     ])
                         ->remember('{eat-card}-device-printer-kitchen-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
-                            return DevicePrinter::query()->where('store_device_id', $device_id)
+                            return DevicePrinter::query()
+                                ->where('store_device_id', $device_id)
                                 ->where('printer_type', 'kitchen')
                                 ->get();
                         });
@@ -661,16 +690,13 @@ trait Stage7PrepareAdvanceData
                         DEVICE_PRINTERS.$this->store->id,
                     ])
                         ->remember('{eat-card}-device-printer-label-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
-                            return DevicePrinter::query()->where('store_device_id', $device_id)
+                            return DevicePrinter::query()
+                                ->where('store_device_id', $device_id)
                                 ->where('printer_type', 'label')
                                 ->get();
                         });
-
                     $kitchen = $kitchen_printer ? $kitchen_printer->pluck('name')->toArray() : [];
                     $label = $label_printer ? $label_printer->pluck('name')->toArray() : [];
-                } else {
-                    $kitchen = [];
-                    $label = [];
                 }
 
                 //set final kitchen and label printer
@@ -686,9 +712,19 @@ trait Stage7PrepareAdvanceData
         $this->additionalSettings['categories_settings'] = $category_settings;
     }
 
+    protected function prepareRunningOrderItems()
+    {
+        // code in generator file
+    }
+
     protected function sortItems()
     {
         if (empty($this->jsonItems)) {
+            return;
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING && $this->printType != PrintTypes::PROFORMA) {
+            // skip for kitchen print
             return;
         }
 

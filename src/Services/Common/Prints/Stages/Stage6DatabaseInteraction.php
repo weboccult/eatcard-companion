@@ -15,11 +15,22 @@ trait Stage6DatabaseInteraction
 {
     protected function setCategoryData()
     {
+        $categoriesIds = [];
         if ($this->orderType == OrderTypes::PAID) {
             $categoriesIds = collect(($this->order['order_items'] ?? []))->pluck('product')->pluck('category_id')->toArray();
 //               $categoriesIds = collect($categoriesIds)->pluck('category_id')->toArray();
         } elseif ($this->orderType == OrderTypes::RUNNING) {
-            //coming soon
+            if (! empty($this->reservationOrderItems)) {
+                $cart = json_decode($this->reservationOrderItems->cart, true);
+                /* get category and products of the store */
+                $categoriesIds = collect($cart)->pluck('category');
+                $categoriesIds = collect($categoriesIds)->pluck('id')->toArray();
+            }
+
+            if (isset($this->proformaProducts) && ! empty($this->proformaProducts)) {
+                $categoriesIds = collect($this->proformaProducts)->pluck('category');
+                $categoriesIds = collect($categoriesIds)->pluck('id')->toArray();
+            }
         } elseif ($this->orderType == OrderTypes::SUB) {
             //coming soon
         } elseif ($this->orderType == OrderTypes::SAVE) {

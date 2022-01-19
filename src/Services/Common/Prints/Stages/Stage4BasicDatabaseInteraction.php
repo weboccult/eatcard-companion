@@ -4,12 +4,19 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Exceptions\KDSUserNotFoundException;
+use Weboccult\EatcardCompanion\Exceptions\NoKitchenPrintForUntilException;
+use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
+use Weboccult\EatcardCompanion\Exceptions\ReservationOrderItemEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
+use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
+use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
@@ -36,6 +43,31 @@ trait Stage4BasicDatabaseInteraction
         $subOrder = '';
     }
 
+    protected function setReservationOrderItemData()
+    {
+        if ($this->orderType != OrderTypes::RUNNING) {
+            return;
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING && ! in_array($this->printType, [PrintTypes::DEFAULT,
+                                                                                          PrintTypes::KITCHEN_LABEL,
+                                                                                          PrintTypes::KITCHEN, PrintTypes::LABEL, ])) {
+            return;
+        }
+
+        if (empty($this->reservationOrderItemId)) {
+            throw new OrderIdEmptyException();
+        }
+
+        $reservationOrderItems = ReservationOrderItem::with(['table'])->where('id', $this->reservationOrderItemId)->first();
+
+        if (empty($reservationOrderItems)) {
+            throw new ReservationOrderItemEmptyException();
+        }
+
+        $this->reservationOrderItems = $reservationOrderItems;
+    }
+
     protected function setOrderData()
     {
         if ($this->orderType != OrderTypes::PAID) {
@@ -47,8 +79,15 @@ trait Stage4BasicDatabaseInteraction
 
             return;
         }
+
+        //fetch only order item if set in payload for kitchen print
+        $orderItemId = $this->orderItemId;
+
         $order = Order::with([
-            'orderItems' => function ($q1) {
+            'orderItems' => function ($q1) use ($orderItemId) {
+                $q1->when($orderItemId > 0, function ($q) use ($orderItemId) {
+                    $q->where('id', $orderItemId);
+                });
                 $q1->with([
                     'product' => function ($q2) {
                         $q2->withTrashed()->with([
@@ -66,7 +105,10 @@ trait Stage4BasicDatabaseInteraction
         if (empty($order)) {
             companionLogger('Eatcard companion : Order details -1 : ', $order);
             $order = OrderHistory::with([
-                'orderItems' => function ($q1) {
+                'orderItems' => function ($q1) use ($orderItemId) {
+                    $q1->when($orderItemId > 0, function ($q) use ($orderItemId) {
+                        $q->where('id', $orderItemId);
+                    });
                     $q1->with([
                         'product' => function ($q2) {
                             $q2->withTrashed()->with([
@@ -96,6 +138,12 @@ trait Stage4BasicDatabaseInteraction
         if (! empty($this->order) && ! empty($this->order['parent_id'])) {
             $this->reservationId = $this->order['parent_id'];
         }
+
+        //if reservation order item data is set then take this reservation
+        if (! empty($this->reservationOrderItems) && ! empty($this->reservationOrderItems->reservation_id)) {
+            $this->reservationId = $this->reservationOrderItems->reservation_id;
+        }
+
         if (empty($this->reservationId)) {
             companionLogger('Eatcard companion : No reservation found for get reservation');
 
@@ -109,6 +157,9 @@ trait Stage4BasicDatabaseInteraction
             throw new StoreReservationEmptyException();
         }
 
+        if ($this->orderType == OrderTypes::RUNNING && $this->printType != PrintTypes::PROFORMA && isset($reservation->is_until) && $reservation->is_until == 1) {
+            throw new NoKitchenPrintForUntilException();
+        }
         companionLogger('--Eatcard companion reservation details : ', $reservation);
         $this->reservation = $reservation;
     }
@@ -156,7 +207,7 @@ trait Stage4BasicDatabaseInteraction
         } elseif ($this->orderType == OrderTypes::SAVE) {
             $deviceId = $this->order['device_id'];
         }
-        $kiosk = Cache::tags([
+        $kiosk = /*Cache::tags([
                                 FLUSH_ALL,
                                 FLUSH_POS,
                                 FLUSH_STORE_BY_ID.$this->store->id,
@@ -164,9 +215,25 @@ trait Stage4BasicDatabaseInteraction
                                 STORE_POS_SETTING,
                             ])
                                 ->remember('{eat-card}-kiosk-device-with-settings'.$deviceId, CACHING_TIME, function () use ($deviceId) {
-                                    return KioskDevice::with('settings')->where('id', $deviceId)->first();
-                                });
+                                    return*/ KioskDevice::with('settings')->where('id', $deviceId)->first();
+        /* });*/
         companionLogger('--Eatcard companion Kiosk Device details : ', $kiosk);
+//        dd($kiosk);
         $this->kiosk = $kiosk;
+    }
+
+    protected function setKDSUserData()
+    {
+        if (empty($this->kdsUserId)) {
+            return;
+        }
+
+        $kdsUser = KdsUser::query()->where('id', $this->kdsUserId)->first();
+
+        if (empty($kdsUser)) {
+            throw new KDSUserNotFoundException();
+        }
+
+        $this->kdsUser = $kdsUser;
     }
 }

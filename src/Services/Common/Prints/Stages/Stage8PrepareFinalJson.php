@@ -117,20 +117,57 @@ trait Stage8PrepareFinalJson
 
             if (! empty($this->advanceData['tableName'])) {
                 $orderNo = 'Table '.$this->advanceData['tableName'];
-            }
-
-            if (! empty($this->advanceData['dynamicOrderNo'])) {
-                $orderNo = '#'.$this->advanceData['dynamicOrderNo'];
+            } else {
+                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             }
 
             $title6 = __('messages.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').
                             ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-//            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
-//                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
+            //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
+            //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
 
             $titleTime = $this->order['paid_on'] ?? '';
 
             $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $title1 = '';
+                $title2 = '';
+                $title3 = '';
+                $title4 = '';
+                $title5 = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+                $title6 = date('Y-m-d').' om '.date('H:i');
+                $titleTime = '';
+                $pickupTime = '';
+            }
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING) {
+
+            //reservation order item set then it will be kitchen print of round order
+            if (! empty($this->reservationOrderItems)) {
+                $title5 = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+                $orderNo = $title5;
+            }
+
+            if ($this->printType == PrintTypes::PROFORMA) {
+                $title1 = 'Proforma';
+                $title2 = ($this->reservation['voornaam']) ? $this->reservation['voornaam'].' '.$this->reservation['achternaam'] : '';
+                $title3 = $this->reservation['gsm_no'] ?? '';
+
+                if ($this->additionalSettings['is_print_exclude_email'] == 0) {
+                    $title4 = $this->reservation['email'] ?? '';
+                }
+
+                $orderNo = 'Table '.$this->advanceData['tableName'];
+                $titleTime = '';
+            }
+        }
+
+        if (! empty($titleTime)) {
+            $this->jsonFormatFullReceipt['titteTime'][0]['value2'] = $titleTime;
+        } else {
+            unset($this->jsonFormatFullReceipt['titteTime']);
         }
 
         $this->jsonFormatFullReceipt['title1'] = $title1;
@@ -140,7 +177,6 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['title5'] = $title5;
         $this->jsonFormatFullReceipt['ordernumber'] = $orderNo;
         $this->jsonFormatFullReceipt['title6'] = $title6;
-        $this->jsonFormatFullReceipt['titteTime'][0]['value2'] = $titleTime;
         $this->jsonFormatFullReceipt['pickuptime'] = $pickupTime;
     }
 
@@ -176,6 +212,11 @@ trait Stage8PrepareFinalJson
             return;
         }
 
+        if ($this->skipMainPrint) {
+            //skip for kitchen print
+            return;
+        }
+
         $address1 = '';
         $address2 = '';
         $address3 = '';
@@ -193,7 +234,7 @@ trait Stage8PrepareFinalJson
         }
 
         $phone = $this->store->store_phone ?? '';
-        $email = $this->store->store_email && ! $this->additionalSettings['is_print_exclude_email'] ? $this->store->store_email : '';
+        $email = $this->store->store_email ?? '';
         $zipcode = $this->store->zipcode ?? '';
         $websiteurl = $this->store->website_url ?? '';
         $kvknumber = $this->store->kvk_number ? 'KVK-'.$this->store->kvk_number : '';
@@ -246,6 +287,10 @@ trait Stage8PrepareFinalJson
         $dateTime = '';
         $customerComments = '';
         $total = '0,00';
+        $itemTitle = '';
+        $tableName = '';
+
+        $tableName = $this->advanceData['tableName'];
 
         if ($this->orderType == OrderTypes::PAID) {
             $checkoutNo = $this->order['checkout_no'] ?? '';
@@ -261,13 +306,42 @@ trait Stage8PrepareFinalJson
             if (! in_array($this->systemType, [SystemTypes::POS])) {
                 $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
             }
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $itemTitle = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+                $dateTime = date('Y-m-d').' om '.date('H:i');
+                $orderType = '';
+            }
+        }
+
+        if ($this->orderType == OrderTypes::RUNNING) {
+            $dateTime = date('Y-m-d').' om '.date('H:i');
+
+            if (! empty($this->reservationOrderItems)) {
+                $itemTitle = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+            }
+
+            if ($this->systemType == SystemTypes::KDS) {
+                $typeOrder = 'Dine-in';
+            }
+
+            if ($this->printType == PrintTypes::PROFORMA && isset($this->total_price)) {
+                $total = $this->total_price;
+                $tableName = '';
+            }
+        }
+
+        if (! empty($typeOrder)) {
+            $this->jsonFormatFullReceipt['typeorder'] = $typeOrder;
+        } else {
+            // need to unset remove white space in header for round order kitchen print
+            unset($this->jsonFormatFullReceipt['typeorder']);
         }
 
         $this->jsonFormatFullReceipt['kioskname'] = $this->kiosk->name ?? '';
-        $this->jsonFormatFullReceipt['tablename'] = $this->advanceData['tableName'];
+        $this->jsonFormatFullReceipt['tablename'] = $tableName;
         $this->jsonFormatFullReceipt['checkoutno'] = $checkoutNo;
         $this->jsonFormatFullReceipt['ordertype'] = $orderType;
-        $this->jsonFormatFullReceipt['typeorder'] = $typeOrder;
         $this->jsonFormatFullReceipt['datetime'] = $dateTime;
         $this->jsonFormatFullReceipt['headertag'] = []; //not in use
         $this->jsonFormatFullReceipt['footertag'] = []; //not in use
@@ -275,8 +349,8 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['customtext'] = $this->additionalSettings['print_custom_text'];
         $this->jsonFormatFullReceipt['fullreceipt'] = $this->additionalSettings['fullreceipt'];
         $this->jsonFormatFullReceipt['kitchenreceipt'] = $this->additionalSettings['kitchenreceipt'];
-        $this->jsonFormatFullReceipt['itemsTitle'] = ''; //not in use
-        $this->jsonFormatFullReceipt['Total'][0]['value1'] = $total;
+        $this->jsonFormatFullReceipt['itemsTitle'] = $itemTitle;
+        $this->jsonFormatFullReceipt['Total'][0]['value1'] = changePriceFormat($total);
         $this->jsonFormatFullReceipt['thankyounote'][] = __('messages.thank_you_line_2');
         $this->jsonFormatFullReceipt['categories_settings'] = $this->additionalSettings['categories_settings'];
         $this->jsonFormatFullReceipt['noofprints'] = $this->additionalSettings['no_of_prints'];

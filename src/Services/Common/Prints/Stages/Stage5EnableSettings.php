@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
+use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
@@ -100,6 +101,7 @@ trait Stage5EnableSettings
         $this->additionalSettings['show_no_of_pieces'] = isset($reservation->reservation_type) && $reservation->reservation_type == 'cart';
         $this->additionalSettings['ayce_data'] = isset($reservation->all_you_eat_data) && ! empty($reservation->all_you_eat_data) ? json_decode($reservation->all_you_eat_data, true) : [];
         $this->additionalSettings['dinein_guest_order'] = isset($this->reservation->is_dine_in) && $this->reservation->is_dine_in == 1;
+        $this->additionalSettings['is_until'] = isset($this->reservation->is_until) && $this->reservation->is_until == 1;
     }
 
     protected function enableGlobalSettings()
@@ -107,6 +109,15 @@ trait Stage5EnableSettings
 
         //skip main print for kitchen related prints
         if (in_array($this->printType, [PrintTypes::KITCHEN, PrintTypes::LABEL, PrintTypes::KITCHEN_LABEL])) {
+            $this->skipMainPrint = true;
+        }
+
+        //skip for round order print
+        if (! $this->skipMainPrint && $this->orderType == OrderTypes::RUNNING && $this->printType == PrintTypes::DEFAULT) {
+            $this->skipMainPrint = true;
+        }
+
+        if ($this->systemType == SystemTypes::KDS) {
             $this->skipMainPrint = true;
         }
     }
