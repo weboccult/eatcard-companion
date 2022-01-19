@@ -35,9 +35,9 @@ class Meal extends Model
     {
         $paymentType = '';
         if ($this->payment_type == 1) {
-            $paymentType = __('messages.full_payment');
+            $paymentType = __('eatcard-companion::general.full_payment');
         } elseif ($this->payment_type == 3) {
-            $paymentType = __('messages.partial_payment');
+            $paymentType = __('eatcard-companion::general.partial_payment');
         }
 
         return $paymentType;

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Weboccult\EatcardCompanion\Traits\Translatable;
+use function Weboccult\EatcardCompanion\Helpers\getS3File;
 
 class Category extends Model
 {
@@ -16,6 +17,9 @@ class Category extends Model
 
     public array $translatableFields = ['name'];
 
+    /**
+     * @return mixed
+     */
     public function getImageUrlAttribute()
     {
         if ($this->image) {

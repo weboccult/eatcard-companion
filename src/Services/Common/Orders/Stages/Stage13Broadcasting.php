@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis as LRedis;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\Order;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
 use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 
@@ -39,8 +40,9 @@ trait Stage13Broadcasting
         if ($this->system === SystemTypes::TAKEAWAY) {
             if (($this->store->is_notification) && (! $this->store->notificationSetting || ($this->store->notificationSetting && $this->store->notificationSetting->is_takeaway_notification))) {
                 /*send app notification after order status updated to paid or canceled*/
-                $order = $this->createdOrder->toArray();
-                $order['paid_on'] = Carbon::parse($order['paid_on'])->format('d-m-Y H:i');
+                $order = Order::query()->with('orderItems.product:id,image,sku')->findOrFail($this->createdOrder->id);
+                $order = $order->toArray();
+//                $order['paid_on'] = Carbon::parse($order['paid_on'])->format('d-m-Y H:i');
                 $order['order_date'] = Carbon::parse($order['order_date'])->format('d-m-Y');
                 foreach ($order['order_items'] as $key => $item) {
                     $order['order_items'][$key]['extra'] = json_decode($item['extra']);

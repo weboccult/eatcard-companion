@@ -31,7 +31,8 @@ trait Stage0BasicDatabaseInteraction
                 STORE_SETTING,
                 TAKEAWAY_SETTING.$storeId,
             ])->remember('{eat-card}-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
-                return Store::query()->with('storeSetting')->where('id', $storeId)->first();
+                return Store::query()
+                    ->with('storeSetting', 'multiSafe')->where('id', $storeId)->first();
             });
             if (! empty($store)) {
                 $this->store = $store;

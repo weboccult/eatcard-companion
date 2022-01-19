@@ -47,8 +47,14 @@ use function Weboccult\EatcardCompanion\Helpers\{FUNCTION1, FUNCTION2};
 - Order : To handle common order creation logic
 - Print : To generate common json for all type of prints - SQS | Protocol | Label | Full Receipt | Performa Receipt 
   | Kitchen print.
+- Sms : to send sms with very fluent and elegant API
+- MultiSafe : to handle mutisafe transactions
+- OneSignal : to handle push notification for mobile apps
 
-Please check [ORDER_SERVICE_USAGE.md](Docs/ORDER_SERVICE_USAGE.md) & [PRINT_SERVICE_USAGE.md](Docs/PRINT_SERVICE_USAGE.md) for more details
+Please check below documents for more details 
+- [ORDER_SERVICE_USAGE.md](Docs/ORDER_SERVICE_USAGE.md)
+- [PRINT_SERVICE_USAGE.md](Docs/PRINT_SERVICE_USAGE.md)  
+- [EATCARD_SMS_USAGE.md](Docs/EATCARD_SMS_USAGE.md)
 
 ## Companion Config
 
@@ -60,6 +66,24 @@ php artisan eatcardcompanion:publish --type=config
 It will publish eatcardCompanion.php to your parent project
 
 Please check [EATCARD_COMPANION.md](Docs/EATCARD_COMPANION.md) for more details
+
+## Sms Config & Migration
+
+here's how you can use publish sms config file to manage numerous settings
+
+```php
+php artisan eatcardsms:publish --type=config
+```
+It will publish eatcardSms.php to your parent project
+
+```php
+php artisan eatcardsms:publish --type=migration
+```
+It will publish one migration to your parent project to store sms history.
+
+Please check [EATCARD_SMS.md](Docs/EATCARD_SMS.md) for more details
+
+
 
 ## Translation Support
 

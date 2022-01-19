@@ -18,8 +18,27 @@ class Store extends Model
         return $this->hasOne(StoreSetting::class, 'store_id', 'id');
     }
 
+    /**
+     * @return HasOne
+     */
     public function takeawaySetting(): HasOne
     {
         return $this->hasOne(TakeawaySetting::class, 'store_id', 'id');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function store_owner(): HasOne
+    {
+        return $this->hasOne(StoreOwner::class, 'store_id', 'id');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function multiSafe(): HasOne
+    {
+        return $this->hasOne(MultiSafePay::class, 'store_id', 'id');
     }
 }

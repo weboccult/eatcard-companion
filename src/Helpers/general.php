@@ -520,7 +520,7 @@ if (! function_exists('sendResWebNotification')) {
                         ->get()
                         ->toArray();
                     foreach ($orders as $key => $order) {
-                        $orders[$key]['dutch_order_status'] = __('messages.'.$order['order_status']);
+                        $orders[$key]['dutch_order_status'] = __('eatcard-companion::general.'.$order['order_status']);
                     }
                     $reservation->reservation->orders = $orders;
                 }
@@ -699,7 +699,7 @@ if (! function_exists('sendWebNotification')) {
         try {
             $notification = Notification::query()->create([
                 'store_id'        => $order['store_id'],
-                'notification'    => __('messages.new_order_notification', [
+                'notification'    => __('eatcard-companion::general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),
@@ -715,7 +715,7 @@ if (! function_exists('sendWebNotification')) {
                     'contact_no'            => $order['contact_no'],
                     'order_status'          => $order['order_status'],
                     'table_name'            => $order['table_name'],
-                    'dutch_order_status'    => __('messages.'.$order['order_status']),
+                    'dutch_order_status'    => __('eatcard-companion::general.'.$order['order_status']),
                     'date'                  => $data['orderDate'],
                     'delivery_address'      => $order['delivery_address'],
                     'method'                => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? '' : $order['method'],

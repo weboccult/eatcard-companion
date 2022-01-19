@@ -8,6 +8,9 @@ use Illuminate\Support\Stringable;
 use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Weboccult\EatcardCompanion\Services\Core\EatcardPrint;
 use Weboccult\EatcardCompanion\Services\Core\EatcardOrder;
+use Weboccult\EatcardCompanion\Services\Core\EatcardSms;
+use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
+use Weboccult\EatcardCompanion\Services\Core\OneSignal;
 
 if (! function_exists('companionLogger')) {
     /**
@@ -63,5 +66,41 @@ if (! function_exists('eatcardOrder')) {
     function eatcardOrder(): EatcardOrder
     {
         return app('eatcard-order');
+    }
+}
+
+if (! function_exists('multiSafe')) {
+    /**
+     * Access MultiSafe through helper.
+     *
+     * @return MultiSafe
+     */
+    function multiSafe(): MultiSafe
+    {
+        return app('multi-safe');
+    }
+}
+
+if (! function_exists('oneSignal')) {
+    /**
+     * Access SmsManager through helper.
+     *
+     * @return OneSignal
+     */
+    function oneSignal(): OneSignal
+    {
+        return app('sms');
+    }
+}
+
+if (! function_exists('eatcardSms')) {
+    /**
+     * Access SmsManager through helper.
+     *
+     * @return EatcardSms
+     */
+    function eatcardSms(): EatcardSms
+    {
+        return app('eatcard-sms');
     }
 }

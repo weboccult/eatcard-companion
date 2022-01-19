@@ -9,7 +9,6 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
-use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
@@ -106,12 +105,8 @@ trait Stage9PerformOperations
     protected function asapOrderOperation()
     {
         if ($this->system === SystemTypes::TAKEAWAY) {
-            $this->orderData = $this->payload['is_asap'] ?? 0;
             if (! isset($this->payload['is_asap'])) {
-                $store_takeaway_setting = TakeawaySetting::query()
-                    ->where('store_id', $this->store->id)
-                    ->first();
-                $store_time_slots = json_decode($store_takeaway_setting->pickup_delivery_days, true);
+                $store_time_slots = json_decode($this->takeawaySetting->pickup_delivery_days, true);
                 $current_day = Carbon::parse($this->orderData['order_date'])->dayOfWeekIso - 1;
                 if (isset($store_time_slots[$current_day]['is_max_order_per_slot']) &&
                     $store_time_slots[$current_day]['is_max_order_per_slot'] == '1' &&

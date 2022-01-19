@@ -25,13 +25,15 @@
     "guzzlehttp/guzzle": "^7.0.1",
     "illuminate/collections": "^8.0",
     "illuminate/console": "^8.0",
+    "illuminate/contracts": "^8.80",
     "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
     "mollie/laravel-mollie": "^2.17",
     "nunomaduro/collision": "^5.0",
     "pestphp/pest": "^1.0",
     "phpunit/phpunit": "^9.0",
-    "spatie/laravel-newsletter": "^4.11"
+    "spatie/laravel-newsletter": "^4.11",
+    "twilio/sdk": "^6.33"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -59,13 +61,17 @@
       "aliases": {
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
-        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
+        "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
+        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal",
+        "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider",
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider"
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardSmsServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider"
       ]
     }
   },

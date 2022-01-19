@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Weboccult\EatcardCompanion\Traits\Translatable;
+use function Weboccult\EatcardCompanion\Helpers\getS3File;
 
 class GiftCard extends Model
 {

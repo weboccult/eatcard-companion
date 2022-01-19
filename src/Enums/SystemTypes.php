@@ -7,6 +7,7 @@ namespace Weboccult\EatcardCompanion\Enums;
  */
 class SystemTypes extends BaseEnum
 {
+    public const ANONYMOUS = 'ANONYMOUS';
     public const DINE_IN = 'DINE_IN';
     public const KIOSK = 'KIOSK';
     public const POS = 'POS';

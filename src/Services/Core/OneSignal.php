@@ -6,6 +6,7 @@ use Exception;
 use Weboccult\EatcardCompanion\Models\Device;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\reverseRouteGenerator;
 
 /**
  * @author Darshit Hedpara
@@ -27,12 +28,13 @@ class OneSignal
 
     private string $app_id;
     private string $app_rest_key;
-    private string $api_url = 'https://onesignal.com/api/v1';
+    private string $api_url;
 
     public function __construct()
     {
-        $this->app_id = env('ONE_SIGNAL_APP_ID');
-        $this->app_rest_key = env('ONE_SIGNAL_REST_API_KEY');
+        $this->api_url = config('eatcardCompanion.push_notification.one_signal.api_url');
+        $this->app_id = config('eatcardCompanion.push_notification.one_signal.app_id');
+        $this->app_rest_key = config('eatcardCompanion.push_notification.one_signal.rest_api_key');
     }
 
     /**
@@ -42,10 +44,10 @@ class OneSignal
      */
     public function createDevice($onesignal_id): bool
     {
-        $url = $this->api_url.'/players/'.$onesignal_id.'?app_id='.$this->app_id;
+        $deviceCreateURL = $this->api_url.reverseRouteGenerator('push_notification.one_signal.create_device_url', ['onesignal_id' => $onesignal_id, 'app_id' => $this->app_id], [], null, true);
         try {
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_URL, $deviceCreateURL);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -98,7 +100,8 @@ class OneSignal
         $fields = json_encode($fields);
         try {
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $this->api_url.'/notifications');
+            $notificationUrl = config('eatcardCompanion.push_notification.one_signal.send_notification_url');
+            curl_setopt($ch, CURLOPT_URL, $this->api_url.$notificationUrl);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json; charset=utf-8',
                 'Authorization: Basic '.$this->app_rest_key,

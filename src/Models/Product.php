@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Weboccult\EatcardCompanion\Classes\ImageFilters;
 use Weboccult\EatcardCompanion\Traits\Translatable;
+use function Weboccult\EatcardCompanion\Helpers\getS3File;
 
 class Product extends Model
 {
