@@ -73,7 +73,6 @@ class RunningOrderGenerator extends BaseGenerator
         if ($this->printType == PrintTypes::PROFORMA) {
             $reservationOrderItems = ReservationOrderItem::query()->where('reservation_id', $this->reservationId)->get();
         }
-        https://sqs.eu-central-1.amazonaws.com/472623568929/kdssqstest
 
         $items = [];
         foreach ($reservationOrderItems as $rk => $reservationOrderItem) {
