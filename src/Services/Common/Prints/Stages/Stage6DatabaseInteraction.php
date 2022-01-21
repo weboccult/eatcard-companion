@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PaymentSplitTypes;
 use Weboccult\EatcardCompanion\Models\Category;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -16,9 +17,13 @@ trait Stage6DatabaseInteraction
     protected function setCategoryData()
     {
         $categoriesIds = [];
-        if ($this->orderType == OrderTypes::PAID) {
-            $categoriesIds = collect(($this->order['order_items'] ?? []))->pluck('product')->pluck('category_id')->toArray();
-//               $categoriesIds = collect($categoriesIds)->pluck('category_id')->toArray();
+        if (in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
+            if ($this->orderType == OrderTypes::SUB && isset($this->order['payment_split_type']) && $this->order['payment_split_type'] == PaymentSplitTypes::PRODUCT_SPLIT) {
+                $categoriesIds = collect(($this->subOrder['sub_order_items'] ?? []))->pluck('product')->pluck('category_id')->toArray();
+            } else {
+                $categoriesIds = collect(($this->order['order_items'] ?? []))->pluck('product')->pluck('category_id')->toArray();
+                //               $categoriesIds = collect($categoriesIds)->pluck('category_id')->toArray();
+            }
         } elseif ($this->orderType == OrderTypes::RUNNING) {
             if (! empty($this->reservationOrderItems)) {
                 $cart = json_decode($this->reservationOrderItems->cart, true);
@@ -31,8 +36,6 @@ trait Stage6DatabaseInteraction
                 $categoriesIds = collect($this->proformaProducts)->pluck('category');
                 $categoriesIds = collect($categoriesIds)->pluck('id')->toArray();
             }
-        } elseif ($this->orderType == OrderTypes::SUB) {
-            //coming soon
         } elseif ($this->orderType == OrderTypes::SAVE) {
             if (isset($this->saveOrderProducts) && ! empty($this->saveOrderProducts)) {
                 $categoriesIds = collect($this->saveOrderProducts)->pluck('category');

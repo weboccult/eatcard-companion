@@ -19,7 +19,7 @@ trait Stage8PrepareFinalJson
 {
     protected function setMainPrinter()
     {
-        //no need to set printer name if setting is enable
+        //no need to set printer name if setting is enabled
         if ($this->skipMainPrint) {
             return;
         }
@@ -84,8 +84,13 @@ trait Stage8PrepareFinalJson
     protected function setOpenCashDrawer()
     {
         if ($this->systemType == SystemTypes::POS && $this->printType == PrintTypes::DEFAULT && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
-            if (isset($this->order['method']) && isset($this->order['total_price']) && $this->order['method'] == 'cash') {
-                $this->jsonFormatFullReceipt['opendrawer'] = (int) $this->order['total_price'] > 0 ? '1' : '0';
+            $order = $this->order;
+            if ($this->orderType == OrderTypes::SUB) {
+                $order = $this->subOrder;
+            }
+
+            if (isset($order['method']) && isset($order['total_price']) && $order['method'] == 'cash') {
+                $this->jsonFormatFullReceipt['opendrawer'] = (int) $order['total_price'] > 0 ? '1' : '0';
             }
         }
     }
@@ -103,33 +108,6 @@ trait Stage8PrepareFinalJson
         $pickupTime = '';
 
         if ($this->orderType == OrderTypes::PAID) {
-            $title1 = 'Uw bestelling is '.__('messages.'.($this->order['status'] ?? ''));
-//            $title1 = 'Uw bestelling is '.($this->order['status'] ?? '');
-
-            $title2 = $this->order['full_name'] ?? '';
-            $title3 = $this->order['contact_no'] ?? '';
-
-            if ($this->additionalSettings['is_print_exclude_email'] == 0) {
-                $title4 = $this->order['email'] ?? '';
-            }
-
-            $title5 = '#'.($this->order['order_id'] ?? '');
-
-            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
-                $orderNo = 'Table '.$this->advanceData['tableName'];
-            } else {
-                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
-            }
-
-            $title6 = __('messages.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').
-                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-            //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
-            //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-
-            $titleTime = $this->order['paid_on'] ?? '';
-
-            $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
-
             if ($this->systemType == SystemTypes::KDS) {
                 $title1 = '';
                 $title2 = '';
@@ -139,17 +117,30 @@ trait Stage8PrepareFinalJson
                 $title6 = date('Y-m-d').' om '.date('H:i');
                 $titleTime = '';
                 $pickupTime = '';
+            } else {
+                $title1 = 'Uw bestelling is '.__('messages.'.($this->order['status'] ?? ''));
+                $title2 = $this->order['full_name'] ?? '';
+                $title3 = $this->order['contact_no'] ?? '';
+                if ($this->additionalSettings['is_print_exclude_email'] == 0) {
+                    $title4 = $this->order['email'] ?? '';
+                }
+                $title5 = '#'.($this->order['order_id'] ?? '');
+                $title6 = __('messages.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
+                //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
+                //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
+                $titleTime = $this->order['paid_on'] ?? '';
+                $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
+            }
+
+            // for reservation order need to add table name prefix before name
+            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
+                $orderNo = 'Table '.$this->advanceData['tableName'];
+            } else {
+                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             }
         }
 
         if ($this->orderType == OrderTypes::RUNNING) {
-
-            //reservation order item set then it will be kitchen print of round order
-            if (! empty($this->reservationOrderItems)) {
-                $title5 = 'Table #'.($this->reservationOrderItems->table->name ?? '');
-                $orderNo = $title5;
-            }
-
             if ($this->printType == PrintTypes::PROFORMA) {
                 $title1 = 'Proforma';
                 $title2 = ($this->reservation['voornaam']) ? $this->reservation['voornaam'].' '.$this->reservation['achternaam'] : '';
@@ -161,6 +152,12 @@ trait Stage8PrepareFinalJson
 
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $titleTime = '';
+            }
+
+            //reservation order item set then it will be kitchen print of round order
+            if (! empty($this->reservationOrderItems)) {
+                $title5 = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+                $orderNo = $title5;
             }
         }
 
@@ -182,6 +179,18 @@ trait Stage8PrepareFinalJson
             }
         }
 
+        if ($this->orderType == OrderTypes::SUB) {
+            $title1 = 'Uw bestelling is '.__('messages.'.($this->subOrder['status'] ?? ''));
+            $title5 = '#'.($this->order['order_id'] ?? '');
+            $titleTime = $this->subOrder['paid_on'] ?? '';
+            $pickupTime = $this->order['order_time'] ?? '';
+            // for reservation order need to add table name prefix before name
+            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
+                $orderNo = 'Table '.$this->advanceData['tableName'];
+            } else {
+                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+            }
+        }
         if (! empty($titleTime)) {
             $this->jsonFormatFullReceipt['titteTime'][0]['value2'] = $titleTime;
         } else {
@@ -304,7 +313,7 @@ trait Stage8PrepareFinalJson
         $orderType = '';
         $dateTime = '';
         $customerComments = '';
-        $total = '0,00';
+        $total = '0';
         $itemTitle = '';
         $tableName = '';
 
@@ -314,12 +323,11 @@ trait Stage8PrepareFinalJson
             $checkoutNo = $this->order['checkout_no'] ?? '';
 
             $typeOrder = $this->additionalSettings['thirdPartyName'].__('messages.'.($this->order['order_type'] ?? ''));
-//            $typeOrder = $this->additionalSettings['thirdPartyName'] . ($this->order['order_type'] ?? '');
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
 
             $customerComments = $this->order['comment'] ?? '';
 
-            $total = ''.changePriceFormat($this->order['total_price'] ?? '0');
+            $total = $this->order['total_price'] ?? '0';
 
             if (! in_array($this->systemType, [SystemTypes::POS])) {
                 $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
@@ -363,6 +371,13 @@ trait Stage8PrepareFinalJson
             if (isset($this->total_price)) {
                 $total = $this->total_price;
             }
+        }
+
+        if ($this->orderType == OrderTypes::SUB) {
+            $customerComments = $this->order['comment'] ?? '';
+            $total = $this->subOrder['total_price'] ?? '0';
+            $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
+            $tableName = '';
         }
 
         if (! empty($typeOrder)) {

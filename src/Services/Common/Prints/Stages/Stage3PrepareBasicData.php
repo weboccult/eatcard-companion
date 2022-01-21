@@ -158,6 +158,7 @@ trait Stage3PrepareBasicData
                 'cash_drawer_available' => 0,
                 'kiosk_printer_name' => '',
                 'is_print_cart_add' => 0,
+                'is_print_split' => 0,
 
                 //advance data
                 'thirdPartyName' => '',

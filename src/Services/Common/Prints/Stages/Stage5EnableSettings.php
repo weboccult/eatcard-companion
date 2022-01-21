@@ -90,6 +90,7 @@ trait Stage5EnableSettings
 
         if ($this->systemType == SystemTypes::POS) {
             $this->additionalSettings['addon_print_categories'] = isset($kiosk->settings->add_print_categories) && ! empty($kiosk->settings->add_print_categories) ? json_decode($kiosk->settings->add_print_categories, true) : [];
+            $this->additionalSettings['is_print_split'] = $kiosk->settings->add_print_categories ?? 0;
         }
     }
 

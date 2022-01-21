@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PaymentSplitTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
@@ -24,7 +25,7 @@ trait Stage7PrepareAdvanceData
     protected function prepareDynamicOrderNo()
     {
         $dynamicOrderNo = '';
-        if ($this->orderType == OrderTypes::PAID) {
+        if (in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             if (! empty($this->additionalSettings['print_dynamic_order_no'])) {
                 $dynamicOrderNo = ''.substr(($this->order['order_id'] ?? ''), -3);
             } else {
@@ -92,6 +93,15 @@ trait Stage7PrepareAdvanceData
         if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservation)) {
             $this->reservation['order_date'] = Carbon::parse($this->reservation->getRawOriginal('res_date'))->format('d-m-Y');
         }
+
+        if ($this->orderType == OrderTypes::SUB) {
+            if (isset($this->subOrder['paid_on'])) {
+                $this->subOrder['paid_on'] = Carbon::parse($this->subOrder['paid_on'])->format('d-m-Y H:i');
+            }
+            if (isset($this->subOrder['order_date'])) {
+                $this->subOrder['order_date'] = Carbon::parse($this->subOrder['order_date'])->format('d-m-Y');
+            }
+        }
     }
 
     protected function setThirdPartyName()
@@ -147,7 +157,7 @@ trait Stage7PrepareAdvanceData
             $excludeSystemName = 'deliveroo';
         }
 
-        $excludePrintSystem = explode(',', $this->additionalSettings['exclude_print_from_main_print']);
+        $excludePrintSystem = ! empty($this->additionalSettings['exclude_print_from_main_print']) ? explode(',', $this->additionalSettings['exclude_print_from_main_print']) : [];
         if (! empty($excludePrintSystem) && in_array($excludeSystemName, $excludePrintSystem)) {
             $fullReceipt = '0';
         }
@@ -159,6 +169,10 @@ trait Stage7PrepareAdvanceData
     {
         // no need to prepare ayce item if main print will not print
         if ($this->skipMainPrint) {
+            return;
+        }
+
+        if ($this->orderType == OrderTypes::SUB && isset($this->order['payment_split_type']) && $this->order['payment_split_type'] == PaymentSplitTypes::PRODUCT_SPLIT) {
             return;
         }
 
@@ -414,16 +428,32 @@ trait Stage7PrepareAdvanceData
     protected function preparePaidOrderItems()
     {
         //only for paid orders
-        if ($this->orderType != OrderTypes::PAID) {
+        if (! in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             return;
         }
 
-        // return id order items not found then return it
-        if (! (isset($this->order['order_items']) && ! empty($this->order['order_items']))) {
-            return;
-        }
+        $order = [];
+        $orderItems = [];
+        $isSubOrderItems = false;
 
-        $order = $this->order;
+        if ($this->orderType == OrderTypes::SUB && isset($this->order['payment_split_type']) && $this->order['payment_split_type'] == PaymentSplitTypes::PRODUCT_SPLIT) {
+            $isSubOrderItems = true;
+            // return id suborder items not found then return it
+            if (! (isset($this->subOrder['sub_order_items']) && ! empty($this->subOrder['sub_order_items']))) {
+                return;
+            }
+            $order = $this->subOrder;
+            if (isset($order['order_items'])) {
+                unset($order['order_items']);
+            }
+            $order['order_items'] = $order['sub_order_items'];
+        } else {
+            // return id order items not found then return it
+            if (! (isset($this->order['order_items']) && ! empty($this->order['order_items']))) {
+                return;
+            }
+            $order = $this->order;
+        }
 
         //sort order items as per categories sequence
         $sortedItems = [];
@@ -629,6 +659,11 @@ trait Stage7PrepareAdvanceData
                 $skipKitchenLabelPrint = true;
             }
 
+            if ($this->orderType == OrderTypes::SUB && isset($order['status']) && $order['status'] != 'paid' && ! $isSubOrderItems) {
+                //skip kitchen print if custome or equal split sub order is not paid.
+                $skipKitchenLabelPrint = true;
+            }
+
             if ($skipKitchenLabelPrint == false) {
                 if ($item['product']['printers']) {
                     $pro_kitchen = collect($item['product']['printers'])
@@ -744,8 +779,6 @@ trait Stage7PrepareAdvanceData
         $hideVoidProducts = $this->additionalSettings['hide_void_product'];
         $hideOnTheHouseProducts = $this->additionalSettings['hide_onthehouse_product'];
 
-//       dd($hideVoidProducts);
-
         foreach ($this->jsonItems as $keyItem=>$item) {
             if ($item['void_id'] == 0 && $item['on_the_house'] == 0 && $item['original_price'] > 0) {
                 $normalItems[] = $item;
@@ -782,32 +815,38 @@ trait Stage7PrepareAdvanceData
         }
 
         $receipt = [];
+        $order = [];
 
-        if ($this->orderType == OrderTypes::PAID) {
+        if (in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
+            if ($this->orderType == OrderTypes::PAID) {
+                $order = $this->order;
+            } elseif ($this->orderType == OrderTypes::SUB) {
+                $order = $this->subOrder;
+            }
 
             //return if order not found
-            if (empty($this->order)) {
+            if (empty($order)) {
                 return;
             }
 
-            if ($this->order['method'] == 'ccv') {
-                $this->order['ccv_customer_receipt_decode'] = json_decode($this->order['ccv_customer_receipt'], true);
-                if ($this->order['ccv_customer_receipt_decode']) {
-                    foreach ($this->order['ccv_customer_receipt_decode'] as $temp) {
+            if ($order['method'] == 'ccv') {
+                $order['ccv_customer_receipt_decode'] = json_decode($order['ccv_customer_receipt'], true);
+                if ($order['ccv_customer_receipt_decode']) {
+                    foreach ($order['ccv_customer_receipt_decode'] as $temp) {
                         $receipt[] = $temp;
                     }
                 }
             }
 
-            if ($this->order['method'] == 'wipay') {
-                $decoded = json_decode($this->order['worldline_customer_receipt'], true);
-                $this->order['worldline_customer_receipt_decode'] = collect($decoded)
+            if ($order['method'] == 'wipay') {
+                $decoded = json_decode($order['worldline_customer_receipt'], true);
+                $order['worldline_customer_receipt_decode'] = collect($decoded)
                     ->flatten()
                     ->reject(function ($value, $key) {
                         return $value == '0';
                     })
                     ->toArray();
-                foreach ($this->order['worldline_customer_receipt_decode'] as $temp) {
+                foreach ($order['worldline_customer_receipt_decode'] as $temp) {
                     $receipt[] = $temp;
                 }
             }
@@ -861,6 +900,30 @@ trait Stage7PrepareAdvanceData
             $method = $this->order['method'] ?? 0;
             $total_price = $this->order['total_price'] ?? 0;
             $reservation_paid = $this->order['reservation_paid'] ?? 0;
+        } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
+            $sub_total = $this->subOrder['sub_total'] ?? 0;
+            $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
+
+            $order_discount = $this->subOrder['discount'] ?? 0;
+            $is_euro_discount_order = $this->subOrder['discount_type'] == 'EURO' ? 1 : 0;
+            $discount_amount = $this->subOrder['discount_amount'] ?? 0;
+            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
+
+            $total_tax = $this->subOrder['total_tax'] ?? 0;
+            $total_alcohol_tax = $this->subOrder['total_alcohol_tax'] ?? 0;
+            $coupon_price = $this->subOrder['coupon_price'] ?? 0;
+            $cash_paid = $this->subOrder['cash_paid'] ?? 0;
+            $method = $this->subOrder['method'] ?? 0;
+            $total_price = $this->subOrder['total_price'] ?? 0;
+            $reservation_paid = $this->subOrder['reservation_paid'] ?? 0;
+
+            if ($this->order['payment_split_type'] == PaymentSplitTypes::EQUAL_SPLIT && $this->order['payment_split_persons']) {
+                $split_no = ($this->subOrder['split_no']) ? ''.$this->subOrder['split_no'] : '';
+                $summary[] = [
+                    'key'   => 'spliting',
+                    'value' => $split_no.'/'.$this->order['payment_split_persons'],
+                ];
+            }
         }
 
         if ($sub_total > 0) {

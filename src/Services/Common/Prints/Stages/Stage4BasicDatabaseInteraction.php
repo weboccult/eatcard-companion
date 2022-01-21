@@ -12,6 +12,8 @@ use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationOrderItemEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\SubOrderEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\SubOrderPrintSettingsDisableException;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
@@ -20,6 +22,7 @@ use Weboccult\EatcardCompanion\Models\OrderReceipt;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
@@ -38,10 +41,28 @@ trait Stage4BasicDatabaseInteraction
         if (empty($this->subOrderId)) {
             companionLogger('Eatcard companion : No order id found for get order details');
 
-            return;
+            throw new SubOrderEmptyException();
         }
 
-        $subOrder = '';
+        $subOrder = SubOrder::query()->has('parentOrder')
+                    ->with([
+                            'subOrderItems' => function ($q1) {
+                                $q1->with(['product' => function ($q2) {
+                                    $q2->with('printers');
+                                    $q2->withTrashed()->with(['category' => function ($q3) {
+                                        $q3->withTrashed();
+                                    }]);
+                                }]);
+                            },
+                        ])
+                    ->where('id', $this->subOrderId)->first();
+
+        //validate as per order type
+        if (empty($subOrder)) {
+            throw new SubOrderEmptyException();
+        }
+
+        $this->subOrder = $subOrder->toArray();
     }
 
     protected function setReservationOrderItemData()
@@ -71,8 +92,12 @@ trait Stage4BasicDatabaseInteraction
 
     protected function setOrderData()
     {
-        if ($this->orderType != OrderTypes::PAID) {
+        if (! in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             return;
+        }
+
+        if ($this->orderType == OrderTypes::SUB && ! empty($this->subOrder)) {
+            $this->orderId = $this->subOrder['parent_order_id'] ?? 0;
         }
 
         if (empty($this->orderId)) {
@@ -125,7 +150,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         //validate as per order type
-        if (empty($order) && in_array($this->orderType, [OrderTypes::PAID])) {
+        if (empty($order) && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             companionLogger('Eatcard companion : No order Data found for get order details');
             throw new OrderNotFoundException();
         }
@@ -158,6 +183,7 @@ trait Stage4BasicDatabaseInteraction
             throw new StoreReservationEmptyException();
         }
 
+        //skip kitchen print for until
         if ($this->orderType == OrderTypes::RUNNING && $this->printType != PrintTypes::PROFORMA && isset($reservation->is_until) && $reservation->is_until == 1) {
             throw new NoKitchenPrintForUntilException();
         }
@@ -231,7 +257,12 @@ trait Stage4BasicDatabaseInteraction
                                     return*/ KioskDevice::with('settings')->where('id', $deviceId)->first();
         /* });*/
         companionLogger('--Eatcard companion Kiosk Device details : ', $kiosk);
-//        dd($kiosk);
+
+        //skip print if SubOrder print settings is disable
+        if ($this->orderType == OrderTypes::SUB && ! empty($kiosk) && isset($kiosk->settings->is_print_split) && $kiosk->settings->is_print_split == 0) {
+            throw new SubOrderPrintSettingsDisableException();
+        }
+
         $this->kiosk = $kiosk;
     }
 

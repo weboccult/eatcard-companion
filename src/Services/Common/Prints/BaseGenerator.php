@@ -119,7 +119,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
             return $this->jsonFormatFullReceipt;
         } catch (\Exception $e) {
             companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());
-//            dd('Eatcard Exception', $e->getMessage(), $e->getFile(), $e->getLine());
+
             return [];
         }
     }
