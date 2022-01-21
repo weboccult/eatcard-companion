@@ -12,7 +12,8 @@ use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
-use function Weboccult\EatcardCompanion\Helpers\reverseRouteGenerator;
+use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
+use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 /**
  * @description Stag 12
@@ -29,15 +30,15 @@ trait Stage12PaymentProcess
      */
     protected function ccvPayment()
     {
-        if ($this->system == SystemTypes::POS && $this->orderData['method'] == 'ccv') {
+        if ($this->system == SystemTypes::POS && $this->createdOrder->payment_method_type == 'ccv') {
             if ($this->isSubOrder) {
-                $webhook_url = reverseRouteGenerator('payment.gateway.ccv.webhook.pos.sub_order', [
+                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.sub_order', [
                     'id'       => $this->createdOrder->id,
                     'store_id' => $this->store->id,
                 ], ['is_last_payment' => $this->payload['is_last_payment'] ?? 0], SystemTypes::POS);
                 $meta_data = "{'parent_order': '".$this->createdOrder->parent_order_id."','sub_order': '".$this->createdOrder->id."'}";
             } else {
-                $webhook_url = reverseRouteGenerator('payment.gateway.ccv.webhook.pos.order', [
+                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.order', [
                     'id'       => $this->createdOrder->id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::POS);
@@ -47,7 +48,7 @@ trait Stage12PaymentProcess
                 'amount'     => number_format((float) $this->createdOrder->total_price, 2, '.', ''),
                 'currency'   => 'EUR',
                 'method'     => 'TERMINAL',
-                'returnUrl'  => reverseRouteGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS),
+                'returnUrl'  => generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS),
                 'webhookUrl' => $webhook_url,
                 'language'   => 'NLD',
                 'metadata'   => $meta_data,
@@ -104,7 +105,7 @@ trait Stage12PaymentProcess
      */
     protected function wiPayment()
     {
-        if ($this->system == SystemTypes::POS && $this->orderData['method'] == 'wipay') {
+        if ($this->system == SystemTypes::POS && $this->createdOrder->payment_method_type == 'wipay') {
             $order_price = round($this->createdOrder->total_price * 100, 0);
             $order_type = $this->isSubOrder ? 'sub_order' : 'order';
 
@@ -167,31 +168,42 @@ trait Stage12PaymentProcess
         if ($this->system === SystemTypes::TAKEAWAY && $this->createdOrder->payment_method_type == 'mollie') {
             try {
                 Mollie::api()->setApiKey($this->store->mollie_api_key);
-                $redirectUrl = reverseRouteGenerator('payment.gateway.mollie.redirectUrl.takeaway', [
-                            'id'       => $this->createdOrder->id,
-                            'store_id' => $this->store->id,
-                        ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
-                $webhookUrl = reverseRouteGenerator('payment.gateway.mollie.webhook.takeaway', [
-                            'id'       => $this->createdOrder->id,
-                            'store_id' => $this->store->id,
-                        ], [], SystemTypes::TAKEAWAY);
-                $payment = Mollie::api()->payments()->create([
-                            'amount'      => [
-                                'currency' => 'EUR',
-                                'value'    => ''.number_format($this->createdOrder->total_price, 2, '.', ''),
-                            ],
-                            'method'      => $this->orderData['method'],
-                            'description' => 'Order #'.$this->createdOrder->order_id,
-                            'redirectUrl' => $redirectUrl,
-                            //                'webhookUrl'  => $webhookUrl,
-                            'metadata'    => [
-                                'order_id' => $this->createdOrder->order_id,
-                            ],
-                        ]);
+
+                $redirectUrl = generalUrlGenerator('payment.gateway.mollie.redirectUrl.takeaway', [
+                    'id'       => $this->createdOrder->id,
+                    'store_id' => $this->store->id,
+                ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+
+                $webhookUrl = webhookGenerator('payment.gateway.mollie.webhook.takeaway', [
+                    'id'       => $this->createdOrder->id,
+                    'store_id' => $this->store->id,
+                ], [], SystemTypes::TAKEAWAY);
+
+                $payload = [
+                    'amount'      => [
+                        'currency' => 'EUR',
+                        'value'    => ''.number_format($this->createdOrder->total_price, 2, '.', ''),
+                    ],
+                    'method'      => $this->orderData['method'],
+                    'description' => 'Order #'.$this->createdOrder->order_id,
+                    'redirectUrl' => $redirectUrl,
+                    'webhookUrl'  => $webhookUrl,
+                    'metadata'    => [
+                        'order_id' => $this->createdOrder->order_id,
+                    ],
+                ];
+
+                $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
+                if ($isWebhookExcluded) {
+                    unset($payload['webhookUrl']);
+                }
+
+                $payment = Mollie::api()->payments()->create($payload);
+
                 $this->createdOrder->update(['mollie_payment_id' => $payment->id]);
                 $this->paymentResponse = [
-                            'payment_link' => $payment->_links->checkout->href,
-                        ];
+                    'payment_link' => $payment->_links->checkout->href,
+                ];
             } catch (Exception $e) {
                 if ($e->getCode() > 400) {
                     if (strpos($e->getMessage(), 'The amount is lower than the minimum')) {
@@ -215,18 +227,21 @@ trait Stage12PaymentProcess
     protected function multiSafePayment()
     {
         if ($this->system === SystemTypes::TAKEAWAY && $this->createdOrder->payment_method_type == 'multisafepay') {
-            $webhookUrl = reverseRouteGenerator('payment.gateway.multisafe.webhook.takeaway', [
+            $webhookUrl = webhookGenerator('payment.gateway.multisafe.webhook.takeaway', [
                         'id'       => $this->createdOrder->id,
                         'store_id' => $this->store->id,
                     ], [], SystemTypes::TAKEAWAY);
-            $redirectUrl = reverseRouteGenerator('payment.gateway.multisafe.redirectUrl.takeaway', [
+
+            $redirectUrl = generalUrlGenerator('payment.gateway.multisafe.redirectUrl.takeaway', [
                 'id'       => $this->createdOrder->id,
                 'store_id' => $this->store->id,
             ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
-            $cancelUrl = reverseRouteGenerator('payment.gateway.multisafe.cancelUrl.takeaway', [
+
+            $cancelUrl = generalUrlGenerator('payment.gateway.multisafe.cancelUrl.takeaway', [
                 'id'       => $this->createdOrder->id,
                 'store_id' => $this->store->id,
             ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+
             $data = [
                 'type'            => $this->createdOrder->method == 'IDEAL' ? 'direct' : 'redirect',
                 'currency'        => 'EUR',
@@ -244,6 +259,12 @@ trait Stage12PaymentProcess
                     'close_window'     => true,
                 ],
             ];
+
+            $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
+            if ($isWebhookExcluded) {
+                unset($data['payment_options']['notification_url']);
+            }
+
             $payment = MultiSafe::setApiKey($this->store->multiSafe->api_key)->postOrder($data);
             if (isset($payment['payment_url'])) {
                 $this->paymentResponse = $payment;

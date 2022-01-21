@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @description To manage all the settings and constants from this config file
+ *
+ * @author Darshit Hedpara
+ */
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -56,6 +62,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exposed webhook endpoint
+    |--------------------------------------------------------------------------
+    |
+    | Here you can set ngRok or any third-party library to
+    | expose your local project, so you can receive webhooks
+    |
+    | Note : use http instead of https because,
+    | In your local machine you may not have SSL certificates and webhook might not work.
+    */
+
+    'exposed_webhook' => [
+        'settings' => [
+            /*
+             *  If you are testing / working on local machine then,
+             *  you may want to set exclude_webhook setting (which is available in payment section) to 'false'.
+             *
+             *  Some payment gateways are not allowing local urls as webhook endpoint.
+             *  E.g. Mollie payment gateway
+             *
+             *  So you may want to set enable_exposed_webhook setting to true then,
+             *  You can receive webhook from the payment gateways,
+             *  Or you want mimic the behaviour of webhook same as production or staging environment.
+             *
+             *  Note : exclude_webhook has a higher priority then exposed_webhook settings.
+             */
+            'enable_exposed_webhook' => env('COMPANION_ENABLE_EXPOSED_WEBHOOK', false),
+        ],
+        'admin' => env('COMPANION_EXPOSED_ADMIN_WEBHOOK', 'http://xyz.ngrok.com'),
+        'pos' => env('COMPANION_EXPOSED_POS_WEBHOOK', 'http://xyz.ngrok.com'),
+        'takeaway' => env('COMPANION_EXPOSED_TAKEAWAY_WEBHOOK', 'http://xyz.ngrok.com'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Manage Push Notification
     |--------------------------------------------------------------------------
     |
@@ -64,9 +104,9 @@ return [
     */
     'push_notification' => [
         'one_signal' => [
-            'api_url' => 'https://onesignal.com/api/v1',
-            'create_device_url' => '/players/<%onesignal_id%>?app_id=<%app_id%>',
-            'send_notification_url' => '/notifications',
+            'api_url' => env('COMPANION_ONE_SIGNAL_API_URL', 'https://onesignal.com/api/v1'),
+            'create_device_url' => env('COMPANION_ONE_SIGNAL_CREATE_DEVICE_URL', '/players/<%onesignal_id%>?app_id=<%app_id%>'),
+            'send_notification_url' => env('COMPANION_ONE_SIGNAL_CREATE_DEVICE_URL', '/notifications'),
             'app_id' => env('COMPANION_ONE_SIGNAL_APP_ID', ''),
             'rest_api_key' => env('COMPANION_ONE_SIGNAL_REST_API_KEY', ''),
         ],
@@ -82,6 +122,20 @@ return [
     */
 
     'payment' => [
+        'settings' => [
+            /*
+             *  If you are testing / working on local machine then,
+             *  you may want to set exclude_webhook setting to 'true'.
+             *
+             *  It will remove the key-value pair while creating payment.
+             *  some payment gateways are not allowing local urls as webhook endpoint.
+             *  E.g. Mollie payment gateway
+             *
+             *  If you want to use exposed webhook then you may not want to set false to exclude_webhook.
+             *  As exclude_webhook has a higher priority then exposed_webhook settings.
+             */
+            'exclude_webhook' => env('COMPANION_EXCLUDE_WEBHOOK', false),
+        ],
         'gateway' => [
             'ccv' => [
                 'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
@@ -112,23 +166,23 @@ return [
                 'webhook' => null, // No need, it will point to main domain directly.
             ],
             'multisafe' => [
-                'mode'    => env('COMPANION_MULTISAFE_MODE', 'live'),
-                'staging'    => 'https://testapi.multisafepay.com/v1/json',
-                'production' => 'https://api.multisafepay.com/v1/json',
-                'endpoints'  => [
+                'mode'        => env('COMPANION_MULTISAFE_MODE', 'live'),
+                'staging'     => 'https://testapi.multisafepay.com/v1/json',
+                'production'  => 'https://api.multisafepay.com/v1/json',
+                'endpoints'   => [
                     'paymentMethod' => '/gateways',
-                    'issuer' => '/issuers/IDEAL',
-                    'createOrder' => '/orders',
-                    'getOrder' => '/orders/<%order_id%>',
-                    'refundOrder' => '/orders/<%order_id%>/refunds',
+                    'issuer'        => '/issuers/IDEAL',
+                    'createOrder'   => '/orders',
+                    'getOrder'      => '/orders/<%order_id%>',
+                    'refundOrder'   => '/orders/<%order_id%>/refunds',
                 ],
-                'webhook' => [
+                'webhook'     => [
                     'takeaway' => 'multisafe/takeaway/webhook/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
                     'takeaway' => 'multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
                 ],
-                'cancelUrl' => [
+                'cancelUrl'   => [
                     'takeaway' => 'multisafe/takeaway/cancel/<%id%>/<%store_id%>',
                 ],
             ],
@@ -159,10 +213,10 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | System Endpoints
+    | Other Endpoints
     |--------------------------------------------------------------------------
     |
-    | Different system's endpoint will be managed from here
+    | Other endpoint will be managed from here
     |
     */
 

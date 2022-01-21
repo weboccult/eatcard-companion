@@ -20,14 +20,18 @@ trait Stage4EnableSettings
                 $this->settings['additional_fee'] = [
                     'status' => true,
                     'value'  => $store->storeSetting->additional_fee,
+                    // 'value'  => $this->payload['additional_fee'] ?? 0,
+                    // here we're not using fee from frontend side payload
                 ];
             }
         }
         if ($this->system == SystemTypes::TAKEAWAY) {
             if (isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
-                $this->settings['delivery_fee'] = [
+                $this->settings['additional_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->additional_fee ?? 0,
+                    // 'value'  => $this->payload['additional_fee'] ?? 0,
+                    // here we're not using fee from frontend side payload
                 ];
             }
         }
@@ -39,6 +43,7 @@ trait Stage4EnableSettings
             $this->settings['delivery_fee'] = [
                 'status' => true,
                 'value'  => $this->payload['delivery_fee'] ?? 0,
+                // Todo : this delivery fee should be calculated again at the backend
             ];
         }
     }
@@ -49,7 +54,9 @@ trait Stage4EnableSettings
             if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee) {
                 $this->settings['plastic_bag_fee'] = [
                     'status' => true,
-                    'value'  => $this->payload['delivery_fee'] ?? 0,
+                    'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
+                    // 'value'  => $this->payload['plastic_bag_fee'] ?? 0,
+                    // here we're not using fee from frontend side payload
                 ];
             }
         }

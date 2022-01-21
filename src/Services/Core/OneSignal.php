@@ -44,7 +44,7 @@ class OneSignal
      */
     public function createDevice($onesignal_id): bool
     {
-        $deviceCreateURL = $this->api_url.reverseRouteGenerator('push_notification.one_signal.create_device_url', ['onesignal_id' => $onesignal_id, 'app_id' => $this->app_id], [], null, true);
+        $deviceCreateURL = $this->api_url.reverseRouteGenerator('push_notification.one_signal.create_device_url', ['onesignal_id' => $onesignal_id, 'app_id' => $this->app_id], []);
         try {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $deviceCreateURL);

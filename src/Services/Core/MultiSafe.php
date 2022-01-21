@@ -196,7 +196,7 @@ class MultiSafe
     public function getOrder(string $orderId)
     {
         $client = new Client(['headers' => ['api_key' => $this->apiKey]]);
-        $getOrderUrl = reverseRouteGenerator('payment.gateway.multisafe.endpoints.getOrder', ['order_id' => $orderId], [], null, true);
+        $getOrderUrl = reverseRouteGenerator('payment.gateway.multisafe.endpoints.getOrder', ['order_id' => $orderId], []);
         $request = $client->request('GET', $this->paymentUrl.$getOrderUrl);
         $statusCode = $request->getStatusCode();
         $request->getHeaderLine('content-type');
@@ -220,7 +220,7 @@ class MultiSafe
     public function refundOrder(string $orderId, ?array $data)
     {
         $client = new Client(['headers' => ['api_key' => $this->apiKey]]);
-        $refundOrderUrl = reverseRouteGenerator('payment.gateway.multisafe.endpoints.refundOrder', ['order_id' => $orderId], [], null, true);
+        $refundOrderUrl = reverseRouteGenerator('payment.gateway.multisafe.endpoints.refundOrder', ['order_id' => $orderId], []);
         $request = $client->request('POST', $this->paymentUrl.$refundOrderUrl, [
             'form_params' => $data,
         ]);
