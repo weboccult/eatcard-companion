@@ -109,74 +109,76 @@ trait Stage3PrepareBasicData
 
         //additional settings fix formates
         $this->additionalSettings = [
-                'request_type'                          => '',
-                'current_device_id'                     => 0,
-                'is_print_from_device_setting_printer ' => false,
-                'show_supplement_kitchen_name'          => false,
-                'show_pcs_in_product_name'              => false,
-                'is_discount_type_amount'               => false,
-                //discount either in percentage or amount
-                'is_discount_on_cart'                   => false,
-                //discount either in item wise or in all cart
-                //reservation settings
-                'kitchen_comment' => '',
-                'show_supp_kitchen_name' => false,
-                'addon_print_categories' => [],
-                'show_no_of_pieces' => false,
-                'ayce_data' => [],
-                'is_until' => false,
 
-                //store settings
-                'hide_free_product' => 0,
-                'hide_void_product' => 0,
-                'hide_onthehouse_product' => 0,
-                'show_product_comment_in_main_receipt' => 0,
-                'show_order_transaction_detail' => 0,
-                'is_print_exclude_email'         => 0,
-                'alternative_printer'         => '',
-                'default_printer_name'         => '',
-                'exclude_print_status'         => false,
-                'exclude_print_from_main_print'         => '',
-                'main_print_logo_hide'         => 0,
-                'double_height'         => '0',
-                'kitchenheaderspace'         => 0,
-                'kitchenheaderformat'         => 0,
-                'kitchensubheader'         => 0,
-                'is_print_category'         => '0',
-                'is_print_product'         => '0',
-                'double_width'         => '0',
-                'product_double_height'         => '0',
-                'print_separator_length'         => '',
-                'delivery_address_font_size'         => 0,
-                'show_delivery_address_in_kitchen_receipt'         => 0,
-                'print_custom_text'         => '',
-                'kiosk_data' => [],
-                'no_of_prints' => '1',
+            //protocol variables
+            'request_type'                          => '',
+            'current_device_id'                     => 0,
 
-                //kiosk device settings
-                'kioskname' => '',
-                'cash_drawer_available' => 0,
-                'kiosk_printer_name' => '',
-                'is_print_cart_add' => 0,
-                'is_print_split' => 0,
+            //Order related settings
+            'show_supplement_kitchen_name'          => false,
 
-                //advance data
-                'thirdPartyName' => '',
-                'fullreceipt' => '0',
-                'kitchenreceipt' => '1',
-                'categories_settings' => [],
-                'dinein_guest_order' => false,
+            //reservation settings
+            'kitchen_comment' => '',
+            'addon_print_categories' => [],
+            'show_no_of_pieces' => false,
+            'ayce_data' => [],
+            'is_until' => false,
 
-            ];
+            //store settings
+            'hide_free_product' => 0,
+            'hide_void_product' => 0,
+            'hide_onthehouse_product' => 0,
+            'show_product_comment_in_main_receipt' => 0,
+            'show_order_transaction_detail' => 0,
+            'is_print_exclude_email'         => 0,
+            'alternative_printer'         => '',
+            'default_printer_name'         => '',
+            'exclude_print_status'         => false,
+            'exclude_print_from_main_print'         => '',
+            'main_print_logo_hide'         => 0,
+            'double_height'         => '0',
+            'kitchenheaderspace'         => 0,
+            'kitchenheaderformat'         => 0,
+            'kitchensubheader'         => 0,
+            'is_print_category'         => '0',
+            'is_print_product'         => '0',
+            'double_width'         => '0',
+            'product_double_height'         => '0',
+            'print_separator_length'         => '',
+            'delivery_address_font_size'         => 0,
+            'show_delivery_address_in_kitchen_receipt'         => 0,
+            'print_custom_text'         => '',
+            'kiosk_data' => [],
+            'no_of_prints' => '1',
+
+            //kiosk device settings
+            'kioskname' => '',
+            'cash_drawer_available' => 0,
+            'kiosk_printer_name' => '',
+            'is_print_cart_add' => 0,
+            'is_print_split' => 0,
+
+            //advance data
+            'thirdPartyName' => '',
+            'fullreceipt' => '0',
+            'kitchenreceipt' => '1',
+            'categories_settings' => [],
+            'dinein_guest_order' => false,
+
+        ];
 
         //format of advance data
         $this->advanceData = [
-                'tableName' => '',
-                'dynamicOrderNo' => '',
+            'tableName' => '',
+            'dynamicOrderNo' => '',
 
-                ];
+        ];
     }
 
+    /**
+     * @return void
+     *  use for store protocol print payload data
+     */
     protected function preparePayloadData()
     {
         $globalOrderId = $this->payload['order_id'];
@@ -201,6 +203,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set paid order data
+     */
     protected function prepareOrderData()
     {
         if ($this->orderType == OrderTypes::PAID) {
@@ -209,6 +215,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set reservation data
+     */
     protected function prepareReservationData()
     {
         if ($this->orderType == OrderTypes::RUNNING && $this->printType == PrintTypes::PROFORMA) {
@@ -216,6 +226,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set reservation order item data related to KDS related print.
+     */
     protected function prepareReservationOrderItemData()
     {
         if ($this->orderType == OrderTypes::RUNNING && in_array($this->printType, [PrintTypes::DEFAULT,
@@ -226,6 +240,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set sub order data
+     */
     protected function prepareSubOrderData()
     {
         if ($this->orderType == OrderTypes::SUB) {
@@ -233,6 +251,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set save order data
+     */
     protected function prepareSaveOrderData()
     {
         if ($this->orderType == OrderTypes::SAVE) {
@@ -241,6 +263,10 @@ trait Stage3PrepareBasicData
         }
     }
 
+    /**
+     * @return void
+     * set global device id from protocol payload
+     */
     protected function prepareDeviceId()
     {
         if (! empty($this->payloadRequestDetails)) {

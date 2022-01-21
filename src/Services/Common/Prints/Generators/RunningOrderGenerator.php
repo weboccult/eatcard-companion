@@ -53,6 +53,15 @@ class RunningOrderGenerator extends BaseGenerator
         parent::__construct();
     }
 
+    /**
+     * @return void
+     * prepare Running order items details for print in Proforma and Kitchen print.
+     * skip for ,Paid, save and Sub order
+     * Skip for Until Kitchen Print
+     * here we will modify item name base on product settings,
+     * modify item name with add void, on-the-house, discount 's postfix.
+     * set Kitchen and Label printer for print it based on there print type and settings.
+     */
     protected function prepareRunningOrderItems()
     {
         if ($this->printType != PrintTypes::PROFORMA && $this->additionalSettings['is_until']) {
@@ -205,7 +214,7 @@ class RunningOrderGenerator extends BaseGenerator
             if ($item['size']) {
                 $size_price = isset($item['size']['price']) ? (float) $item['size']['price'] : 0;
                 $item_total += $size_price;
-                $current = __('messages.'.$item['size']['name']);
+                $current = __('eatcard-companion::print.'.$item['size']['name']);
                 $newItem['itemaddons'][] = $current;
                 $newItem['kitchenitemaddons'][] = $current;
             }
@@ -276,7 +285,10 @@ class RunningOrderGenerator extends BaseGenerator
                 $skipKitchenLabelPrint = true;
             }
 
-            if ($this->printType == PrintTypes::DEFAULT && $this->additionalSettings['is_print_cart_add'] == 1 && in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories'])) {
+            // no need to print if order is already saved
+            if ($this->skipKitchenLabelPrint || $skipKitchenLabelPrint) {
+                $skipKitchenLabelPrint = true;
+            } elseif ($this->printType == PrintTypes::DEFAULT && $this->additionalSettings['is_print_cart_add'] == 1 && in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories'])) {
                 // no need to print if printed already
                 $skipKitchenLabelPrint = true;
             } elseif ($this->printType == PrintTypes::PROFORMA) {
@@ -372,6 +384,7 @@ class RunningOrderGenerator extends BaseGenerator
      * @param $item_total
      *
      * @return void
+     * calculate product tax, discount, product deposit and other things.
      */
     protected function itemPricesCalculate($item, $isAYCEProduct = false)
     {
@@ -434,6 +447,10 @@ class RunningOrderGenerator extends BaseGenerator
         }
     }
 
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
     protected function prepareSummary()
     {
         if ($this->skipMainPrint) {
@@ -444,7 +461,7 @@ class RunningOrderGenerator extends BaseGenerator
 
         if ($this->sub_total > 0) {
             $summary[] = [
-                   'key'   => __('messages.sub_total'),
+                   'key'   => __('eatcard-companion::general.sub_total'),
                    'value' => ''.changePriceFormat($this->sub_total),
                ];
         }
@@ -456,7 +473,7 @@ class RunningOrderGenerator extends BaseGenerator
 //           }
         if ($this->total_dis_wo_tax > 0) {
             $summary[] = [
-                   'key'   => __('messages.discount_amount').$this->order_discount_amount_with_prefix,
+                   'key'   => __('eatcard-companion::general.discount_amount').$this->order_discount_amount_with_prefix,
                    'value' => ''.changePriceFormat($this->total_dis_wo_tax),
                ];
         }
@@ -480,32 +497,32 @@ class RunningOrderGenerator extends BaseGenerator
 //           }
 //           if ($additional_fee > 0) {
 //               $summary[] = [
-//                   'key'   => __('messages.additional_fees'),
+//                   'key'   => __('eatcard-companion::general.additional_fees'),
 //                   'value' => ''.changePriceFormat($additional_fee),
 //               ];
 //           }
 //           if ($plastic_bag_fee > 0) {
 //               $summary[] = [
-//                   'key'   => __('messages.bag'),
+//                   'key'   => __('eatcard-companion::general.bag'),
 //                   'value' => ''.changePriceFormat($plastic_bag_fee),
 //               ];
 //           }
 //           if ($coupon_price > 0) {
 //               $summary[] = [
-//                   'key'   => __('messages.gift_voucher_cost'),
+//                   'key'   => __('eatcard-companion::general.gift_voucher_cost'),
 //                   'value' => ''.changePriceFormat($coupon_price),
 //               ];
 //           }
 //           if ($cash_paid > 0 && $method == 'cash') {
 //               $summary[] = [
-//                   'key'   => __('messages.cash_paid_cost'),
+//                   'key'   => __('eatcard-companion::general.cash_paid_cost'),
 //                   'value' => ''.changePriceFormat($cash_paid),
 //               ];
 //           }
 //           $cash_changes = $cash_paid - $total_price;
 //           if ($cash_paid > 0 && $cash_changes > 0 && $method == 'cash') {
 //               $summary[] = [
-//                   'key'   => __('messages.cash_changes'),
+//                   'key'   => __('eatcard-companion::general.cash_changes'),
 //                   'value' => ''.changePriceFormat($cash_changes),
 //               ];
 //           }

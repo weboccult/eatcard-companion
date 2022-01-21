@@ -14,6 +14,11 @@ use function Weboccult\EatcardCompanion\Helpers\companionLogger;
  */
 trait Stage6DatabaseInteraction
 {
+    /**
+     * @return void
+     * set categories data
+     * category id will be got from related order Item details
+     */
     protected function setCategoryData()
     {
         $categoriesIds = [];

@@ -22,6 +22,11 @@ use function Weboccult\EatcardCompanion\Helpers\set_discount_with_prifix;
  */
 trait Stage7PrepareAdvanceData
 {
+    /**
+     * @return void
+     * set order number base on store takeaway setting.
+     * it was use only for Paid and Sub orders.
+     */
     protected function prepareDynamicOrderNo()
     {
         $dynamicOrderNo = '';
@@ -36,6 +41,12 @@ trait Stage7PrepareAdvanceData
         $this->advanceData['dynamicOrderNo'] = trim($dynamicOrderNo);
     }
 
+    /**
+     * @return void
+     * Set table name base on related order and reservation data
+     * there are multiple system related condition.
+     * it will use on Main and kitchen print both
+     */
     protected function prepareTableName()
     {
         $tableName = '';
@@ -45,7 +56,7 @@ trait Stage7PrepareAdvanceData
             if ($this->systemType == SystemTypes::KDS) {
                 $tableName = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             } elseif ($this->additionalSettings['dinein_guest_order'] && ! empty($tableName)) {
-                $tableName = ($this->order['table_name']) ? __('messages.table_name').' '.$this->order['table_name'] : '';
+                $tableName = ($this->order['table_name']) ? __('eatcard-companion::general.table_name').' '.$this->order['table_name'] : '';
             }
         }
 
@@ -62,6 +73,11 @@ trait Stage7PrepareAdvanceData
         $this->advanceData['tableName'] = $tableName;
     }
 
+    /**
+     * @return void
+     * set related order data
+     * update data format and other condition for modify data will be applied here.
+     */
     protected function processOrderData()
     {
         if ($this->orderType == OrderTypes::PAID) {
@@ -104,6 +120,10 @@ trait Stage7PrepareAdvanceData
         }
     }
 
+    /**
+     * @return void
+     * set third party name prefix here
+     */
     protected function setThirdPartyName()
     {
         $thirdPartyName = '';
@@ -124,6 +144,10 @@ trait Stage7PrepareAdvanceData
         $this->additionalSettings['thirdPartyName'] = $thirdPartyName;
     }
 
+    /**
+     * @return void
+     * set full recipt will be printed or not base on store & device settings, and type of print
+     */
     public function prepareFullReceiptFlag()
     {
         if ($this->skipMainPrint) {
@@ -165,6 +189,13 @@ trait Stage7PrepareAdvanceData
         $this->additionalSettings['fullreceipt'] = $fullReceipt;
     }
 
+    /**
+     * @return void
+     * Prepare AYCE items for all type of order.
+     * It will print only on Main receipt, so we not prepare if Main print is Skied.
+     * calculated manual tax nd order price for Proforma and save order.
+     * need to skip for sub order item wise split order, because for that type of order we not allow it
+     */
     public function prepareAYCEItems()
     {
         // no need to prepare ayce item if main print will not print
@@ -425,6 +456,14 @@ trait Stage7PrepareAdvanceData
         companionLogger('ayce item json prepared', $this->jsonItems);
     }
 
+    /**
+     * @return void
+     * prepare order items details for print in Main and Kitchen print.
+     * skip for save and running order
+     * here we will modify item name base on product settings,
+     * modify item name with add void, on-the-house, discount 's postfix.
+     * set Kitchen and Label printer for print it based on there print type and settings.
+     */
     protected function preparePaidOrderItems()
     {
         //only for paid orders
@@ -546,7 +585,7 @@ trait Stage7PrepareAdvanceData
             //set product category
             $newItem['category'] = ''.($item['product']['category_id'] ?? '');
 
-            // set product kitchen descriptopn
+            // set product kitchen description
             $newItem['kitchendescription'] = $item['product']['alt_name'] ?? '';
 
             //calculate product total price
@@ -570,7 +609,7 @@ trait Stage7PrepareAdvanceData
                 if ($extra->size) {
                     $size_price = isset($extra->size->price) ? (float) $extra->size->price : 0;
                     $item_total += $size_price;
-                    $current = __('messages.'.$extra->size->name);
+                    $current = __('eatcard-companion::print.'.$extra->size->name);
                     $newItem['itemaddons'][] = $current;
                     $newItem['kitchenitemaddons'][] = $current;
                 }
@@ -747,16 +786,37 @@ trait Stage7PrepareAdvanceData
         $this->additionalSettings['categories_settings'] = $category_settings;
     }
 
+    /**
+     * @return void
+     * prepare Running order items details for print in Proforma and Kitchen print.
+     * skip for ,Paid, save and Sub order
+     * Skip for Until Kitchen Print
+     * here we will modify item name base on product settings,
+     * modify item name with add void, on-the-house, discount 's postfix.
+     * set Kitchen and Label printer for print it based on there print type and settings.
+     */
     protected function prepareRunningOrderItems()
     {
         // code in individual generator file
     }
 
+    /**
+     * @return void
+     * prepare Save items details for print in Main and Kitchen print.
+     * skip for Paid, Sub and running order
+     * here we will modify item name base on product settings,
+     * modify item name with add void, on-the-house, discount 's postfix.
+     * set Kitchen and Label printer for print it based on there print type and settings.
+     */
     protected function prepareSaveOrderItems()
     {
         // code in individual generator file
     }
 
+    /**
+     * @return void
+     * Sort Item in sequence of Paid, Void, On-The-House, Free/Zero Price Product
+     */
     protected function sortItems()
     {
         if (empty($this->jsonItems)) {
@@ -803,6 +863,10 @@ trait Stage7PrepareAdvanceData
         $this->jsonItems = $items;
     }
 
+    /**
+     * @return void
+     * Attach ccv/wpay payment receipt details in footer of print if setting is on.
+     */
     protected function preparePaymentReceipt()
     {
         if ($this->skipMainPrint) {
@@ -855,6 +919,10 @@ trait Stage7PrepareAdvanceData
         $this->jsonReceipt = $receipt;
     }
 
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
     protected function prepareSummary()
     {
         if ($this->skipMainPrint) {
@@ -928,7 +996,7 @@ trait Stage7PrepareAdvanceData
 
         if ($sub_total > 0) {
             $summary[] = [
-                'key'   => __('messages.sub_total'),
+                'key'   => __('eatcard-companion::general.sub_total'),
                 'value' => ''.changePriceFormat($sub_total),
             ];
         }
@@ -940,7 +1008,7 @@ trait Stage7PrepareAdvanceData
         }
         if ($discount_amount > 0) {
             $summary[] = [
-                'key'   => __('messages.discount_amount').$discount_type_sign_with_amount,
+                'key'   => __('eatcard-companion::general.discount_amount').$discount_type_sign_with_amount,
                 'value' => ''.changePriceFormat($discount_amount),
             ];
         }
@@ -964,32 +1032,32 @@ trait Stage7PrepareAdvanceData
         }
         if ($additional_fee > 0) {
             $summary[] = [
-                'key'   => __('messages.additional_fees'),
+                'key'   => __('eatcard-companion::general.additional_fees'),
                 'value' => ''.changePriceFormat($additional_fee),
             ];
         }
         if ($plastic_bag_fee > 0) {
             $summary[] = [
-                'key'   => __('messages.bag'),
+                'key'   => __('eatcard-companion::general.bag'),
                 'value' => ''.changePriceFormat($plastic_bag_fee),
             ];
         }
         if ($coupon_price > 0) {
             $summary[] = [
-                'key'   => __('messages.gift_voucher_cost'),
+                'key'   => __('eatcard-companion::general.gift_voucher_cost'),
                 'value' => ''.changePriceFormat($coupon_price),
             ];
         }
         if ($cash_paid > 0 && $method == 'cash') {
             $summary[] = [
-                'key'   => __('messages.cash_paid_cost'),
+                'key'   => __('eatcard-companion::general.cash_paid_cost'),
                 'value' => ''.changePriceFormat($cash_paid),
             ];
         }
         $cash_changes = $cash_paid - $total_price;
         if ($cash_paid > 0 && $cash_changes > 0 && $method == 'cash') {
             $summary[] = [
-                'key'   => __('messages.cash_changes'),
+                'key'   => __('eatcard-companion::general.cash_changes'),
                 'value' => ''.changePriceFormat($cash_changes),
             ];
         }

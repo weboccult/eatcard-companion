@@ -35,7 +35,7 @@ trait Stage1PrepareValidationRules
         }
 
         if ($this->orderType == OrderTypes::SAVE) {
-            //kitchen, proforma print not supported for save orders
+            //proforma print not supported for save orders
             $this->addRuleToGeneratorSpecificRules(PrintTypeNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
         }
     }

@@ -17,6 +17,10 @@ use function Weboccult\EatcardCompanion\Helpers\companionLogger;
  */
 trait Stage8PrepareFinalJson
 {
+    /**
+     * @return void
+     * set Main receipt Printer base on related settings
+     */
     protected function setMainPrinter()
     {
         //no need to set printer name if setting is enabled
@@ -56,6 +60,10 @@ trait Stage8PrepareFinalJson
         companionLogger('--1. printername', $printer_name);
     }
 
+    /**
+     * @return void
+     * set kitchen print related data in final print json
+     */
     protected function setKitchenRelatedFields()
     {
         $this->jsonFormatFullReceipt['kitchencomment'] = $this->additionalSettings['kitchen_comment'];
@@ -81,6 +89,10 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['SeparatorLength'] = $this->additionalSettings['print_separator_length'];
     }
 
+    /**
+     * @return void
+     * set open cash drawer flag details
+     */
     protected function setOpenCashDrawer()
     {
         if ($this->systemType == SystemTypes::POS && $this->printType == PrintTypes::DEFAULT && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
@@ -95,6 +107,10 @@ trait Stage8PrepareFinalJson
         }
     }
 
+    /**
+     * @return void
+     * set Main and Kitchen print header titles and related details
+     */
     protected function setPrintTitles()
     {
         $title1 = '';
@@ -118,14 +134,14 @@ trait Stage8PrepareFinalJson
                 $titleTime = '';
                 $pickupTime = '';
             } else {
-                $title1 = 'Uw bestelling is '.__('messages.'.($this->order['status'] ?? ''));
+                $title1 = 'Uw bestelling is '.__('eatcard-companion::general.'.($this->order['status'] ?? ''));
                 $title2 = $this->order['full_name'] ?? '';
                 $title3 = $this->order['contact_no'] ?? '';
                 if ($this->additionalSettings['is_print_exclude_email'] == 0) {
                     $title4 = $this->order['email'] ?? '';
                 }
                 $title5 = '#'.($this->order['order_id'] ?? '');
-                $title6 = __('messages.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
+                $title6 = __('eatcard-companion::general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 $titleTime = $this->order['paid_on'] ?? '';
@@ -180,7 +196,7 @@ trait Stage8PrepareFinalJson
         }
 
         if ($this->orderType == OrderTypes::SUB) {
-            $title1 = 'Uw bestelling is '.__('messages.'.($this->subOrder['status'] ?? ''));
+            $title1 = 'Uw bestelling is '.__('eatcard-companion::general.'.($this->subOrder['status'] ?? ''));
             $title5 = '#'.($this->order['order_id'] ?? '');
             $titleTime = $this->subOrder['paid_on'] ?? '';
             $pickupTime = $this->order['order_time'] ?? '';
@@ -207,6 +223,10 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['pickuptime'] = $pickupTime;
     }
 
+    /**
+     * @return void
+     * Set user address details for delivery orders
+     */
     protected function setDeliveryAddress()
     {
         $deliveryTitle = '';
@@ -216,7 +236,7 @@ trait Stage8PrepareFinalJson
 
         if ($this->orderType == OrderTypes::PAID) {
             if (isset($this->order['order_type']) && $this->order['order_type'] == 'delivery') {
-                $deliveryTitle = __('messages.'.$this->order['order_type']);
+                $deliveryTitle = __('eatcard-companion::general.'.$this->order['order_type']);
 //                $deliveryTitle = $this->order['order_type'] ?? '';
                 $deliveryAddress = $this->order['delivery_address'] ?? '';
                 $deliveryFontSize = $this->additionalSettings['delivery_address_font_size'];
@@ -233,6 +253,10 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['kitchendeliveryaddress'] = $kitchenDeliveryAddress;
     }
 
+    /**
+     * @return void
+     * set store details print in footer of print
+     */
     protected function setStoreAddress()
     {
         if (empty($this->store)) {
@@ -283,6 +307,7 @@ trait Stage8PrepareFinalJson
 
     /**
      * @throws \Exception
+     * Set Store and Eatcard logo, based on related settings
      */
     protected function setLogo()
     {
@@ -306,6 +331,10 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['showeatcardname'] = $showEatcardName;
     }
 
+    /**
+     * @return void
+     * set other additional details related to his order type, print type and settings
+     */
     protected function setOtherDetails()
     {
         $checkoutNo = '';
@@ -322,7 +351,7 @@ trait Stage8PrepareFinalJson
         if ($this->orderType == OrderTypes::PAID) {
             $checkoutNo = $this->order['checkout_no'] ?? '';
 
-            $typeOrder = $this->additionalSettings['thirdPartyName'].__('messages.'.($this->order['order_type'] ?? ''));
+            $typeOrder = $this->additionalSettings['thirdPartyName'].__('eatcard-companion::general.'.($this->order['order_type'] ?? ''));
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
 
             $customerComments = $this->order['comment'] ?? '';
@@ -330,7 +359,7 @@ trait Stage8PrepareFinalJson
             $total = $this->order['total_price'] ?? '0';
 
             if (! in_array($this->systemType, [SystemTypes::POS])) {
-                $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
+                $orderType = ($this->order['dine_in_type']) ? __('eatcard-companion::general.'.$this->order['dine_in_type']) : '';
             }
 
             if ($this->systemType == SystemTypes::KDS) {
@@ -357,9 +386,7 @@ trait Stage8PrepareFinalJson
         }
 
         if ($this->orderType == OrderTypes::SAVE) {
-            if (! empty($this->saveOrderItemCartId)) {
-                $dateTime = $this->saveOrder['order_time'] ?? '';
-            }
+            $dateTime = $this->saveOrder['order_time'] ?? '';
 
             if ($this->systemType == SystemTypes::KDS) {
                 $dateTime = date('Y-m-d').' om '.date('H:i');
@@ -376,7 +403,7 @@ trait Stage8PrepareFinalJson
         if ($this->orderType == OrderTypes::SUB) {
             $customerComments = $this->order['comment'] ?? '';
             $total = $this->subOrder['total_price'] ?? '0';
-            $orderType = ($this->order['dine_in_type']) ? __('messages.'.$this->order['dine_in_type']) : '';
+            $orderType = ($this->order['dine_in_type']) ? __('eatcard-companion::general.'.$this->order['dine_in_type']) : '';
             $tableName = '';
         }
 
@@ -400,21 +427,33 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['kitchenreceipt'] = $this->additionalSettings['kitchenreceipt'];
         $this->jsonFormatFullReceipt['itemsTitle'] = $itemTitle;
         $this->jsonFormatFullReceipt['Total'][0]['value1'] = changePriceFormat($total);
-        $this->jsonFormatFullReceipt['thankyounote'][] = __('messages.thank_you_line_2');
+        $this->jsonFormatFullReceipt['thankyounote'][] = __('eatcard-companion::general.thank_you_line_2');
         $this->jsonFormatFullReceipt['categories_settings'] = $this->additionalSettings['categories_settings'];
         $this->jsonFormatFullReceipt['noofprints'] = $this->additionalSettings['no_of_prints'];
     }
 
+    /**
+     * @return void
+     * set order items in final json
+     */
     protected function setItems()
     {
         $this->jsonFormatFullReceipt['items'] = $this->jsonItems;
     }
 
+    /**
+     * @return void
+     * set third party payment receipt details in final json
+     */
     protected function setReceipt()
     {
         $this->jsonFormatFullReceipt['receipt'] = $this->jsonReceipt;
     }
 
+    /**
+     * @return void
+     * set bill summary in final json
+     */
     protected function setSummary()
     {
         $this->jsonFormatFullReceipt['summary'] = $this->jsonSummary;

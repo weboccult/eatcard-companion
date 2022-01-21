@@ -10,6 +10,7 @@ use Weboccult\EatcardCompanion\Exceptions\NoKitchenPrintForUntilException;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationOrderItemEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\SaveOrderEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\SubOrderEmptyException;
@@ -32,6 +33,12 @@ use function Weboccult\EatcardCompanion\Helpers\companionLogger;
  */
 trait Stage4BasicDatabaseInteraction
 {
+    /**
+     * @return void
+     * set sub order data
+     * return if global sub order id not set.
+     * return if sub order data not found.
+     */
     protected function setSubOrderData()
     {
         if ($this->orderType != OrderTypes::SUB) {
@@ -65,15 +72,18 @@ trait Stage4BasicDatabaseInteraction
         $this->subOrder = $subOrder->toArray();
     }
 
+    /**
+     * @return void
+     * set reservation order item data for running order kitchen print
+     * throw error if not reservation order item id found
+     */
     protected function setReservationOrderItemData()
     {
         if ($this->orderType != OrderTypes::RUNNING) {
             return;
         }
 
-        if ($this->orderType == OrderTypes::RUNNING && ! in_array($this->printType, [PrintTypes::DEFAULT,
-                                                                                          PrintTypes::KITCHEN_LABEL,
-                                                                                          PrintTypes::KITCHEN, PrintTypes::LABEL, ])) {
+        if (! in_array($this->printType, [PrintTypes::DEFAULT, PrintTypes::KITCHEN_LABEL, PrintTypes::KITCHEN, PrintTypes::LABEL])) {
             return;
         }
 
@@ -90,6 +100,12 @@ trait Stage4BasicDatabaseInteraction
         $this->reservationOrderItems = $reservationOrderItems;
     }
 
+    /**
+     * @return void
+     * set order data for save and sub order
+     * return id global order id not set.
+     * throw exception if order data not found
+     */
     protected function setOrderData()
     {
         if (! in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
@@ -158,6 +174,13 @@ trait Stage4BasicDatabaseInteraction
         companionLogger('Eatcard companion : Order with details', $this->order);
     }
 
+    /**
+     * @return void
+     * set reservation details
+     * return if global reservation id is not set
+     * throw exception if no reservation data found for running order
+     * throw exception if until setting is on and call for kitchen print , because no need to print kitchen print for until
+     */
     protected function setReservationData()
     {
         //if order data is set then take this reservation
@@ -191,6 +214,11 @@ trait Stage4BasicDatabaseInteraction
         $this->reservation = $reservation;
     }
 
+    /**
+     * @return void
+     * set save order data
+     * throw error if global save order id is not set
+     */
     protected function setSaveOrderData()
     {
         if ($this->orderType != OrderTypes::SAVE) {
@@ -204,12 +232,18 @@ trait Stage4BasicDatabaseInteraction
         $saveOrder = OrderReceipt::query()->where('id', $this->saveOrderId)->first();
 
         if (empty($saveOrder)) {
-            throw new OrderIdEmptyException();
+            throw new SaveOrderEmptyException();
         }
 
         $this->saveOrder = $saveOrder;
     }
 
+    /**
+     * @return void
+     * set store data
+     * based on order details set store id first
+     * throw error if store data not found
+     */
     protected function setStoreData()
     {
         $storeId = 0;
@@ -228,9 +262,17 @@ trait Stage4BasicDatabaseInteraction
             throw new StoreEmptyException();
         }
         companionLogger('--Eatcard companion store details : ', $store);
+
         $this->store = $store;
     }
 
+    /**
+     * @return void
+     * set POS/Kiosk Device setting data
+     * set POS/Kiosk device id, From Protocol OR Based on order details
+     * For suborder, It's depend on device settings, so if suborder print is skipped then throw exception.
+     * return if no  data found
+     */
     protected function setDeviceData()
     {
         $deviceId = 0;
@@ -266,6 +308,11 @@ trait Stage4BasicDatabaseInteraction
         $this->kiosk = $kiosk;
     }
 
+    /**
+     * @return void
+     * Set KDS User data for KDS Kitchen print
+     * throw exception if data not found
+     */
     protected function setKDSUserData()
     {
         if (empty($this->kdsUserId)) {

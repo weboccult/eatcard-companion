@@ -13,6 +13,10 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
  */
 trait Stage5EnableSettings
 {
+    /**
+     * @return void
+     * set all settings related to store
+     */
     protected function enableStoreSettings()
     {
         //return if store setting is not set
@@ -65,6 +69,11 @@ trait Stage5EnableSettings
         $this->additionalSettings['no_of_prints'] = ''.($store->storeSetting->no_of_prints ?? '1');
     }
 
+    /**
+     * @return void
+     * set all setting related to takeaway settings
+     * some settings are use for all system so there is no system wise conditions
+     */
     protected function enableStoreTakeawaySetting()
     {
         //return if store setting is not set
@@ -75,6 +84,10 @@ trait Stage5EnableSettings
         $this->additionalSettings['print_dynamic_order_no'] = $this->store->takeawaySetting->print_dynamic_order_no ?? 0;
     }
 
+    /**
+     * @return void
+     * set all POS/Kiosk device related settings
+     */
     protected function enableDeviceSettings()
     {
         //return if kiosk setting is not set
@@ -94,6 +107,10 @@ trait Stage5EnableSettings
         }
     }
 
+    /**
+     * @return void
+     * set all reservation related settings
+     */
     protected function enableStoreReservationSettings()
     {
         //return if reservation data is empty
@@ -110,6 +127,10 @@ trait Stage5EnableSettings
         $this->additionalSettings['is_until'] = isset($this->reservation->is_until) && $this->reservation->is_until == 1;
     }
 
+    /**
+     * @return void
+     * set some global settings for skip prints based on there Print type
+     */
     protected function enableGlobalSettings()
     {
 
@@ -125,6 +146,10 @@ trait Stage5EnableSettings
 
         if ($this->systemType == SystemTypes::KDS) {
             $this->skipMainPrint = true;
+        }
+
+        if (in_array($this->printType, [PrintTypes::MAIN, PrintTypes::PROFORMA])) {
+            $this->skipKitchenLabelPrint = true;
         }
     }
 }
