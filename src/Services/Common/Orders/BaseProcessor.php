@@ -34,7 +34,6 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage9PerformOperat
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\MagicAccessors;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Traits\Staggable;
-use function Weboccult\EatcardCompanion\Helpers\reverseRouteGenerator;
 
 /**
  * @mixin MagicAccessors
@@ -166,16 +165,6 @@ abstract class BaseProcessor implements BaseProcessorContract
      */
     public function dispatch()
     {
-        dd(
-            reverseRouteGenerator(
-                'push_notification.one_signal.create_device_url',
-                ['onesignal_id' => 123123, 'app_id' => 13123],
-                [],
-                null,
-                true
-            )
-        );
-
         return $this->stageIt([
             fn () => $this->stage0_BasicDatabaseInteraction(),
             fn () => $this->stage1_PrepareValidationRules(),

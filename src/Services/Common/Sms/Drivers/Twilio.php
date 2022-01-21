@@ -12,7 +12,7 @@ use Weboccult\EatcardCompanion\Models\BillingInformation;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\UserWallet;
 use Weboccult\EatcardCompanion\Services\Common\Sms\Driver;
-use function Weboccult\EatcardCompanion\Helpers\reverseRouteGenerator;
+use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 /**
  * Driver Twilio.
@@ -68,7 +68,7 @@ class Twilio extends Driver
                 $result = $this->client->account->messages->create($recipient, [
                         'from'           => $from,
                         'body'           => $this->body,
-                        'statusCallback' => reverseRouteGenerator('sms.webhook.admin', [], [], SystemTypes::ADMIN),
+                        'statusCallback' => webhookGenerator('sms.webhook.admin', [], [], SystemTypes::ADMIN),
                     ]);
                 $result = $result->toArray();
                 $result['error'] = false;

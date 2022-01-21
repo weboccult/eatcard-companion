@@ -2,33 +2,67 @@
 
 namespace Weboccult\EatcardCompanion\Helpers;
 
+if (! function_exists('webhookGenerator')) {
+    /**
+     * @param string $path
+     * @param array|null $parameters
+     * @param array|null $queryParam
+     * @param string|null $system
+     *
+     * @return string
+     */
+    function webhookGenerator(string $path, ?array $parameters, ?array $queryParam = [], string $system = null): string
+    {
+        $preparedUrl = reverseRouteGenerator($path, $parameters, $queryParam);
+        $domain = config('eatcardCompanion.system_endpoints.'.strtolower($system));
+        $isWebhookExposed = config('eatcardCompanion.exposed_webhook.settings.enable_exposed_webhook');
+        if ($isWebhookExposed) {
+            $domain = config('eatcardCompanion.exposed_webhook.'.strtolower($system));
+        }
+
+        return $domain.$preparedUrl;
+    }
+}
+
+if (! function_exists('generalUrlGenerator')) {
+    /**
+     * @param string $path
+     * @param array|null $parameters
+     * @param array|null $queryParam
+     * @param string|null $system
+     *
+     * @return string
+     */
+    function generalUrlGenerator(string $path, ?array $parameters, ?array $queryParam = [], string $system = null): string
+    {
+        $preparedUrl = reverseRouteGenerator($path, $parameters, $queryParam);
+        $domain = config('eatcardCompanion.system_endpoints.'.strtolower($system));
+
+        return $domain.$preparedUrl;
+    }
+}
+
 if (! function_exists('reverseRouteGenerator')) {
     /**
      * @param string $path
      * @param ?array $parameters
      * @param ?array $queryParam
-     * @param ?string $system
-     * @param ?bool $withoutDomain
      *
      * @return string
      *
      * @author Darshit Hedpara
      */
-    function reverseRouteGenerator(string $path, ?array $parameters, ?array $queryParam = [], string $system = null, ?bool $withoutDomain = false): string
+    function reverseRouteGenerator(string $path, ?array $parameters, ?array $queryParam = []): string
     {
         $preparedUrl = preg_replace_callback('/<%(.*?)%>/', function ($preg) use ($parameters) {
             return $parameters[$preg[1]] ?? $preg[0];
         }, config('eatcardCompanion.'.$path));
 
-        if ($withoutDomain) {
-            return $preparedUrl.buildQueryParams($queryParam);
-        } else {
-            $domain = config('eatcardCompanion.system_endpoints.'.strtolower($system));
-
-            return $domain.$preparedUrl.buildQueryParams($queryParam);
-        }
+        return $preparedUrl.buildQueryParams($queryParam);
     }
+}
 
+if (! function_exists('buildQueryParams')) {
     /**
      * @param $params
      *
