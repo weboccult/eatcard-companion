@@ -10,6 +10,7 @@ use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\phpDecrypt;
 
 /**
  * @description Stag 0
@@ -80,6 +81,9 @@ trait Stage0BasicDatabaseInteraction
     {
         if (isset($this->payload['device_id']) && ! empty($this->payload['device_id']) && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
             $deviceId = $this->payload['device_id'];
+            if ($this->system === SystemTypes::KIOSK) {
+                $deviceId = phpDecrypt($this->payload['device_id']);
+            }
             $storeId = $this->payload['store_id'];
             $device = Cache::tags([
                 FLUSH_ALL,

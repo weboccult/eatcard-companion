@@ -2,6 +2,8 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
@@ -27,7 +29,12 @@ trait Stage16PrepareResponse
                 ]);
             }
         } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
-            $this->setDumpDieValue($this->paymentResponse);
+            if (isset($this->paymentResponse['error']) && $this->paymentResponse['error'] == 1) {
+                // Wipay will set error
+                $this->setDumpDieValue(['custom_error' => $this->paymentResponse['errormsg']]);
+            } else {
+                $this->setDumpDieValue($this->paymentResponse);
+            }
         } else {
             companionLogger('Not supported method found.!');
         }
@@ -59,6 +66,33 @@ trait Stage16PrepareResponse
             } else {
                 companionLogger('Not supported payment method found.!');
             }
+        }
+    }
+
+    protected function kioskResponse()
+    {
+        Session::forget('kiosk-language');
+        App::setLocale('nl');
+
+        if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk') {
+            $this->setDumpDieValue($this->paymentResponse);
+        } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
+            $response = [];
+
+            if (isset($this->paymentResponse['error']) && $this->paymentResponse['error'] == 1) {
+                // Wipay will set error
+                $response['error'] = $this->paymentResponse['errormsg'];
+            }
+
+            $response['payUrl'] = $this->createdOrder->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;
+            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && $this->takeawaySetting->print_dynamic_order_no == 1) {
+                $response['order_id'] = ''.substr($this->createdOrder->order_id, -3);
+            } else {
+                $response['order_id'] = ''.substr($this->createdOrder->order_id, -2);
+            }
+            $this->setDumpDieValue($response);
+        } else {
+            companionLogger('Not supported method found.!');
         }
     }
 }

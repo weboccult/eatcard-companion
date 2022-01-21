@@ -42,6 +42,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Localization
+    |--------------------------------------------------------------------------
+    |
+    | You can enable localization using enable_translation flag.
+    |
+    */
+    'enable_translation'       => env('COMPANION_TRANSLATION_STATUS', true),
+    'enable_print_translation' => env('COMPANION_PRINT_TRANSLATION_STATUS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | System Endpoints
     |--------------------------------------------------------------------------
     |
@@ -53,6 +64,7 @@ return [
         'admin' => env('COMPANION_ADMIN_ENDPOINT', 'http://eatcard-admin.local'),
         'pos' => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
         'takeaway' => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
+        'kiosk' => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
     ],
 
     /*
@@ -82,11 +94,12 @@ return [
              *
              *  Note : exclude_webhook has a higher priority then exposed_webhook settings.
              */
-            'enable_exposed_webhook' => env('COMPANION_ENABLE_EXPOSED_WEBHOOK', false)
+            'enable_exposed_webhook' => env('COMPANION_ENABLE_EXPOSED_WEBHOOK', false),
         ],
         'admin' => env('COMPANION_EXPOSED_ADMIN_WEBHOOK', 'http://xyz.ngrok.com'),
         'pos' => env('COMPANION_EXPOSED_POS_WEBHOOK', 'http://xyz.ngrok.com'),
         'takeaway' => env('COMPANION_EXPOSED_TAKEAWAY_WEBHOOK', 'http://xyz.ngrok.com'),
+        'kiosk' => env('COMPANION_EXPOSED_KIOSK_WEBHOOK', 'http://xyz.ngrok.com'),
     ],
 
     /*
@@ -144,12 +157,12 @@ return [
                         'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
-                        // will be documented in near future...
+                        'order'     => '/kiosk/webhook/<%id%>/<%store_id%>',
                     ],
                 ],
                 'returnUrl' => [
                     'pos' => '/pos',
-                    'kiosk' => null, // will be documented in near future...
+                    'kiosk' => '/<%device_id%>',
                 ],
             ],
             'wipay' => [

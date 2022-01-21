@@ -375,6 +375,10 @@ abstract class BaseProcessor implements BaseProcessorContract
             $this->takeawayResponse();
         }
 
+        if ($this->system == SystemTypes::KIOSK) {
+            $this->kioskResponse();
+        }
+
         // anything you want
         // $this->setDumpDieValue([
         //     'order' => $this->orderData,

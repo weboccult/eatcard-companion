@@ -21,7 +21,7 @@ trait Stage5DatabaseInteraction
         if ($this->system == SystemTypes::POS && $this->isSubOrder) {
             $product_ids = collect($this->originalCart)->pluck('id')->toArray();
         } else {
-            // other systems : POS | Waitress | Takeaway
+            // Other systems : POS | Waitress | Takeaway | Kiosk
             $product_ids = collect($this->cart)->pluck('id')->toArray();
         }
         companionLogger('Product ids extracted from cart', $product_ids);

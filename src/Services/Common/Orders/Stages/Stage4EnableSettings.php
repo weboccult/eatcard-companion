@@ -15,7 +15,7 @@ trait Stage4EnableSettings
 {
     protected function enableAdditionalFees()
     {
-        if ($this->system == SystemTypes::POS) {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK])) {
             if ($this->payload['method'] != 'cash' && isset($this->store->storeSetting) && $this->store->storeSetting->is_pin == 1 && ! empty($store->storeSetting->additional_fee)) {
                 $this->settings['additional_fee'] = [
                     'status' => true,
@@ -52,6 +52,18 @@ trait Stage4EnableSettings
     {
         if ($this->system == SystemTypes::TAKEAWAY) {
             if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee) {
+                $this->settings['plastic_bag_fee'] = [
+                    'status' => true,
+                    'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
+                    // 'value'  => $this->payload['plastic_bag_fee'] ?? 0,
+                    // here we're not using fee from frontend side payload
+                ];
+            }
+        }
+
+        if ($this->system == SystemTypes::KIOSK) {
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_kiosk == 1 &&
+                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in') {
                 $this->settings['plastic_bag_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,

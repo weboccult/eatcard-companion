@@ -13,6 +13,7 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
+use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 /**
@@ -30,25 +31,38 @@ trait Stage12PaymentProcess
      */
     protected function ccvPayment()
     {
-        if ($this->system == SystemTypes::POS && $this->createdOrder->payment_method_type == 'ccv') {
-            if ($this->isSubOrder) {
-                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.sub_order', [
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'ccv') {
+            if ($this->system == SystemTypes::POS) {
+                if ($this->isSubOrder) {
+                    $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.sub_order', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['is_last_payment' => $this->payload['is_last_payment'] ?? 0], SystemTypes::POS);
+                    $meta_data = "{'parent_order': '".$this->createdOrder->parent_order_id."','sub_order': '".$this->createdOrder->id."'}";
+                } else {
+                    $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.order', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], [], SystemTypes::POS);
+                    $meta_data = "{'order': '".$this->createdOrder->order_id."'}";
+                }
+                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
+            }
+            if ($this->system == SystemTypes::KIOSK) {
+                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.kiosk.order', [
                     'id'       => $this->createdOrder->id,
                     'store_id' => $this->store->id,
-                ], ['is_last_payment' => $this->payload['is_last_payment'] ?? 0], SystemTypes::POS);
-                $meta_data = "{'parent_order': '".$this->createdOrder->parent_order_id."','sub_order': '".$this->createdOrder->id."'}";
-            } else {
-                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.order', [
-                    'id'       => $this->createdOrder->id,
-                    'store_id' => $this->store->id,
-                ], [], SystemTypes::POS);
+                ], [], SystemTypes::KIOSK);
                 $meta_data = "{'order': '".$this->createdOrder->order_id."'}";
+                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.kiosk', [
+                    'device_id' => phpEncrypt($this->device->id),
+                ], [], SystemTypes::KIOSK);
             }
             $inputs = [
                 'amount'     => number_format((float) $this->createdOrder->total_price, 2, '.', ''),
                 'currency'   => 'EUR',
                 'method'     => 'TERMINAL',
-                'returnUrl'  => generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS),
+                'returnUrl'  => $returnUrl,
                 'webhookUrl' => $webhook_url,
                 'language'   => 'NLD',
                 'metadata'   => $meta_data,
@@ -83,15 +97,24 @@ trait Stage12PaymentProcess
                 unset($order->order_id);
             }
             $this->createdOrder->update(['ccv_payment_ref' => $response['reference']]);
-            if ($this->isSubOrder) {
+
+            if ($this->system == SystemTypes::POS) {
+                if ($this->isSubOrder) {
+                    $this->paymentResponse = [
+                        'pay_url'      => $response['payUrl'],
+                        'sub_order_id' => $this->createdOrder->id,
+                        'order_id'     => $this->createdOrder->id,
+                    ];
+                } else {
+                    $this->paymentResponse = [
+                        'pay_url'  => $response['payUrl'],
+                        'order_id' => $this->createdOrder->id,
+                    ];
+                }
+            }
+            if ($this->system == SystemTypes::KIOSK) {
                 $this->paymentResponse = [
-                    'pay_url'      => $response['payUrl'],
-                    'sub_order_id' => $this->createdOrder->id,
-                    'order_id'     => $this->createdOrder->id,
-                ];
-            } else {
-                $this->paymentResponse = [
-                    'pay_url'  => $response['payUrl'],
+                    'payUrl'  => $response['payUrl'],
                     'order_id' => $this->createdOrder->id,
                 ];
             }
@@ -105,9 +128,14 @@ trait Stage12PaymentProcess
      */
     protected function wiPayment()
     {
-        if ($this->system == SystemTypes::POS && $this->createdOrder->payment_method_type == 'wipay') {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'wipay') {
             $order_price = round($this->createdOrder->total_price * 100, 0);
-            $order_type = $this->isSubOrder ? 'sub_order' : 'order';
+            if ($this->system == SystemTypes::KIOSK) {
+                $order_type = 'order';
+            }
+            if ($this->system == SystemTypes::POS) {
+                $order_type = $this->isSubOrder ? 'sub_order' : 'order';
+            }
 
             $inputs = [
                 'amount'    => $order_price,
@@ -134,12 +162,14 @@ trait Stage12PaymentProcess
             $response = json_decode($request_data->getBody()->getContents(), true);
 
             if ($response['error'] == 1) {
-                $this->setDumpDieValue(['custom_error' => $response['errormsg']]);
+                $this->paymentResponse = $response;
+
+                return;
             }
 
             companionLogger('Wipay payment Response', 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
 
-            if ($order_type == 'sub_order') {
+            if ($this->system == SystemTypes::POS && $this->isSubOrder && $order_type == 'sub_order') {
                 $order = SubOrder::query()->findOrFail($this->createdOrder->id);
             } else {
                 $order = Order::query()->findOrFail($this->createdOrder->id);
@@ -152,7 +182,7 @@ trait Stage12PaymentProcess
                 'order_id' => $order['id'],
             ];
 
-            if ($this->isSubOrder) {
+            if ($this->system == SystemTypes::POS && $this->isSubOrder) {
                 $this->paymentResponse = [
                    'sub_order' => $this->createdOrder,
                    'data'      => $data,
@@ -282,5 +312,14 @@ trait Stage12PaymentProcess
 
     protected function setBypassPaymentLogicAndOverridePaymentResponse()
     {
+        if ($this->system == SystemTypes::KIOSK) {
+            if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk') {
+                $this->paymentResponse = [
+                    'ssai' => 'fake_ssai',
+                    'reference' => 'fake_response',
+                    'payUrl' => 'https://www.google.com',
+                ];
+            }
+        }
     }
 }

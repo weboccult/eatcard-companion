@@ -205,6 +205,20 @@ if (! function_exists('generateTakeawayOrderId')) {
     }
 }
 
+if (! function_exists('generateKioskOrderId')) {
+    /**
+     * @param $store_id
+     *
+     * @return int|string
+     */
+    function generateKioskOrderId($store_id)
+    {
+        // logic is same so redirect to existing function
+        // created separate function, In case If we want to update login for kiosk only.
+        return generateTakeawayOrderId($store_id);
+    }
+}
+
 if (! function_exists('generatePOSOrderId')) {
     /**
      * @param $store_id
@@ -1042,6 +1056,31 @@ if (! function_exists('phpEncrypt')) {
         $encryption_key = '!$@#eatcard_kiosk_device_encrypt#@$!';
         // Encryption of string process starts
         return base64_encode(openssl_encrypt($simple_string, $ciphering, $encryption_key, $options, $encryption_iv));
+    }
+}
+
+if (! function_exists('phpDecrypt')) {
+
+    /**
+     * @param string $encrypted_string
+     *
+     * @return string
+     * @Description decrypt string to simple string
+     */
+    function phpDecrypt(string $encrypted_string): string
+    {
+        // Store cipher method
+        $ciphering = 'AES-256-CBC';
+        // Use OpenSSl encryption method
+        //	$iv_length = openssl_cipher_iv_length($ciphering);
+        $options = 0;
+        // Used random_bytes() which gives randomly
+        // 16 digit values
+        $decryption_iv = '@eatcard--kiosk@';
+        // Store the decryption key
+        $decryption_key = '!$@#eatcard_kiosk_device_encrypt#@$!';
+        // Descrypt the string
+        return openssl_decrypt(base64_decode($encrypted_string), $ciphering, $decryption_key, $options, $decryption_iv);
     }
 }
 

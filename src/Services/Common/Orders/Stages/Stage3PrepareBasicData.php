@@ -98,6 +98,12 @@ trait Stage3PrepareBasicData
                 $this->orderData['is_asap'] = 1;
             }
         }
+
+        if ($this->system === SystemTypes::KIOSK) {
+            $kiosk_data = json_decode($this->store->kiosk_data, true);
+            $is_auto_preparing = $kiosk_data['is_auto_preparing'] ?? null;
+            $this->orderData['order_status'] = ($is_auto_preparing) ? 'preparing' : 'received';
+        }
     }
 
     protected function prepareOrderBasicDetails()
@@ -118,6 +124,14 @@ trait Stage3PrepareBasicData
             $this->orderData['last_name'] = trim($this->payload['last_name']);
             $this->orderData['email'] = trim($this->payload['email']);
             $this->orderData['contact_no'] = trim($this->payload['contact_no']);
+        }
+
+        if ($this->system === SystemTypes::KIOSK) {
+            if ($this->payload['order_type'] == 'pickup') {
+                $this->orderData['delivery_address'] = '';
+                $this->orderData['delivery_postcode'] = '';
+                $this->orderData['delivery_place'] = '';
+            }
         }
     }
 

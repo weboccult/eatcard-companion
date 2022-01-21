@@ -4,11 +4,12 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
-use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\SubCategory;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\discountCalc;
+use function Weboccult\EatcardCompanion\Helpers\generateKioskOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generatePOSOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generateTakeawayOrderId;
 
@@ -86,6 +87,12 @@ trait Stage8PrepareAdvanceData
             }
             $this->orderData['payment_method_type'] = $this->payload['type'];
         }
+        if ($this->system == SystemTypes::KIOSK) {
+            if (isset($this->payload['bop']) && ($this->payload['bop'] != '' || $this->payload['bop'] != null) && $this->payload['bop'] == 'wot@kiosk') {
+                $this->orderData['status'] = 'paid';
+                $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            }
+        }
     }
 
     protected function prepareSplitPaymentDetails()
@@ -107,6 +114,9 @@ trait Stage8PrepareAdvanceData
         }
         if ($this->system == SystemTypes::TAKEAWAY) {
             $this->orderData['order_id'] = generateTakeawayOrderId($this->store->id);
+        }
+        if ($this->system == SystemTypes::KIOSK) {
+            $this->orderData['order_id'] = generateKioskOrderId($this->store->id);
         }
     }
 
@@ -150,12 +160,12 @@ trait Stage8PrepareAdvanceData
 
             $is_euro_discount = isset($item['is_euro_discount']) ? (int) $item['is_euro_discount'] : 0;
 
-            // original quantity will be used only for sub order.
-            $original_quantity = isset($item['original_quantity']) ? (int) $item['original_quantity'] : 0;
-            $item_quantity = isset($item['quantity']) ? (int) $item['quantity'] : 0;
-            $item_discount = isset($item['discount']) ? (float) $item['discount'] : 0;
-
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && $this->isSubOrder) {
+                // original quantity will be used only for sub order.
+                $original_quantity = isset($item['original_quantity']) ? (int) $item['original_quantity'] : 0;
+                $item_quantity = isset($item['quantity']) ? (int) $item['quantity'] : 0;
+                $item_discount = isset($item['discount']) ? (float) $item['discount'] : 0;
+
                 // if same quantity is not in sub order then need to calculate euro discount
                 if ($is_euro_discount == 1 & $this->discountData['order_discount'] == 0 && $original_quantity > 0 && $original_quantity != $item_quantity) {
                     $this->orderItemsData['discount'] = ($item_discount / $original_quantity) * $item_quantity;
@@ -231,6 +241,13 @@ trait Stage8PrepareAdvanceData
             $this->orderItemsData[$key]['supplement_total'] = 0;
             $productTax = (isset($product->tax) && $product->tax != '') ? $product->tax : $product->category->tax;
             $this->orderItemsData[$key]['tax_percentage'] = $productTax;
+
+            $subCategories = [];
+            if ($this->system === SystemTypes::KIOSK) {
+                $sub_category_id = collect($item['supplements'])->pluck('category_id')->toArray();
+                $subCategories = SubCategory::query()->whereIn('id', $sub_category_id)->get();
+            }
+
             if (isset($item['supplements'])) {
                 $finalSupplements = [];
                 foreach (collect($item['supplements']) as $i) {
@@ -251,6 +268,13 @@ trait Stage8PrepareAdvanceData
                             'categoryId' => isset($i['categoryId']) ? (int) $i['categoryId'] : null,
                             'alt_name'   => isset($currentSup->alt_name) && ! empty($currentSup->alt_name) ? $currentSup->alt_name : null,
                         ];
+
+                        if ($this->system === SystemTypes::KIOSK) {
+                            $currentSubCategoryData = collect($subCategories)->firstWhere('id', $i['category_id']);
+                            $currentPreparedSupplement['category_name'] = $currentSubCategoryData['name'] ?? '';
+                            $currentPreparedSupplement['deselect_supplement'] = $currentSubCategoryData['display_deselected'] ?? '';
+                        }
+
                         $finalSupplements[] = $currentPreparedSupplement;
                     }
                 }
@@ -317,6 +341,9 @@ trait Stage8PrepareAdvanceData
                             $this->orderData['total_alcohol_tax'] += $current_sub;
                         }
                     }
+                    if ($this->system === SystemTypes::KIOSK) {
+                        $this->orderData['total_alcohol_tax'] += $current_sub;
+                    }
                 }
             } else {
                 //9% tax
@@ -341,6 +368,9 @@ trait Stage8PrepareAdvanceData
                     } else {
                         $this->orderData['total_tax'] += $current_sub;
                     }
+                }
+                if ($this->system === SystemTypes::KIOSK) {
+                    $this->orderData['total_tax'] += $current_sub;
                 }
             }
             if ($notVoided && $notOnTheHouse) {
@@ -403,6 +433,61 @@ trait Stage8PrepareAdvanceData
             $this->orderItemsData[$key]['product_id'] = $product->id;
             $this->orderItemsData[$key]['product_name'] = $product->name;
             $this->orderItemsData[$key]['quantity'] = $item['quantity'];
+
+            if ($this->system === SystemTypes::KIOSK) {
+                $selected_supplements_data = $item['supplements'];
+                $final_selected_supplements_data = [];
+                companionLogger('Kiosk - selected supplement data', $selected_supplements_data);
+                foreach ($selected_supplements_data as $select_supplement_data) {
+                    $final_selected_supplements_data[$select_supplement_data['category_id']]['sub_cat_id'] = $select_supplement_data['category_id'];
+                    $final_selected_supplements_data[$select_supplement_data['category_id']]['sub_cat_name'] = $select_supplement_data['category_name'];
+                    $final_selected_supplements_data[$select_supplement_data['category_id']]['display_deselected'] = $select_supplement_data['deselect_supplement'] > 0;
+                    $select_supplement = [];
+                    $current_supplement = collect($this->supplementData)->where('id', $select_supplement_data['id'])->first();
+                    $select_supplement['id'] = $select_supplement_data['id'];
+                    $select_supplement['name'] = $select_supplement_data['name'];
+                    $select_supplement['val'] = $select_supplement_data['val'];
+                    $select_supplement['total_val'] = $select_supplement_data['total_val'];
+                    $select_supplement['qty'] = $select_supplement_data['qty'];
+                    $select_supplement['categoryId'] = isset($select_supplement_data['categoryId']) ? (int) $select_supplement_data['categoryId'] : null;
+                    $select_supplement['alt_name'] = $current_supplement['alt_name'] ?? null;
+                    $final_selected_supplements_data[$select_supplement_data['category_id']]['selected'][] = $select_supplement;
+                }
+                companionLogger('Kiosk - final selected supplement data', $final_selected_supplements_data);
+
+                companionLogger('Kiosk - deselected supplement data', $item['deselect_sups']);
+                $deselected_supplements_data = (isset($item['deselect_sups']) && ! empty($item['deselect_sups'])) ? $item['deselect_sups'] : [];
+                foreach ($deselected_supplements_data as $deselect_supplement_data) {
+                    $final_selected_supplements_data[$deselect_supplement_data['category_id']]['sub_cat_id'] = $deselect_supplement_data['category_id'];
+                    $final_selected_supplements_data[$deselect_supplement_data['category_id']]['sub_cat_name'] = $deselect_supplement_data['category_name'];
+                    $final_selected_supplements_data[$deselect_supplement_data['category_id']]['display_deselected'] = $deselect_supplement_data['deselect_supplement'] > 0;
+                    $deselect_supplement = [];
+                    $current_supplement = collect($this->supplementData)->where('id', $deselect_supplement_data['id'])->first();
+                    $deselect_supplement['id'] = $deselect_supplement_data['id'];
+                    $deselect_supplement['name'] = $deselect_supplement_data['name'];
+                    $deselect_supplement['val'] = $deselect_supplement_data['val'];
+                    $deselect_supplement['total_val'] = $deselect_supplement_data['val'];
+                    $deselect_supplement['qty'] = 0;
+                    $deselect_supplement['categoryId'] = isset($deselect_supplement_data['category_id']) ? (int) $deselect_supplement_data['category_id'] : null;
+                    $deselect_supplement['alt_name'] = $current_supplement['alt_name'] ?? null;
+                    $final_selected_supplements_data[$deselect_supplement_data['category_id']]['deselected'][] = $deselect_supplement;
+                }
+
+                companionLogger('Kiosk - final after deselect supplement data', $final_selected_supplements_data);
+
+                $finalPreparedSupplementData = [];
+                foreach ($final_selected_supplements_data as $supplementData) {
+                    if (! isset($supplementData['selected'])) {
+                        $supplementData['selected'] = [];
+                    }
+                    if (! isset($supplementData['deselected'])) {
+                        $supplementData['deselected'] = [];
+                    }
+                    $finalPreparedSupplementData[] = $supplementData;
+                }
+                $item['supplements'] = $finalPreparedSupplementData;
+            }
+
             $this->orderItemsData[$key]['extra'] = json_encode([
                 'serve_type'  => $item['serve_type'] ?? [],
                 'size'        => $item['size'] ?? [],
@@ -411,6 +496,7 @@ trait Stage8PrepareAdvanceData
                 'users'       => $item['user_name'] ?? [],
                 'transfer'    => $transferItems,
             ]);
+
             $this->orderItemsData[$key]['total_price'] = ($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) + (($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) * $this->orderItemsData[$key]['tax_percentage'] / 100);
             if ($normalOrder && $notVoided && $notOnTheHouse) {
                 $deposit = $product->statiege_id_deposite ?? 0;
@@ -463,6 +549,12 @@ trait Stage8PrepareAdvanceData
 
     protected function calculateFees()
     {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
+            if ($this->settings['additional_fee']['status'] == true) {
+                $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
+            }
+        }
         if ($this->system == SystemTypes::TAKEAWAY) {
             if ($this->settings['delivery_fee']['status'] == true) {
                 $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
@@ -477,10 +569,14 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
             }
         }
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-            if ($this->settings['additional_fee']['status'] == true) {
-                $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
-                $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
+        if ($this->system == SystemTypes::KIOSK) {
+            if ($this->settings['delivery_fee']['status'] == true) {
+                $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['delivery_fee']['value'];
+            }
+            if ($this->settings['plastic_bag_fee']['status'] == true) {
+                $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
             }
         }
     }
@@ -495,6 +591,10 @@ trait Stage8PrepareAdvanceData
         }
 
         if ($this->system == SystemTypes::TAKEAWAY) {
+            $this->orderData['total_price'] += $this->orderData['statiege_deposite_total'];
+        }
+
+        if ($this->system == SystemTypes::KIOSK) {
             $this->orderData['total_price'] += $this->orderData['statiege_deposite_total'];
         }
     }

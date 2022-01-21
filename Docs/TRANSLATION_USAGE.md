@@ -30,4 +30,17 @@ __('eatcard-companion::general.test')
 or
 
 trans('eatcard-companion::general.test')
+
+---------------------
+```
+
+New helpers added : 
+
+- both function have their setting in [EATCARD_COMPANION.md](Docs/EATCARD_COMPANION.md)
+- So you can enable or disable translation
+
+```php
+__companionTrans('general.test')
+__companionPrintTrans('general.test')
+
 ```

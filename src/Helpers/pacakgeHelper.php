@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Helpers;
 
 use Exception;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Stringable;
 use Weboccult\EatcardCompanion\Enums\LoggerTypes;
@@ -42,6 +43,42 @@ if (! function_exists('companionLogger')) {
             case LoggerTypes::CLOUDWATCH:
                 break;
         }
+    }
+}
+
+if (! function_exists('__companionTrans')) {
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    function __companionTrans(string $path): string
+    {
+        $isTranslationEnabled = config('eatcardCompanion.enable_translation');
+        if (! $isTranslationEnabled) {
+            // If not enabled then reset locale to EN
+            App::setLocale('en');
+        }
+
+        return __('eatcard-companion::'.$path);
+    }
+}
+
+if (! function_exists('__companionPrintTrans')) {
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    function __companionPrintTrans(string $path): string
+    {
+        $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
+        if (! $isPrintTranslationEnabled) {
+            // If not enabled then reset locale to EN
+            App::setLocale('en');
+        }
+
+        return __('eatcard-companion::'.$path);
     }
 }
 
