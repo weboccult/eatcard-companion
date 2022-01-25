@@ -13,6 +13,7 @@ use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Models\Supplement;
+use Weboccult\EatcardCompanion\Models\Table;
 use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage0BasicDatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Orders\Stages\Stage10PerformFeesCalculation;
@@ -96,6 +97,9 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     /** @var StoreReservation|null|object */
     protected $storeReservation = null;
+
+    /** @var Table|null|object */
+    protected $table = null;
 
     /** @var KioskDevice|null|object */
     protected $device = null;
@@ -193,6 +197,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->setStoreData(),
+            fn () => $this->setTableData(),
             fn () => $this->setTakeawaySettingData(),
             fn () => $this->setParentOrderData(),
             fn () => $this->setDeviceData(),
@@ -232,6 +237,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareOrderStatus(),
             fn () => $this->prepareOrderBasicDetails(),
             fn () => $this->prepareSavedOrderIdData(),
+            fn () => $this->createReservationForGuestAndResetSession(),
             fn () => $this->prepareReservationDetails(),
         ]);
     }
@@ -331,6 +337,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->ccvPayment(),
             fn () => $this->wiPayment(),
             fn () => $this->molliePayment(),
+            fn () => $this->cashPayment(),
             fn () => $this->multiSafePayment(),
             fn () => $this->updateOrderReferenceIdFromPaymentGateway(),
             fn () => $this->setBypassPaymentLogicAndOverridePaymentResponse(),
@@ -377,6 +384,10 @@ abstract class BaseProcessor implements BaseProcessorContract
 
         if ($this->system == SystemTypes::KIOSK) {
             $this->kioskResponse();
+        }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+            $this->dineInResponse();
         }
 
         // anything you want

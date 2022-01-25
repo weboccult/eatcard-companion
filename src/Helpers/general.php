@@ -17,6 +17,7 @@ use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
+use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\RunningOrderGenerator;
@@ -219,6 +220,20 @@ if (! function_exists('generateKioskOrderId')) {
     }
 }
 
+if (! function_exists('generateDineInOrderId')) {
+    /**
+     * @param $store_id
+     *
+     * @return int|string
+     */
+    function generateDineInOrderId($store_id)
+    {
+        // logic is same so redirect to existing function
+        // created separate function, In case If we want to update login for kiosk only.
+        return generateTakeawayOrderId($store_id);
+    }
+}
+
 if (! function_exists('generatePOSOrderId')) {
     /**
      * @param $store_id
@@ -265,6 +280,37 @@ if (! function_exists('generatePOSOrderId')) {
         }
 
         return $order ? $order->order_id + 1 : date('y').'000001';
+    }
+}
+if (! function_exists('generateReservationId')) {
+    /**
+     * @return int
+     * @Description generate reservation id
+     */
+    function generateReservationId(): int
+    {
+        $id = rand(1111111, 9999999);
+        $exist = StoreReservation::query()->where('reservation_id', $id)->first();
+        if ($exist) {
+            return generateReservationId();
+        } else {
+            return $id;
+        }
+    }
+}
+if (! function_exists('carbonParseAddHoursFormat')) {
+
+    /**
+     * @param string $time
+     * @param int $hours : Integer
+     * @param string $format
+     *
+     * @return string
+     * @Description calculate carbon time
+     */
+    function carbonParseAddHoursFormat(string $time, int $hours, string $format): string
+    {
+        return Carbon::parse($time)->addHours($hours)->format($format);
     }
 }
 

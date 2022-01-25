@@ -14,6 +14,7 @@ use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
+use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 /**
@@ -195,19 +196,44 @@ trait Stage12PaymentProcess
 
     protected function molliePayment()
     {
-        if ($this->system === SystemTypes::TAKEAWAY && $this->createdOrder->payment_method_type == 'mollie') {
+        if (in_array($this->system, [SystemTypes::TAKEAWAY, SystemTypes::DINE_IN]) && $this->createdOrder->payment_method_type == 'mollie') {
             try {
                 Mollie::api()->setApiKey($this->store->mollie_api_key);
 
-                $redirectUrl = generalUrlGenerator('payment.gateway.mollie.redirectUrl.takeaway', [
-                    'id'       => $this->createdOrder->id,
-                    'store_id' => $this->store->id,
-                ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+                if ($this->system === SystemTypes::TAKEAWAY) {
+                    $redirectUrl = generalUrlGenerator('payment.gateway.mollie.redirectUrl.takeaway', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
 
-                $webhookUrl = webhookGenerator('payment.gateway.mollie.webhook.takeaway', [
-                    'id'       => $this->createdOrder->id,
-                    'store_id' => $this->store->id,
-                ], [], SystemTypes::TAKEAWAY);
+                    $webhookUrl = webhookGenerator('payment.gateway.mollie.webhook.takeaway', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], [], SystemTypes::TAKEAWAY);
+                }
+                if ($this->system === SystemTypes::DINE_IN) {
+                    if (! empty($this->storeReservation)) {
+                        $redirectUrl = generalUrlGenerator('payment.gateway.mollie.redirectUrl.dine_in', [
+                            'id'       => $this->createdOrder->id,
+                            'store_id' => $this->store->id,
+                        ], ['url' => $this->payload['url'], 'res_id' => $this->storeReservation->id], SystemTypes::DINE_IN);
+
+                        $webhookUrl = webhookGenerator('payment.gateway.mollie.webhook.dine_in', [
+                            'id'       => $this->createdOrder->id,
+                            'store_id' => $this->store->id,
+                        ], ['res_id' => $this->storeReservation->id], SystemTypes::DINE_IN);
+                    } else {
+                        $redirectUrl = generalUrlGenerator('payment.gateway.mollie.redirectUrl.dine_in', [
+                            'id'       => $this->createdOrder->id,
+                            'store_id' => $this->store->id,
+                        ], ['url' => $this->payload['url']], SystemTypes::DINE_IN);
+
+                        $webhookUrl = webhookGenerator('payment.gateway.mollie.webhook.dine_in', [
+                            'id'       => $this->createdOrder->id,
+                            'store_id' => $this->store->id,
+                        ], [], SystemTypes::DINE_IN);
+                    }
+                }
 
                 $payload = [
                     'amount'      => [
@@ -256,21 +282,53 @@ trait Stage12PaymentProcess
 
     protected function multiSafePayment()
     {
-        if ($this->system === SystemTypes::TAKEAWAY && $this->createdOrder->payment_method_type == 'multisafepay') {
-            $webhookUrl = webhookGenerator('payment.gateway.multisafe.webhook.takeaway', [
+        if (in_array($this->system, [SystemTypes::TAKEAWAY, SystemTypes::DINE_IN]) && $this->createdOrder->payment_method_type == 'multisafepay') {
+            if ($this->system === SystemTypes::TAKEAWAY) {
+                $webhookUrl = webhookGenerator('payment.gateway.multisafe.webhook.takeaway', [
+                            'id'       => $this->createdOrder->id,
+                            'store_id' => $this->store->id,
+                        ], [], SystemTypes::TAKEAWAY);
+
+                $redirectUrl = generalUrlGenerator('payment.gateway.multisafe.redirectUrl.takeaway', [
+                    'id'       => $this->createdOrder->id,
+                    'store_id' => $this->store->id,
+                ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+
+                $cancelUrl = generalUrlGenerator('payment.gateway.multisafe.cancelUrl.takeaway', [
+                    'id'       => $this->createdOrder->id,
+                    'store_id' => $this->store->id,
+                ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+            }
+
+            if ($this->system === SystemTypes::DINE_IN) {
+                if (! empty($this->storeReservation)) {
+                    $webhookUrl = webhookGenerator('payment.gateway.multisafe.webhook.dine_in', [
                         'id'       => $this->createdOrder->id,
                         'store_id' => $this->store->id,
-                    ], [], SystemTypes::TAKEAWAY);
-
-            $redirectUrl = generalUrlGenerator('payment.gateway.multisafe.redirectUrl.takeaway', [
-                'id'       => $this->createdOrder->id,
-                'store_id' => $this->store->id,
-            ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
-
-            $cancelUrl = generalUrlGenerator('payment.gateway.multisafe.cancelUrl.takeaway', [
-                'id'       => $this->createdOrder->id,
-                'store_id' => $this->store->id,
-            ], ['url' => $this->payload['url']], SystemTypes::TAKEAWAY);
+                    ], ['res_id' => $this->storeReservation->id], SystemTypes::DINE_IN);
+                    $redirectUrl = generalUrlGenerator('payment.gateway.multisafe.redirectUrl.dine_in', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['url' => $this->payload['url'], 'res_id' => $this->storeReservation->id], SystemTypes::DINE_IN);
+                    $cancelUrl = generalUrlGenerator('payment.gateway.multisafe.cancelUrl.dine_in', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['url' => $this->payload['url'], 'res_id' => $this->storeReservation->id], SystemTypes::DINE_IN);
+                } else {
+                    $webhookUrl = webhookGenerator('payment.gateway.multisafe.webhook.dine_in', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], [], SystemTypes::DINE_IN);
+                    $redirectUrl = generalUrlGenerator('payment.gateway.multisafe.redirectUrl.dine_in', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['url' => $this->payload['url']], SystemTypes::DINE_IN);
+                    $cancelUrl = generalUrlGenerator('payment.gateway.multisafe.cancelUrl.dine_in', [
+                        'id'       => $this->createdOrder->id,
+                        'store_id' => $this->store->id,
+                    ], ['url' => $this->payload['url']], SystemTypes::DINE_IN);
+                }
+            }
 
             $data = [
                 'type'            => $this->createdOrder->method == 'IDEAL' ? 'direct' : 'redirect',
@@ -303,6 +361,21 @@ trait Stage12PaymentProcess
                     'multisafe_error_message' => $payment['multisafe_error_message'],
                 ];
             }
+        }
+    }
+
+    protected function cashPayment()
+    {
+        if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
+            $current_data = [
+                'orderDate'       => $this->createdOrder->order_date,
+                'is_notification' => 1,
+            ];
+            $order = $this->createdOrder->toArray();
+            sendWebNotification($this->store, $order, $current_data, 0, 0);
+            $this->paymentResponse = [
+                'store_slug' => $this->store->store_slug,
+            ];
         }
     }
 

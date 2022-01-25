@@ -3,11 +3,13 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Session;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\Table;
 use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\phpDecrypt;
@@ -38,6 +40,28 @@ trait Stage0BasicDatabaseInteraction
             if (! empty($store)) {
                 $this->store = $store;
                 $this->orderData['store_id'] = $this->store->id;
+            }
+        }
+    }
+
+    protected function setTableData()
+    {
+        if (isset($this->payload['table_id']) && ! empty($this->payload['table_id'])) {
+            $tableId = $this->payload['table_id'];
+            $storeId = $this->payload['store_id'];
+            $table = Cache::tags([
+                FLUSH_ALL,
+                FLUSH_DINE_IN,
+                EP_DINE_POST_ORDER,
+                FLUSH_STORE_BY_ID.$storeId,
+                TABLES,
+                TABLE_BY_ID.$tableId,
+            ])->remember('{eat-card}-table-by-id-'.$tableId, caching_time, function () use ($tableId) {
+                return Table::findOrFail($tableId);
+            });
+            if (! empty($table)) {
+                $this->table = $table;
+                $this->orderData['table_id'] = $this->table->id;
             }
         }
     }
@@ -114,6 +138,14 @@ trait Stage0BasicDatabaseInteraction
                 },
                 'tables.table',
             ])->where('id', $reservationId)->first();
+            if (! empty($reservation)) {
+                $this->storeReservation = $reservation;
+            }
+        }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
+            $reservation = StoreReservation::where('id', $session_id)->first();
             if (! empty($reservation)) {
                 $this->storeReservation = $reservation;
             }

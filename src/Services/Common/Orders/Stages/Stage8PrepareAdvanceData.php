@@ -4,11 +4,13 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubCategory;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\discountCalc;
+use function Weboccult\EatcardCompanion\Helpers\generateDineInOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generateKioskOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generatePOSOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generateTakeawayOrderId;
@@ -93,6 +95,15 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             }
         }
+        if ($this->system == SystemTypes::DINE_IN) {
+            $this->orderData['payment_method_type'] = $this->payload['type'] ?? '';
+
+            if (! $this->payload['method'] || $this->payload['method'] == 'cash' || $this->payload['method'] == 'pin') {
+                $this->orderData['status'] = 'paid';
+                $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+                $this->orderData['payment_method_type'] = '';
+            }
+        }
     }
 
     protected function prepareSplitPaymentDetails()
@@ -117,6 +128,15 @@ trait Stage8PrepareAdvanceData
         }
         if ($this->system == SystemTypes::KIOSK) {
             $this->orderData['order_id'] = generateKioskOrderId($this->store->id);
+        }
+        if ($this->system == SystemTypes::DINE_IN) {
+            $this->orderData['order_id'] = generateDineInOrderId($this->store->id);
+            if (isset($order_data['parent_id'])) {
+                $order = Order::query()->where('parent_id', $this->orderData['parent_id'])->first();
+                if (! empty($order)) {
+                    $this->orderData['order_id'] = $order->order_id;
+                }
+            }
         }
     }
 
@@ -176,7 +196,7 @@ trait Stage8PrepareAdvanceData
             $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
             $product = $this->productData->where('id', $item['id'])->first();
 
-            if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && ! empty($this->storeReservation)) {
+            if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::DINE_IN]) && ! empty($this->storeReservation)) {
                 $allYouCanEatPrice = 0;
                 if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $product->ayce_class->count() > 0 && $this->storeReservation->dineInPrice && isset($this->storeReservation->dineInPrice->dinein_category_id) && $this->storeReservation->dineInPrice->dinein_category_id != '') {
                     $ayeClasses = $product->ayce_class->pluck('dinein_category_id')->toArray();
@@ -309,6 +329,11 @@ trait Stage8PrepareAdvanceData
             } else {
                 $item['weight'] = [];
             }
+
+            if ($this->system === SystemTypes::DINE_IN) {
+                $item['weight'] = [];
+            }
+
             if ($is_product_chargeable) {
                 $product_total = ($supplement_total + $size_total + $weight_total) * $item['quantity'];
             } else {
@@ -341,7 +366,7 @@ trait Stage8PrepareAdvanceData
                             $this->orderData['total_alcohol_tax'] += $current_sub;
                         }
                     }
-                    if ($this->system === SystemTypes::KIOSK) {
+                    if (in_array($this->system, [SystemTypes::KIOSK, SystemTypes::DINE_IN])) {
                         $this->orderData['total_alcohol_tax'] += $current_sub;
                     }
                 }
@@ -369,7 +394,7 @@ trait Stage8PrepareAdvanceData
                         $this->orderData['total_tax'] += $current_sub;
                     }
                 }
-                if ($this->system === SystemTypes::KIOSK) {
+                if (in_array($this->system, [SystemTypes::KIOSK, SystemTypes::DINE_IN])) {
                     $this->orderData['total_tax'] += $current_sub;
                 }
             }
@@ -510,7 +535,7 @@ trait Stage8PrepareAdvanceData
             } else {
                 $this->orderItemsData[$key]['status'] = 'received';
             }
-            if ($this->system == SystemTypes::POS && isset($this->payload['reservation_id']) && $this->payload['reservation_id']) {
+            if (($this->system == SystemTypes::POS || $this->system == SystemTypes::WAITRESS) && isset($this->payload['reservation_id']) && $this->payload['reservation_id']) {
                 $this->orderItemsData[$key]['status'] = 'done';
             }
             $this->orderItemsData[$key]['comment'] = isset($item['comment']) && ! empty($item['comment']) ? $item['comment'] : null;
@@ -583,7 +608,7 @@ trait Stage8PrepareAdvanceData
 
     protected function calculateStatiegeDeposite()
     {
-        if ($this->system == SystemTypes::POS) {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
             $normalOrder = (isset($this->payload['reservation_id']) && $this->payload['reservation_id'] != '' && ! empty($this->storeReservation)) ? 0 : 1;
             if ($normalOrder) {
                 $this->orderData['total_price'] += $this->orderData['statiege_deposite_total'];

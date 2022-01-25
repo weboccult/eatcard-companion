@@ -64,12 +64,12 @@ return [
     | Different system's endpoint will be managed from here
     |
     */
-
     'system_endpoints' => [
-        'admin' => env('COMPANION_ADMIN_ENDPOINT', 'http://eatcard-admin.local'),
-        'pos' => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
+        'admin'    => env('COMPANION_ADMIN_ENDPOINT', 'http://eatcard-admin.local'),
+        'pos'      => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
         'takeaway' => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
-        'kiosk' => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
+        'kiosk'    => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
+        'dine_in'  => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in.local'),
     ],
 
     /*
@@ -83,7 +83,6 @@ return [
     | Note : use http instead of https because,
     | In your local machine you may not have SSL certificates and webhook might not work.
     */
-
     'exposed_webhook' => [
         'settings' => [
             /*
@@ -101,10 +100,11 @@ return [
              */
             'enable_exposed_webhook' => env('COMPANION_ENABLE_EXPOSED_WEBHOOK', false),
         ],
-        'admin' => env('COMPANION_EXPOSED_ADMIN_WEBHOOK', 'http://xyz.ngrok.com'),
-        'pos' => env('COMPANION_EXPOSED_POS_WEBHOOK', 'http://xyz.ngrok.com'),
+        'admin'    => env('COMPANION_EXPOSED_ADMIN_WEBHOOK', 'http://xyz.ngrok.com'),
+        'pos'      => env('COMPANION_EXPOSED_POS_WEBHOOK', 'http://xyz.ngrok.com'),
         'takeaway' => env('COMPANION_EXPOSED_TAKEAWAY_WEBHOOK', 'http://xyz.ngrok.com'),
-        'kiosk' => env('COMPANION_EXPOSED_KIOSK_WEBHOOK', 'http://xyz.ngrok.com'),
+        'kiosk'    => env('COMPANION_EXPOSED_KIOSK_WEBHOOK', 'http://xyz.ngrok.com'),
+        'dine_in'  => env('COMPANION_EXPOSED_DINE_IN_WEBHOOK', 'http://xyz.ngrok.com'),
     ],
 
     /*
@@ -117,11 +117,11 @@ return [
     */
     'push_notification' => [
         'one_signal' => [
-            'api_url' => env('COMPANION_ONE_SIGNAL_API_URL', 'https://onesignal.com/api/v1'),
-            'create_device_url' => env('COMPANION_ONE_SIGNAL_CREATE_DEVICE_URL', '/players/<%onesignal_id%>?app_id=<%app_id%>'),
+            'api_url'               => env('COMPANION_ONE_SIGNAL_API_URL', 'https://onesignal.com/api/v1'),
+            'create_device_url'     => env('COMPANION_ONE_SIGNAL_CREATE_DEVICE_URL', '/players/<%onesignal_id%>?app_id=<%app_id%>'),
             'send_notification_url' => env('COMPANION_ONE_SIGNAL_CREATE_DEVICE_URL', '/notifications'),
-            'app_id' => env('COMPANION_ONE_SIGNAL_APP_ID', ''),
-            'rest_api_key' => env('COMPANION_ONE_SIGNAL_REST_API_KEY', ''),
+            'app_id'                => env('COMPANION_ONE_SIGNAL_APP_ID', ''),
+            'rest_api_key'          => env('COMPANION_ONE_SIGNAL_REST_API_KEY', ''),
         ],
     ],
 
@@ -150,33 +150,34 @@ return [
             'exclude_webhook' => env('COMPANION_EXCLUDE_WEBHOOK', false),
         ],
         'gateway' => [
-            'ccv' => [
+            'ccv'       => [
                 'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
                 'production' => 'https://redirect.jforce.be/api/v1',
                 'endpoints'  => [
                     'createOrder' => '/payment',
                 ],
-                'webhook' => [
-                    'pos' => [
+                'webhook'    => [
+                    'pos'   => [
                         'order'     => '/pos/webhook/<%id%>/<%store_id%>',
                         'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
-                        'order'     => '/kiosk/webhook/<%id%>/<%store_id%>',
+                        'order' => '/kiosk/webhook/<%id%>/<%store_id%>',
                     ],
                 ],
-                'returnUrl' => [
-                    'pos' => '/pos',
+                'returnUrl'  => [
+                    'pos'   => '/pos',
                     'kiosk' => '/<%device_id%>',
                 ],
             ],
-            'wipay' => [
+            'wipay'     => [
                 'staging'    => 'https://wipayacc.worldline.nl',
                 'production' => 'https://wipay.worldline.nl',
                 'endpoints'  => [
                     'createOrder' => '/api/2.0/json/debit',
                 ],
-                'webhook' => null, // No need, it will point to main domain directly.
+                'webhook'    => null,
+                // No need, it will point to main domain directly.
             ],
             'multisafe' => [
                 'mode'        => env('COMPANION_MULTISAFE_MODE', 'live'),
@@ -190,21 +191,26 @@ return [
                     'refundOrder'   => '/orders/<%order_id%>/refunds',
                 ],
                 'webhook'     => [
-                    'takeaway' => 'multisafe/takeaway/webhook/<%id%>/<%store_id%>',
+                    'takeaway' => '/multisafe/takeaway/webhook/<%id%>/<%store_id%>',
+                    'dine_in'  => '/multisafe/dine-in/webhook/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
-                    'takeaway' => 'multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
+                    'takeaway' => '/multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
+                    'dine_in'  => '/multisafe/dine-in/orders-success/<%id%>/<%store_id%>',
                 ],
                 'cancelUrl'   => [
-                    'takeaway' => 'multisafe/takeaway/cancel/<%id%>/<%store_id%>',
+                    'takeaway' => '/multisafe/takeaway/cancel/<%id%>/<%store_id%>',
+                    'dine_in'  => '/multisafe/dine-in/cancel/<%id%>/<%store_id%>',
                 ],
             ],
-            'mollie' => [
-                'webhook' => [
+            'mollie'    => [
+                'webhook'     => [
                     'takeaway' => '/webhook/<%id%>/<%store_id%>',
+                    'dine_in'  => '/dine-in/webhook/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
                     'takeaway' => '/orders-success/<%id%>/<%store_id%>',
+                    'dine_in'  => '/dine-in/orders-success/<%id%>/<%store_id%>',
                 ],
             ],
         ],

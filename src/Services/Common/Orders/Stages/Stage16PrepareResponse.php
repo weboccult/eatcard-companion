@@ -45,27 +45,7 @@ trait Stage16PrepareResponse
         if ($this->orderData['method'] == 'cash') {
             $this->setDumpDieValue(['redirect_url' => $this->payload['url'].'?status=paid&type=takeaway&store='.$this->store->store_slug]);
         } else {
-            if ($this->createdOrder->payment_method_type == 'mollie') {
-                if (isset($this->paymentResponse['payment_link'])) {
-                    $this->setDumpDieValue(['payment_link' => $this->paymentResponse['payment_link']]);
-                } elseif (isset($this->paymentResponse['mollie_error'])) {
-                    $this->setDumpDieValue(['error_from_mollie_payment_gateway' => $this->paymentResponse['mollie_error']]);
-                } else {
-                    $this->setDumpDieValue(['error_from_mollie_payment_gateway' => 'Something went wrong']);
-                }
-            } elseif ($this->createdOrder->payment_method_type == 'multisafepay') {
-                if (isset($this->paymentResponse['payment_url'])) {
-                    $this->setDumpDieValue(['payment_link' => $this->paymentResponse['payment_url']]);
-                } else {
-                    if (isset($this->paymentResponse['multisafe_error_message'])) {
-                        $this->setDumpDieValue(['error_from_multisafe_payment_gateway' => $this->paymentResponse['multisafe_error_message']]);
-                    } else {
-                        $this->setDumpDieValue(['error_from_multisafe_payment_gateway' => 'Something went wrong']);
-                    }
-                }
-            } else {
-                companionLogger('Not supported payment method found.!');
-            }
+            $this->mollieAndMultiSafeResponse();
         }
     }
 
@@ -93,6 +73,40 @@ trait Stage16PrepareResponse
             $this->setDumpDieValue($response);
         } else {
             companionLogger('Not supported method found.!');
+        }
+    }
+
+    protected function dineInResponse()
+    {
+        if ($this->orderData['method'] == 'cash') {
+            $this->setDumpDieValue($this->paymentResponse);
+        } else {
+            $this->mollieAndMultiSafeResponse();
+        }
+    }
+
+    protected function mollieAndMultiSafeResponse(): void
+    {
+        if ($this->createdOrder->payment_method_type == 'mollie') {
+            if (isset($this->paymentResponse['payment_link'])) {
+                $this->setDumpDieValue(['payment_link' => $this->paymentResponse['payment_link']]);
+            } elseif (isset($this->paymentResponse['mollie_error'])) {
+                $this->setDumpDieValue(['error_from_mollie_payment_gateway' => $this->paymentResponse['mollie_error']]);
+            } else {
+                $this->setDumpDieValue(['error_from_mollie_payment_gateway' => 'Something went wrong']);
+            }
+        } elseif ($this->createdOrder->payment_method_type == 'multisafepay') {
+            if (isset($this->paymentResponse['payment_url'])) {
+                $this->setDumpDieValue(['payment_link' => $this->paymentResponse['payment_url']]);
+            } else {
+                if (isset($this->paymentResponse['multisafe_error_message'])) {
+                    $this->setDumpDieValue(['error_from_multisafe_payment_gateway' => $this->paymentResponse['multisafe_error_message']]);
+                } else {
+                    $this->setDumpDieValue(['error_from_multisafe_payment_gateway' => 'Something went wrong']);
+                }
+            }
+        } else {
+            companionLogger('Not supported payment method found.!');
         }
     }
 }

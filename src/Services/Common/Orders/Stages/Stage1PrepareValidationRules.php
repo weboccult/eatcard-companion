@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Session;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\KioskDeviceEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\OrderItemsNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawayDateNotAvailableException;
@@ -36,6 +37,7 @@ trait Stage1PrepareValidationRules
     {
         // Add condition here... If you want to exclude store_id validation
         $this->addRuleToCommonRules(StoreEmptyException::class, (! isset($this->payload['store_id']) || empty($this->payload['store_id']) || empty($this->store)));
+        $this->addRuleToCommonRules(OrderItemsNotFoundException::class, empty($this->cart));
 
         if (! empty($this->device) && $this->device->payment_type == 'worldline') {
             $this->addRuleToCommonRules(WorldLineSecretsNotFoundException::class, ! file_exists(public_path('worldline/eatcard.nl.pem')));
