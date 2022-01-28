@@ -93,6 +93,10 @@ Please check [TRANSLATION_USAGE.md](Docs/TRANSLATION_USAGE.md) for more details
 
 Please check [VIEW_USAGE.md](Docs/VIEW_USAGE.md) for more details
 
+## PDD stream and download Support
+
+Please check [PDF_USAGE.md](Docs/PDF_USAGE.md) for more details
+
 ## Traits
 
 - Please check [TRAITS.md](Docs/TRAITS.md) for more details

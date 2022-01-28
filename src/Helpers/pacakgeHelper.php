@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Helpers;
 
+use Barryvdh\DomPDF\PDF;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -94,6 +95,24 @@ if (! function_exists('__companionViews')) {
     function __companionViews(string $path, $data = null): View
     {
         return view('eatcard-companion::'.$path, ['data' => $data]);
+    }
+}
+
+if (! function_exists('__companionPDF')) {
+
+    /**
+     * @param string $path
+     * @param $data
+     *
+     * @return PDF;
+     */
+    function __companionPDF(string $path, $data = null): PDF
+    {
+        $view = __companionViews($path, $data)->render();
+        $pdf = app()->make('dompdf.wrapper');
+        $pdf->loadHTML($view);
+
+        return $pdf;
     }
 }
 
