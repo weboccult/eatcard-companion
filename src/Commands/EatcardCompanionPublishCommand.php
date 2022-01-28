@@ -73,7 +73,8 @@ class EatcardCompanionPublishCommand extends Command
         $this->call('vendor:publish', ['--force'=> null, '--tag' => 'eatcardcompanion-translations']);
     }
 
-    private function viewPublish() {
+    private function viewPublish()
+    {
         $this->call('vendor:publish', ['--force'=> null, '--tag' => 'eatcardcompanion-views']);
     }
 }

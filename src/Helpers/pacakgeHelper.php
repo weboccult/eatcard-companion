@@ -88,6 +88,7 @@ if (! function_exists('__companionViews')) {
     /**
      * @param string $path
      * @param $data
+     *
      * @return View
      */
     function __companionViews(string $path, $data = null): View
