@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Helpers;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Stringable;
 use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Weboccult\EatcardCompanion\Services\Core\EatcardPrint;
@@ -79,6 +80,19 @@ if (! function_exists('__companionPrintTrans')) {
         }
 
         return __('eatcard-companion::'.$path);
+    }
+}
+
+if (! function_exists('__companionViews')) {
+
+    /**
+     * @param string $path
+     * @param $data
+     * @return View
+     */
+    function __companionViews(string $path, $data = null): View
+    {
+        return view('eatcard-companion::'.$path, ['data' => $data]);
     }
 }
 

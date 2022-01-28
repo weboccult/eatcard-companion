@@ -35,11 +35,16 @@ class EatcardCompanionServiceProvider extends ServiceProvider
             ], 'eatcardsms-config');
 
             $this->publishes([
+                __DIR__.'/../resources/views' => resource_path('views/vendor/eatcard-companion'),
+            ], 'eatcardcompanion-views');
+
+            $this->publishes([
                 __DIR__.'/../migrations/create_sms_histories_table.php.stub' => $this->getMigrationFileName($filesystem),
             ], 'eatcardsms-migration');
         }
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
     }
 
     public function register()

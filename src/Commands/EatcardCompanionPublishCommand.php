@@ -40,6 +40,14 @@ class EatcardCompanionPublishCommand extends Command
                 return;
             }
             $this->translationPublish();
+        } elseif ($publishType == 'views') {
+            $answer = $this->ask('Are you sure, you want to publish a view files ? y/N', 'N');
+            if ($answer == 'n' || $answer == 'N') {
+                $this->error('You have cancelled the operation.!');
+
+                return;
+            }
+            $this->viewPublish();
         } else {
             $this->error('Publish type is not supported, Available types ( config / translations ).!');
         }
@@ -57,11 +65,15 @@ class EatcardCompanionPublishCommand extends Command
 
             return;
         }
-        $this->call('vendor:publish', ['--tag' => 'eatcardcompanion-config']);
+        $this->call('vendor:publish', ['--force'=> null, '--tag' => 'eatcardcompanion-config']);
     }
 
     private function translationPublish()
     {
         $this->call('vendor:publish', ['--force'=> null, '--tag' => 'eatcardcompanion-translations']);
+    }
+
+    private function viewPublish() {
+        $this->call('vendor:publish', ['--force'=> null, '--tag' => 'eatcardcompanion-views']);
     }
 }
