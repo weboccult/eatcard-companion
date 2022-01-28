@@ -965,7 +965,7 @@ trait Stage7PrepareAdvanceData
             $plastic_bag_fee = $this->order['plastic_bag_fee'] ?? 0;
             $coupon_price = $this->order['coupon_price'] ?? 0;
             $cash_paid = $this->order['cash_paid'] ?? 0;
-            $method = $this->order['method'] ?? 0;
+            $method = $this->order['method'] ?? '';
             $total_price = $this->order['total_price'] ?? 0;
             $reservation_paid = $this->order['reservation_paid'] ?? 0;
         } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
@@ -981,7 +981,7 @@ trait Stage7PrepareAdvanceData
             $total_alcohol_tax = $this->subOrder['total_alcohol_tax'] ?? 0;
             $coupon_price = $this->subOrder['coupon_price'] ?? 0;
             $cash_paid = $this->subOrder['cash_paid'] ?? 0;
-            $method = $this->subOrder['method'] ?? 0;
+            $method = $this->subOrder['method'] ?? '';
             $total_price = $this->subOrder['total_price'] ?? 0;
             $reservation_paid = $this->subOrder['reservation_paid'] ?? 0;
 
@@ -1048,19 +1048,22 @@ trait Stage7PrepareAdvanceData
                 'value' => ''.changePriceFormat($coupon_price),
             ];
         }
-        if ($cash_paid > 0 && $method == 'cash') {
+        if ($method == 'cash') {
             $summary[] = [
                 'key'   => __('eatcard-companion::general.cash_paid_cost'),
                 'value' => ''.changePriceFormat($cash_paid),
             ];
+
+            $cash_changes = $cash_paid - $total_price;
+
+            if ($cash_paid > 0 && $cash_changes > 0) {
+                $summary[] = [
+                    'key'   => __('eatcard-companion::general.cash_changes'),
+                    'value' => ''.changePriceFormat($cash_changes),
+                ];
+            }
         }
-        $cash_changes = $cash_paid - $total_price;
-        if ($cash_paid > 0 && $cash_changes > 0 && $method == 'cash') {
-            $summary[] = [
-                'key'   => __('eatcard-companion::general.cash_changes'),
-                'value' => ''.changePriceFormat($cash_changes),
-            ];
-        }
+
         if ($reservation_paid > 0) {
             $summary[] = [
                 'key'   => 'Booking deposit',
