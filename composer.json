@@ -17,11 +17,11 @@
   "homepage": "https://github.com/weboccult/eatcard-helpers",
   "require": {
     "php": "^7.4 || ^8.0",
-    "barryvdh/laravel-dompdf": "^0.9.0",
     "ext-bcmath": "*",
     "ext-curl": "*",
     "ext-json": "*",
     "ext-openssl": "*",
+    "barryvdh/laravel-dompdf": "^0.9.0",
     "cmgmyr/messenger": "^2.22",
     "guzzlehttp/guzzle": "^7.0.1",
     "illuminate/collections": "^8.0",
