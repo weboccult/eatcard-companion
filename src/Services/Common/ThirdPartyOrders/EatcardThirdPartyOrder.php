@@ -10,19 +10,20 @@ use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
  */
 class EatcardThirdPartyOrder
 {
-    static private ?EatcardThirdPartyOrder $instance = null;
+    private static ?EatcardThirdPartyOrder $instance = null;
 
-    static private ThirdPartyOrders $processor;
-    static private array $data = [];
+    private static ThirdPartyOrders $processor;
+    private static array $data = [];
 
     /**
      * @return null|static
      */
-    static function getInstance(): ?EatcardThirdPartyOrder
+    public static function getInstance(): ?self
     {
         if (static::$instance == null) {
             static::$instance = new static();
         }
+
         return static::$instance;
     }
 
@@ -33,10 +34,10 @@ class EatcardThirdPartyOrder
     {
         if (class_exists($processor)) {
             static::$processor = new $processor();
-        }
-        else {
+        } else {
             throw new ClassNotFoundException($processor);
         }
+
         return static::getInstance();
     }
 

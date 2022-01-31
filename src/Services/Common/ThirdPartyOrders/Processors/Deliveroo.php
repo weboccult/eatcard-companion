@@ -45,6 +45,7 @@ class Deliveroo extends ThirdPartyOrders
 
     /**
      * @param $action
+     *
      * @return void
      */
     private function performActions($action)
@@ -54,7 +55,7 @@ class Deliveroo extends ThirdPartyOrders
                 $this->createEvent();
                 break;
             case self::CANCELED_EVENT:
-                if (!empty($this->existedOrder)) {
+                if (! empty($this->existedOrder)) {
                     // $this->existedOrder->update(['order_status' => 'cancel_order']);
                 }
                 break;
@@ -65,7 +66,7 @@ class Deliveroo extends ThirdPartyOrders
 
     private function createEvent()
     {
-        if (!empty($this->store) && $this->store->is_check_deliveroo == 1) {
+        if (! empty($this->store) && $this->store->is_check_deliveroo == 1) {
             return;
         }
         $this->prepareOrderData();
@@ -81,13 +82,13 @@ class Deliveroo extends ThirdPartyOrders
     private function prepareOrderData()
     {
         $this->orderData = [
-            'order_id'              => (int)$this->payloadData['order']['display_id'] ?? 0,
+            'order_id'              => (int) $this->payloadData['order']['display_id'] ?? 0,
             'store_id'              => $this->store->id,
             'deliveroo_order_id'    => $this->payloadData['order']['id'],
             'user_id'               => '',
             'alcohol_sub_total'     => 0,
             'normal_sub_total'      => 0,
-            'sub_total'             => isset($this->payloadData['order']['total_price']['fractional']) ? (int)$this->payloadData['order']['total_price']['fractional'] / 100 : 0,
+            'sub_total'             => isset($this->payloadData['order']['total_price']['fractional']) ? (int) $this->payloadData['order']['total_price']['fractional'] / 100 : 0,
             'discount'              => '',
             'discount_type'         => '',
             'discount_amount'       => 0,
@@ -95,7 +96,7 @@ class Deliveroo extends ThirdPartyOrders
             'total_alcohol_tax'     => 0,
             'delivery_fee'          => 0,
             'plastic_bag_fee'       => 0,
-            'total_price'           => isset($this->payloadData['order']['total_price']['fractional']) ? (int)$this->payloadData['order']['total_price']['fractional'] / 100 : 0,
+            'total_price'           => isset($this->payloadData['order']['total_price']['fractional']) ? (int) $this->payloadData['order']['total_price']['fractional'] / 100 : 0,
             'order_date'            => '',
             'order_time'            => '',
             'status'                => 'paid',
@@ -115,12 +116,12 @@ class Deliveroo extends ThirdPartyOrders
     private function prepareASAPData()
     {
         if (isset($this->payloadData['order']['asap'])) {
-            if (!empty($this->payloadData['order']['fulfillment_type'] ?? null) && $this->payloadData['order']['fulfillment_type'] == 'deliveroo') {
+            if (! empty($this->payloadData['order']['fulfillment_type'] ?? null) && $this->payloadData['order']['fulfillment_type'] == 'deliveroo') {
                 $this->orderData['order_date'] = Carbon::parse($this->payloadData['order']['pickup_at'])
                     ->format('Y-m-d');
                 $this->orderData['order_time'] = Carbon::parse($this->payloadData['order']['pickup_at'])->format('H:i');
             }
-            if (!empty($this->payloadData['order']['fulfillment_type'] ?? null) && $this->payloadData['order']['fulfillment_type'] == 'restaurant') {
+            if (! empty($this->payloadData['order']['fulfillment_type'] ?? null) && $this->payloadData['order']['fulfillment_type'] == 'restaurant') {
                 $this->orderData['order_date'] = Carbon::parse($this->payloadData['order']['delivery']['deliver_by'])
                     ->format('Y-m-d');
                 $this->orderData['order_time'] = Carbon::parse($this->payloadData['order']['delivery']['deliver_by'])
@@ -131,7 +132,7 @@ class Deliveroo extends ThirdPartyOrders
 
     private function prepareDeliveryData()
     {
-        if (isset($this->payloadData['order']['delivery']) && !empty($this->payloadData['order']['delivery'])) {
+        if (isset($this->payloadData['order']['delivery']) && ! empty($this->payloadData['order']['delivery'])) {
             $this->orderData['delivery_latitude'] = $this->payloadData['order']['delivery']['location']['latitude'] ?? null;
             $this->orderData['delivery_longitude'] = $this->payloadData['order']['delivery']['location']['longitude'] ?? null;
             $this->orderData['contact_no'] = $this->payloadData['order']['delivery']['contact_number'] ?? null;
@@ -140,7 +141,7 @@ class Deliveroo extends ThirdPartyOrders
             $line1 = $this->payloadData['order']['delivery']['line1'] ?? '';
             $line2 = $this->payloadData['order']['delivery']['line2'] ?? '';
             $city = $this->payloadData['order']['delivery']['city'] ?? '';
-            $this->orderData['delivery_address'] = $line1 . ' ' . $line2 . ',' . $city;
+            $this->orderData['delivery_address'] = $line1.' '.$line2.','.$city;
             // TODO ask for type restaurant
             // if (isset($this->payloadData['order']['delivery']['delivery_fee']) && !empty ($this->payloadData['order']['delivery']['delivery_fee'])) {
             //$this->orderData['delivery_fee'] = $this->payloadData['order']['delivery']['delivery_fee']['fractional'] / 100;
@@ -155,12 +156,12 @@ class Deliveroo extends ThirdPartyOrders
             foreach ($this->payloadData['order']['items'] as $pro_key => $product) {
                 $supplement_total = 0;
                 $supplements = [];
-                if (isset($product['modifiers']) && !empty($product['modifiers'])) {
+                if (isset($product['modifiers']) && ! empty($product['modifiers'])) {
                     foreach ($product['modifiers'] as $dish_key => $sideDish) {
-                        $supplement_total += (($sideDish['quantity']) * (isset($sideDish['unit_price']['fractional']) ? (int)$sideDish['unit_price']['fractional'] / 100 : 0));
+                        $supplement_total += (($sideDish['quantity']) * (isset($sideDish['unit_price']['fractional']) ? (int) $sideDish['unit_price']['fractional'] / 100 : 0));
                         $supplements[] = [
                             'id'   => $sideDish['pos_item_id'] ?? '',
-                            'name' => isset($sideDish['pos_item_id']) && !empty($sideDish['pos_item_id']) ? Supplement::query()
+                            'name' => isset($sideDish['pos_item_id']) && ! empty($sideDish['pos_item_id']) ? Supplement::query()
                                 ->where('deliveroo_id', $sideDish['pos_item_id'])
                                 ->value('name') : '',
                             'qty'  => $sideDish['quantity'] ?? '',
@@ -173,8 +174,8 @@ class Deliveroo extends ThirdPartyOrders
                     ->where('deliveroo_id', $product['pos_item_id'])
                     ->first();
                 $product_tax = isset($product_data->tax) && $product_data->tax != null ? $product_data->tax : (isset($product_data->category) ? $product_data->category->tax : 0);
-                $unit_price = isset($product['unit_price']['fractional']) ? (int)$product['unit_price']['fractional'] / 100 : 0;
-                $total_price = ($unit_price + $supplement_total) * (isset($product['quantity']) ? (int)$product['quantity'] : 1);
+                $unit_price = isset($product['unit_price']['fractional']) ? (int) $product['unit_price']['fractional'] / 100 : 0;
+                $total_price = ($unit_price + $supplement_total) * (isset($product['quantity']) ? (int) $product['quantity'] : 1);
                 /*<--- Order item array --->*/
                 $orderItemsData[$pro_key] = [
                     'product_id'         => $product_data->id ?? $product['pos_item_id'] ?? '',
@@ -226,15 +227,16 @@ class Deliveroo extends ThirdPartyOrders
                 $item['order_id'] = $this->createdOrder->id;
                 OrderItem::create($item);
             }
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
         }
     }
 
     /**
      * @description update deliveroo order sync status
+     *
      * @param $sync_status : string
      * @param $order_id
+     *
      * @return mixed
      */
     public function updateOrderSyncStatus($sync_status, $order_id)
@@ -244,35 +246,35 @@ class Deliveroo extends ThirdPartyOrders
                 return response()->json([
                     'status'  => 'fail',
                     'message' => 'CREDENTIAL not set',
-                    'code'    => 400
+                    'code'    => 400,
                 ], 200);
             }
             $credentials = base64_encode($this->CREDENTIAL);
             $client = new Client([
                 'headers' => [
-                    'Authorization' => 'Basic ' . $credentials,
+                    'Authorization' => 'Basic '.$credentials,
                     'Content-Type'  => 'application/json;charset=UTF-8',
-                ]
+                ],
             ]);
             $json_data = json_encode([
-                "occurred_at" => Carbon::now("UTC"),
-                "status"      => $sync_status,
+                'occurred_at' => Carbon::now('UTC'),
+                'status'      => $sync_status,
             ]);
-            $request = $client->request('POST', $this->API_URL . '/v1/orders/' . $order_id . '/sync_status', [
+            $request = $client->request('POST', $this->API_URL.'/v1/orders/'.$order_id.'/sync_status', [
                 'body' => $json_data,
             ]);
             $request = json_decode($request->getBody()->getContents(), true);
+
             return response()->json([
                 'status' => 'success',
                 'data'   => $request,
-                'code'   => 200
+                'code'   => 200,
             ], 200);
-        }
-        catch (GuzzleException $e) {
+        } catch (GuzzleException $e) {
             return response()->json([
                 'status'  => 'error',
                 'message' => $e->getMessage(),
-                'code'    => 400
+                'code'    => 400,
             ], 400);
         }
     }

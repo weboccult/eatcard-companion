@@ -16,7 +16,6 @@ use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
  */
 abstract class ThirdPartyOrders
 {
-
     /** @var Store|null|object */
     protected ?Store $store;
 
@@ -68,8 +67,7 @@ abstract class ThirdPartyOrders
                 ]),
                 'read_at'         => null,
             ]);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
         }
     }
 
@@ -83,21 +81,19 @@ abstract class ThirdPartyOrders
                 if ($this->store->sqs) {
                     // Todo : get print JSON data from EatcardPrint Service
                     $printRes = [];
-                    if ($printRes && !empty($printRes)) {
+                    if ($printRes && ! empty($printRes)) {
                         config([
                             'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
                             'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
-                            'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url
+                            'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
                         ]);
                         Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
                     }
                 }
-            }
-            else {
+            } else {
                 Order::query()->where('id', $order['id'])->update(['is_future_order_print_pending' => 1]);
             }
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
         }
     }
 }

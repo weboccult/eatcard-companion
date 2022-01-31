@@ -19,7 +19,6 @@ use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 class Thusibezorgd extends ThirdPartyOrders
 {
-
     /** @var array<Store>|null */
     protected $stores;
 
@@ -41,7 +40,7 @@ class Thusibezorgd extends ThirdPartyOrders
             'sqs',
             'StoreThuisbezorgd' => function ($q1) {
                 $q1->where('is_thuisbezorgd', 1);
-            }
+            },
         ])->get();
         $this->fetchOrders();
         $this->prepareOrderDataStoreWise();
@@ -55,20 +54,18 @@ class Thusibezorgd extends ThirdPartyOrders
                 $client = new Client([
                     'auth'    => [
                         $store->StoreThuisbezorgd->user_name,
-                        $store->StoreThuisbezorgd->password
+                        $store->StoreThuisbezorgd->password,
                     ],
-                    'headers' => ['Apikey' => $store->StoreThuisbezorgd->api_key]
+                    'headers' => ['Apikey' => $store->StoreThuisbezorgd->api_key],
                 ]);
-                $request = $client->request('GET', 'https://posapi.takeaway.com/1.0/orders/' . $store->StoreThuisbezorgd->res_id);
+                $request = $client->request('GET', 'https://posapi.takeaway.com/1.0/orders/'.$store->StoreThuisbezorgd->res_id);
                 $statusCode = $request->getStatusCode();
                 $request->getHeaderLine('content-type');
                 $response = json_decode($request->getBody()->getContents(), true);
                 if ($statusCode == 200) {
                     $this->orderResponseStoreWise[$store->id] = $response['orders'];
                 }
-            }
-            catch (GuzzleException $e) {
-
+            } catch (GuzzleException $e) {
             }
         }
     }
@@ -99,8 +96,7 @@ class Thusibezorgd extends ThirdPartyOrders
                                 ->timezone('Europe/Amsterdam')
                                 ->format('Y-m-d');
                         }
-                    }
-                    catch (Exception $oDate) {
+                    } catch (Exception $oDate) {
                     }
                     $orderData = [
                         'is_asap'               => (isset($order['requestedPickupTime']) && $order['requestedPickupTime'] == 'ASAP') ? 1 : 0,
@@ -135,11 +131,10 @@ class Thusibezorgd extends ThirdPartyOrders
                         'created_from'          => 'cron',
                     ];
                     if (isset($order['customer']) && $order['customer']) {
-
                         $street = $order['customer']['street'] ?? '';
                         $streetNumber = $order['customer']['streetNumber'] ?? '';
                         $city = $order['customer']['city'] ?? '';
-                        $orderData['delivery_address'] = $street . ' ' . $streetNumber . ', ' . $city . ', Netherlands';
+                        $orderData['delivery_address'] = $street.' '.$streetNumber.', '.$city.', Netherlands';
                         $orderData['delivery_postcode'] = $order['customer']['postalCode'] ?? '';
                         $orderData['delivery_place'] = $order['customer']['companyName'] ?? '';
                         $orderData['first_name'] = $order['customer']['name'] ?? '';
@@ -147,7 +142,6 @@ class Thusibezorgd extends ThirdPartyOrders
                     }
                     $orderItemData = [];
                     if (isset($order['products']) && count($order['products']) > 0) {
-
                         foreach ($order['products'] as $pro_key => $product) {
                             $orderItemData[$pro_key] = [
                                 'product_id'   => $product['id'] ?? '',
@@ -158,13 +152,11 @@ class Thusibezorgd extends ThirdPartyOrders
                             ];
                             $sideDish_input = [];
                             if (isset($product['sideDishes']) && $product['sideDishes']) {
-
                                 foreach ($product['sideDishes'] as $dish_key => $sideDish) {
-
                                     $sideDish_input[$dish_key] = [
                                         'id'   => $sideDish['id'] ?? '',
                                         'name' => $sideDish['name'] ?? '',
-                                        'val'  => $sideDish['price'] ?? ''
+                                        'val'  => $sideDish['price'] ?? '',
                                     ];
                                 }
                             }
@@ -173,8 +165,7 @@ class Thusibezorgd extends ThirdPartyOrders
                     }
                     $orderData['items'] = $orderItemData;
                     $this->orderDataStoreWise[$storeId][] = $orderData;
-                }
-                catch (Exception $e) {
+                } catch (Exception $e) {
                 }
             }
         }
@@ -219,7 +210,7 @@ class Thusibezorgd extends ThirdPartyOrders
                                     'serve_type'  => [],
                                     'size'        => [],
                                     'supplements' => $sup_items,
-                                    'users'       => []
+                                    'users'       => [],
                                 ]);
                                 unset($item['supplements']);
                                 $product = Product::where('store_id', $orderData['store_id'])
@@ -234,18 +225,17 @@ class Thusibezorgd extends ThirdPartyOrders
                             $orderData['items'] = $currentOrderItems;
                             $this->createOrderAndOrderItems($orderData);
                         }
-                    }
-                    catch (Exception $e) {
+                    } catch (Exception $e) {
                     }
                 }
             }
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
         }
     }
 
     /**
      * @param $orderData
+     *
      * @return void
      */
     private function createOrderAndOrderItems($orderData)
@@ -263,9 +253,9 @@ class Thusibezorgd extends ThirdPartyOrders
             $client = new Client([
                 'auth'    => [
                     $store->StoreThuisbezorgd->user_name,
-                    $store->StoreThuisbezorgd->password
+                    $store->StoreThuisbezorgd->password,
                 ],
-                'headers' => ['Apikey' => $store->StoreThuisbezorgd->api_key]
+                'headers' => ['Apikey' => $store->StoreThuisbezorgd->api_key],
             ]);
             if (isset($orderData['original_date']) && strtotime($orderData['original_date'])) {
                 $this->sendOrderConfirmationToThusibezorgd($orderData, $client);
@@ -273,14 +263,13 @@ class Thusibezorgd extends ThirdPartyOrders
                 $this->sendOrderConfirmedDeliveryTimeToThusibezorgd($orderData, $client);
             }
             $this->createNotificationForThusibezorgd($order, $store);
-        }
-        catch (Exception $e) {
-
+        } catch (Exception $e) {
         }
     }
 
     /**
      * @param $orderData
+     *
      * @return void
      */
     private function sendOrderConfirmationToThusibezorgd($orderData, $client)
@@ -288,22 +277,21 @@ class Thusibezorgd extends ThirdPartyOrders
         try {
             //received order
             $request = $client->request('POST', 'https://posapi.takeaway.com/1.0/status', [
-                "json" => [
+                'json' => [
                     'id'     => $orderData['thusibezorgd_order_id'],
                     'key'    => $orderData['order_key'],
-                    'status' => 'received'
-                ]
+                    'status' => 'received',
+                ],
             ]);
             $statusCode = $request->getStatusCode();
-        }
-        catch (GuzzleException $e) {
-
+        } catch (GuzzleException $e) {
         }
     }
 
     /**
      * @param $orderData
      * @param $client
+     *
      * @return void
      */
     private function sendPrintedEventToThusibezorgd($orderData, $client)
@@ -311,22 +299,21 @@ class Thusibezorgd extends ThirdPartyOrders
         try {
             //printed order
             $request = $client->request('POST', 'https://posapi.takeaway.com/1.0/status', [
-                "json" => [
+                'json' => [
                     'id'     => $orderData['thusibezorgd_order_id'],
                     'key'    => $orderData['order_key'],
-                    'status' => 'printed'
-                ]
+                    'status' => 'printed',
+                ],
             ]);
             // $statusCode = $request->getStatusCode();
-        }
-        catch (GuzzleException $e) {
-
+        } catch (GuzzleException $e) {
         }
     }
 
     /**
      * @param $orderData
      * @param $client
+     *
      * @return void
      */
     private function sendOrderConfirmedDeliveryTimeToThusibezorgd($orderData, $client)
@@ -334,24 +321,23 @@ class Thusibezorgd extends ThirdPartyOrders
         try {
             $orderDate2 = Carbon::parse($orderData['original_date'])->addMinutes(7)->format('Y-m-d H:i:s');
             $request = $client->request('POST', 'https://posapi.takeaway.com/1.0/status', [
-                "json" => [
+                'json' => [
                     'id'                  => $orderData['thusibezorgd_order_id'],
                     'key'                 => $orderData['order_key'],
                     'status'              => 'confirmed_change_delivery_time',
                     'changedDeliveryTime' => $orderDate2,
-                ]
+                ],
             ]);
             $statusCode = $request->getStatusCode();
             $request->getHeaderLine('content-type');
             $response = $request->getBody()->getContents();
-        }
-        catch (GuzzleException $e) {
-
+        } catch (GuzzleException $e) {
         }
     }
 
     /**
      * @param $createdOrder
+     *
      * @return void
      */
     protected function createNotificationForThusibezorgd($createdOrder, $store)
@@ -389,14 +375,14 @@ class Thusibezorgd extends ThirdPartyOrders
             ]);
             $this->socketForThusibezorgd($createdNotification, $store);
             $this->sendJsonToSQSOrSetFuturePrintForThusibezorgd($createdNotification, $store);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
         }
     }
 
     /**
      * @param $createdNotification
      * @param $store
+     *
      * @return void
      */
     private function socketForThusibezorgd($createdNotification, $store)
@@ -412,6 +398,7 @@ class Thusibezorgd extends ThirdPartyOrders
     /**
      * @param $createdOrder
      * @param $store
+     *
      * @return void
      */
     protected function sendJsonToSQSOrSetFuturePrintForThusibezorgd($createdOrder, $store)
@@ -424,21 +411,19 @@ class Thusibezorgd extends ThirdPartyOrders
                 if ($store->sqs) {
                     // Todo : get print JSON data from EatcardPrint Service
                     $printRes = [];
-                    if (!empty($printRes)) {
+                    if (! empty($printRes)) {
                         config([
                             'queue.connections.sqs.region' => $store->sqs->sqs_region,
                             'queue.connections.sqs.queue'  => $store->sqs->sqs_queue_name,
-                            'queue.connections.sqs.prefix' => $store->sqs->sqs_url
+                            'queue.connections.sqs.prefix' => $store->sqs->sqs_url,
                         ]);
                         Queue::connection('sqs')->pushRaw(json_encode($printRes), $store->sqs->sqs_queue_name);
                     }
                 }
-            }
-            else {
+            } else {
                 Order::query()->where('id', $order['id'])->update(['is_future_order_print_pending' => 1]);
             }
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
         }
     }
 }

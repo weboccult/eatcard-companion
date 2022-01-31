@@ -6,9 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
-use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Models\Order;
-use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\OrderItem;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
@@ -16,7 +14,6 @@ use Weboccult\EatcardCompanion\Models\StoreUberEatsSetting;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\ThirdPartyOrders;
-use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 /**
  * @author Darshit Hedpara
@@ -49,6 +46,7 @@ class UberEats extends ThirdPartyOrders
 
     /**
      * @param $data
+     *
      * @return void
      */
     public function handle($data)
@@ -65,8 +63,7 @@ class UberEats extends ThirdPartyOrders
             }
             $this->token = $this->getAccessToken();
             $this->fetchOrder();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
         }
     }
 
@@ -91,12 +88,10 @@ class UberEats extends ThirdPartyOrders
             $this->response = json_decode($request->getBody()->getContents(), true);
             if ($statusCode == 200) {
                 return $this->response['access_token'];
-            }
-            else {
+            } else {
                 return null;
             }
-        }
-        catch (GuzzleException $e) {
+        } catch (GuzzleException $e) {
             return null;
         }
     }
@@ -106,23 +101,23 @@ class UberEats extends ThirdPartyOrders
         try {
             $client = new Client([
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->token,
+                    'Authorization' => 'Bearer '.$this->token,
                     'Content-Type'  => 'application/json',
                 ],
             ]);
-            $request = $client->request('get', 'https://api.uber.com/v2/eats/order/' . $this->resourceId);
+            $request = $client->request('get', 'https://api.uber.com/v2/eats/order/'.$this->resourceId);
             $this->response = json_decode($request->getBody()->getContents(), true);
-            if (isset($this->response['current_state']) && !empty($this->response['current_state'])) {
+            if (isset($this->response['current_state']) && ! empty($this->response['current_state'])) {
                 $this->performActions($this->response['current_state']);
             }
-        }
-        catch (GuzzleException $e) {
+        } catch (GuzzleException $e) {
             return;
         }
     }
 
     /**
      * @param $action
+     *
      * @return void
      */
     private function performActions($action)
@@ -132,31 +127,31 @@ class UberEats extends ThirdPartyOrders
                 $this->createAction();
                 break;
             case self::ACCEPTED_ACTION:
-                if (!empty($this->existedOrder)) {
+                if (! empty($this->existedOrder)) {
                     $this->existedOrder->update(['order_status' => 'preparing']);
                 }
                 break;
             case self::FINISHED_ACTION:
-                if (!empty($this->existedOrder)) {
+                if (! empty($this->existedOrder)) {
                     $this->existedOrder->update(['order_status' => 'done']);
                 }
                 break;
             case self::CANCELED_ACTION:
             case self::DENIED_ACTION:
-                if (!empty($this->existedOrder)) {
+                if (! empty($this->existedOrder)) {
                     $this->existedOrder->update(['order_status' => 'canceled']);
                 }
                 break;
             default:
                 break;
         }
-        if (!empty($this->existedOrder) && in_array($action, [
+        if (! empty($this->existedOrder) && in_array($action, [
                 self::ACCEPTED_ACTION,
                 self::FINISHED_ACTION,
                 self::CANCELED_ACTION,
                 self::DENIED_ACTION,
             ])) {
-            $this->existedOrder->dutch_order_status = __('eatcard-companion::general.' . $this->existedOrder->order_status);
+            $this->existedOrder->dutch_order_status = __('eatcard-companion::general.'.$this->existedOrder->order_status);
             $redis = Redis::connection();
             $redis->publish('order_status_update', json_encode([
                 'id'                   => $this->existedOrder->id,
@@ -167,7 +162,7 @@ class UberEats extends ThirdPartyOrders
                 'dutch_order_status'   => $this->existedOrder->dutch_order_status,
                 'method'               => $this->existedOrder->method,
                 'payment_status'       => $this->existedOrder->status,
-                'dutch_payment_status' => __('messages.' . $this->existedOrder->status),
+                'dutch_payment_status' => __('messages.'.$this->existedOrder->status),
                 'uber_eats_order_id'   => $this->existedOrder->uber_eats_order_id,
                 'message'              => __('messages.dine_in_order_notification_message', ['status' => $this->existedOrder->dutch_order_status]),
             ]));
@@ -267,7 +262,7 @@ class UberEats extends ThirdPartyOrders
                             $country = $res['long_name'];
                         }
                     }
-                    $address = $route . ' ' . $street . ', ' . $locality . ', ' . $country;
+                    $address = $route.' '.$street.', '.$locality.', '.$country;
                     $this->orderData['delivery_address'] = $address;
                     $this->orderData['delivery_latitude'] = $deliveryData['result']['geometry']['location']['lat'];
                     $this->orderData['delivery_longitude'] = $deliveryData['result']['geometry']['location']['lng'];
@@ -373,22 +368,21 @@ class UberEats extends ThirdPartyOrders
 
     /**
      * @param $placeId
+     *
      * @return mixed|null
      */
     private function getDeliveryDetails($placeId)
     {
         try {
             $client = new Client();
-            $request = $client->request('get', 'https://maps.googleapis.com/maps/api/place/details/json?place_id=' . $placeId . '&fields=address_components,formatted_address,geometry&key=' . env('GOOGLE_MAP_API_KEY_OTHERS'));
+            $request = $client->request('get', 'https://maps.googleapis.com/maps/api/place/details/json?place_id='.$placeId.'&fields=address_components,formatted_address,geometry&key='.env('GOOGLE_MAP_API_KEY_OTHERS'));
             $status = $request->getStatusCode();
             if ($status == 200) {
                 return json_decode($request->getBody()->getContents(), true);
-            }
-            else {
+            } else {
                 return null;
             }
-        }
-        catch (GuzzleException $e) {
+        } catch (GuzzleException $e) {
             return null;
         }
     }
@@ -398,19 +392,18 @@ class UberEats extends ThirdPartyOrders
         try {
             $client = new Client([
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->token,
+                    'Authorization' => 'Bearer '.$this->token,
                     'Content-Type'  => 'application/json',
                 ],
             ]);
-            $client->post('https://api.uber.com/v1/eats/orders/' . $this->resourceId . '/accept_pos_order', [
+            $client->post('https://api.uber.com/v1/eats/orders/'.$this->resourceId.'/accept_pos_order', [
                 'body' => json_encode([
                     'reason'      => 'accepted',
                     'pickup_time' => 0,
                 ]),
             ]);
             // order accept success
-        }
-        catch (GuzzleException $e) {
+        } catch (GuzzleException $e) {
             // order accept fail
         }
     }

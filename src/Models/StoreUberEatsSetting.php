@@ -17,6 +17,6 @@ class StoreUberEatsSetting extends Model
         'restaurant_id',
         'store_id',
         'is_uber_eats',
-        'manually_change_order_status'
+        'manually_change_order_status',
     ];
 }
