@@ -230,6 +230,13 @@ return [
         ],
     ],
 
+    'third_party' => [
+        'deliveroo' => [
+            'url' => env('DELIVEROO_URL', null),
+            'credential' => env('DELIVEROO_CREDENTIALS', null),
+        ]
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Other Endpoints
