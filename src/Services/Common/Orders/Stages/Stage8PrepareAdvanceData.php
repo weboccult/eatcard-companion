@@ -171,7 +171,7 @@ trait Stage8PrepareAdvanceData
             $this->orderData['tip_amount'] = $this->payload['tip_amount'] ?? 0;
             $subOrder = SubOrder::query()->where('reservation_id', $this->storeReservation->id)->get();
 
-            if(isset($subOrder) && collect($subOrder)->count() > 0){
+            if (isset($subOrder) && collect($subOrder)->count() > 0) {
                 $this->orderData['tip_amount'] = collect($subOrder)->sum('tip_amount');
             }
         }

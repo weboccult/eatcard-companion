@@ -125,18 +125,18 @@ class PosSubProcessor extends BaseProcessor
     {
         $amount = $this->payload['amount'];
 
-        if (!empty($this->parentOrder)) {
+        if (! empty($this->parentOrder)) {
             $total_amount = $this->parentOrder->total_price;
 
             $total_21_amount = 0;
             $total_21_product_deposit = 0;
-            collect($this->parentOrder->orderItems)->each(function ($q) use(&$total_21_amount, &$total_21_product_deposit){
-                if($q->tax_percentage == 21){
+            collect($this->parentOrder->orderItems)->each(function ($q) use (&$total_21_amount, &$total_21_product_deposit) {
+                if ($q->tax_percentage == 21) {
                     $total_21_amount += $q->total_price - $q->statiege_deposite_total;
                     $total_21_product_deposit += $q->statiege_deposite_total;
-                };
+                }
             });
-            $total_9_amount = $this->parentOrder->total_price - $total_21_amount -$this->parentOrder->statiege_deposite_total;
+            $total_9_amount = $this->parentOrder->total_price - $total_21_amount - $this->parentOrder->statiege_deposite_total;
 
             //division index
             $dIndex = $amount / $total_amount;
@@ -160,16 +160,14 @@ class PosSubProcessor extends BaseProcessor
             $this->orderData['total_price'] = floor($this->orderData['total_price'] * 100) / 100;
 
             $this->orderData['normal_product_total'] = $total_9_amount * $dIndex;
-            $this->orderData['alcohol_product_total'] = $total_21_amount * $dIndex ;
+            $this->orderData['alcohol_product_total'] = $total_21_amount * $dIndex;
             $this->orderData['statiege_deposite_total'] = $this->parentOrder->statiege_deposite_total * $dIndex;
-
-        } else if (!empty($this->storeReservation)) {
-
+        } elseif (! empty($this->storeReservation)) {
             try {
                 $reservationRound = $this->storeReservation->rounds()->get();
                 $cartData = [];
                 collect($reservationRound)->map(function ($item) use (&$cartData) {
-                    $reservation_cart_data = json_decode($item["cart"], true);
+                    $reservation_cart_data = json_decode($item['cart'], true);
                     foreach ($reservation_cart_data as $cart_data) {
                         $cartData[] = $cart_data;
                     }
@@ -203,11 +201,10 @@ class PosSubProcessor extends BaseProcessor
                 $this->orderData['discount_amount'] = ($parentData['order_data']['discount_amount']) ? round($parentData['order_data']['discount_amount'] * $dIndex, 2) : 0;
                 $this->orderData['discount_inc_tax'] = ($parentData['order_data']['discount_inc_tax']) ? round($parentData['order_data']['discount_inc_tax'] * $dIndex, 2) : 0;
                 $this->orderData['discount_type'] = $parentData['order_data']['discount_type'] ?? null;
-                if (!empty($this->orderData['discount_type'])) {
+                if (! empty($this->orderData['discount_type'])) {
                     if ($this->orderData['discount_type'] == 'EURO') {
                         $this->orderData['discount'] = ($parentData['order_data']['discount']) ? round($parentData['order_data']['discount'] * $dIndex, 2) : null;
-                    }
-                    else {
+                    } else {
                         $this->orderData['discount'] = $parentData['order_data']['discount'] ?? null;
                     }
                 }

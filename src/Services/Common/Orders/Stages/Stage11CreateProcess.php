@@ -21,13 +21,15 @@ use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
  */
 trait Stage11CreateProcess
 {
-    protected function markOrderItemsSplitPaymentDone() {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && $this->isSubOrder && ! empty ($this->storeReservation)) {
+    protected function markOrderItemsSplitPaymentDone()
+    {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && $this->isSubOrder && ! empty($this->storeReservation)) {
             ReservationOrderItem::query()->where('reservation_id', $this->storeReservation->id)->update(['split_payment_status' => 1]);
         }
     }
 
-    protected function updateTipAmountInParentOrderIfApplicable() {
+    protected function updateTipAmountInParentOrderIfApplicable()
+    {
         if ($this->system == SystemTypes::POS && $this->isSubOrder && ! empty($this->storeReservation)) {
             $parent_tip = $this->parentOrder->tip_amount;
             $tip = $parent_tip + $this->orderData['tip_amount'];
@@ -40,7 +42,8 @@ trait Stage11CreateProcess
         }
     }
 
-    protected function isSimulateEnabled() {
+    protected function isSimulateEnabled()
+    {
         if ($this->getSimulate()) {
             $this->setDumpDieValue([
                 'order_data'       => $this->orderData,
