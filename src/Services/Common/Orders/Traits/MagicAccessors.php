@@ -24,6 +24,8 @@ use InvalidArgumentException;
  * @method void setDumpDieValue($data)
  * @method array getAfterEffects()
  * @method void setAfterEffects(array $effects)
+ * @method array getSimulate()
+ * @method void setSimulate(bool $value)
  *
  * @author Darshit Hedpara
  */

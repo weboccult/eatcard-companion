@@ -52,6 +52,13 @@ class EatcardOrder
         return $this;
     }
 
+    public function simulate(): self
+    {
+        $this->processor->setSimulate(true);
+
+        return $this;
+    }
+
     /**
      * @return array|void|null
      */

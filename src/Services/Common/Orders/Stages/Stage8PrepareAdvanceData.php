@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubCategory;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\cartTotalValueCalc;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -154,9 +155,24 @@ trait Stage8PrepareAdvanceData
         $this->orderData['statiege_deposite_total'] = 0;
         $this->orderData['ayce_price'] = 0;
 
+        // only used for simulat -- sub order
+        $this->orderData['total_21_amount'] = 0;
+
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
             if (isset($this->payload['ayce_amount']) && ! empty($this->payload['ayce_amount'])) {
                 $this->orderData['ayce_price'] = $this->payload['ayce_amount'];
+            }
+        }
+    }
+
+    protected function prepareTipAmount()
+    {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && ! empty($this->storeReservation)) {
+            $this->orderData['tip_amount'] = $this->payload['tip_amount'] ?? 0;
+            $subOrder = SubOrder::query()->where('reservation_id', $this->storeReservation->id)->get();
+
+            if(isset($subOrder) && collect($subOrder)->count() > 0){
+                $this->orderData['tip_amount'] = collect($subOrder)->sum('tip_amount');
             }
         }
     }
@@ -523,6 +539,10 @@ trait Stage8PrepareAdvanceData
             ]);
 
             $this->orderItemsData[$key]['total_price'] = ($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) + (($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) * $this->orderItemsData[$key]['tax_percentage'] / 100);
+
+            // only used for simulat -- sub order
+            $this->orderData['total_21_amount'] += $this->orderItemsData[$key]['total_price'];
+
             if ($normalOrder && $notVoided && $notOnTheHouse) {
                 $deposit = $product->statiege_id_deposite ?? 0;
                 $this->orderItemsData[$key]['statiege_deposite_value'] = $deposit;
@@ -621,6 +641,13 @@ trait Stage8PrepareAdvanceData
 
         if ($this->system == SystemTypes::KIOSK) {
             $this->orderData['total_price'] += $this->orderData['statiege_deposite_total'];
+        }
+    }
+
+    protected function calculateTipAmount()
+    {
+        if ($this->system == SystemTypes::POS && ! $this->isSubOrder) {
+            $this->orderData['total_price'] = $this->orderData['tip_amount'];
         }
     }
 

@@ -153,6 +153,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected ?array $dumpDieValue = null;
 
+    protected bool $simulate = false;
+
     /**
      * @throws Exception
      */
@@ -286,12 +288,14 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->prepareSplitPaymentDetails(),
             fn () => $this->prepareOrderId(),
             fn () => $this->prepareOrderDetails(),
+            fn () => $this->prepareTipAmount(),
             fn () => $this->prepareSupplementDetails(),
             fn () => $this->prepareOrderItemsDetails(),
             fn () => $this->prepareAllYouCanEatAmountDetails(),
             fn () => $this->calculateOrderDiscount(),
             fn () => $this->calculateFees(),
             fn () => $this->calculateStatiegeDeposite(),
+            fn () => $this->calculateTipAmount(),
             fn () => $this->calculateOriginOrderTotal(),
             fn () => $this->calculateReservationPaidAmount(),
             fn () => $this->prepareEditOrderDetails(),
@@ -320,8 +324,12 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage11_CreateProcess()
     {
         $this->stageIt([
+            fn () => $this->markOrderItemsSplitPaymentDone(),
+            fn () => $this->updateTipAmountInParentOrderIfApplicable(),
+            fn () => $this->isSimulateEnabled(),
             fn () => $this->createOrder(),
             fn () => $this->createOrderItems(),
+            fn () => $this->removeReservationIdAndAssignCreatedOrderIdInSubOrder(),
             fn () => $this->forgetSessions(),
             fn () => $this->markOtherOrderAsIgnore(),
             fn () => $this->createDeliveryIntoDatabase(),

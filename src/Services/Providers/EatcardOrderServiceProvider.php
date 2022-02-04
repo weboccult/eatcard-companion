@@ -13,7 +13,7 @@ class EatcardOrderServiceProvider extends ServiceProvider
 
     public function register()
     {
-        $this->app->singleton('eatcard-order', function () {
+        $this->app->bind('eatcard-order', function () {
             return new EatcardOrder();
         });
     }
