@@ -94,7 +94,12 @@ if (! function_exists('__companionViews')) {
      */
     function __companionViews(string $path, $data = null): View
     {
-        return view('eatcard-companion::'.$path, ['data' => $data]);
+        $view = view('eatcard-companion::'.$path);
+        foreach ($data as $k => $v) {
+            $view->with($k, $v);
+        }
+
+        return $view;
     }
 }
 
