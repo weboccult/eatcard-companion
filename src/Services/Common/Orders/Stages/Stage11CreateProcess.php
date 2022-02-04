@@ -7,7 +7,6 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderDeliveryDetails;
 use Weboccult\EatcardCompanion\Models\OrderItem;
-use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -21,13 +20,6 @@ use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
  */
 trait Stage11CreateProcess
 {
-    protected function markOrderItemsSplitPaymentDone()
-    {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && $this->isSubOrder && ! empty($this->storeReservation)) {
-            ReservationOrderItem::query()->where('reservation_id', $this->storeReservation->id)->update(['split_payment_status' => 1]);
-        }
-    }
-
     protected function updateTipAmountInParentOrderIfApplicable()
     {
         if ($this->system == SystemTypes::POS && $this->isSubOrder && ! empty($this->storeReservation)) {
@@ -58,14 +50,6 @@ trait Stage11CreateProcess
     }
 
     protected function createOrderItems()
-    {
-        foreach ($this->orderItemsData as $key => $orderItem) {
-            $orderItem['order_id'] = $this->createdOrder->id;
-            $this->createdOrderItems[] = OrderItem::query()->insert($orderItem);
-        }
-    }
-
-    protected function removeReservationIdAndAssignCreatedOrderIdInSubOrder()
     {
         foreach ($this->orderItemsData as $key => $orderItem) {
             $orderItem['order_id'] = $this->createdOrder->id;

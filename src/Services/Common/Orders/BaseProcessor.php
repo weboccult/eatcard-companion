@@ -324,12 +324,10 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage11_CreateProcess()
     {
         $this->stageIt([
-            fn () => $this->markOrderItemsSplitPaymentDone(),
             fn () => $this->updateTipAmountInParentOrderIfApplicable(),
             fn () => $this->isSimulateEnabled(),
             fn () => $this->createOrder(),
             fn () => $this->createOrderItems(),
-            fn () => $this->removeReservationIdAndAssignCreatedOrderIdInSubOrder(),
             fn () => $this->forgetSessions(),
             fn () => $this->markOtherOrderAsIgnore(),
             fn () => $this->createDeliveryIntoDatabase(),

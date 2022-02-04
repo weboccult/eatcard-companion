@@ -155,9 +155,6 @@ trait Stage8PrepareAdvanceData
         $this->orderData['statiege_deposite_total'] = 0;
         $this->orderData['ayce_price'] = 0;
 
-        // only used for simulat -- sub order
-        $this->orderData['total_21_amount'] = 0;
-
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
             if (isset($this->payload['ayce_amount']) && ! empty($this->payload['ayce_amount'])) {
                 $this->orderData['ayce_price'] = $this->payload['ayce_amount'];
@@ -539,10 +536,6 @@ trait Stage8PrepareAdvanceData
             ]);
 
             $this->orderItemsData[$key]['total_price'] = ($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) + (($this->orderItemsData[$key]['sub_total'] - $this->orderItemsData[$key]['discount_price']) * $this->orderItemsData[$key]['tax_percentage'] / 100);
-
-            // only used for simulat -- sub order
-            $this->orderData['total_21_amount'] += $this->orderItemsData[$key]['total_price'];
-
             if ($normalOrder && $notVoided && $notOnTheHouse) {
                 $deposit = $product->statiege_id_deposite ?? 0;
                 $this->orderItemsData[$key]['statiege_deposite_value'] = $deposit;
