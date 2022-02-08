@@ -177,7 +177,7 @@ if (! function_exists('getS3File')) {
         if ($path) {
             return $path;
         } else {
-            return env('AWS_URL').'assets/no_image.png';
+            return config('eatcardCompanion.aws_url').'/assets/no_image.png';
         }
     }
 }
