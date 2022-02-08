@@ -40,13 +40,15 @@ trait Stage15ExtraOperations
 
     protected function setKioskOrderAnswerChoiceLogic()
     {
-        $kiosk_data = json_decode($this->store->kiosk_data, true);
-        if (isset($kiosk_data) && isset($kiosk_data['kiosk_entry_popup_question']) && (($kiosk_data['show_on_kiosk_takeaway'] && $inputs['dine_in_type'] == 'take_out') || ($kiosk_data['show_on_kiosk_eatin'] && $inputs['dine_in_type'] == 'dine_in'))) {
-            KioskOrderAnswerChoice::create([
-               'order_id' => $this->createdOrder->id,
-               'question' => $kiosk_data['kiosk_entry_popup_question'],
-               'answer'   => /*$this->payload['confirmation_answer'] == 'No' ? 0 : 1*/1,
-            ]);
+        if ($this->system === SystemTypes::KIOSK) {
+            $kiosk_data = json_decode($this->store->kiosk_data, true);
+            if (isset($kiosk_data) && isset($kiosk_data['kiosk_entry_popup_question']) && (($kiosk_data['show_on_kiosk_takeaway'] && $this->payload['dine_in_type'] == 'take_out') || ($kiosk_data['show_on_kiosk_eatin'] && $this->payload['dine_in_type'] == 'dine_in'))) {
+                KioskOrderAnswerChoice::create([
+                    'order_id' => $this->createdOrder->id,
+                    'question' => $kiosk_data['kiosk_entry_popup_question'],
+                    'answer'   => /*$this->payload['confirmation_answer'] == 'No' ? 0 : 1*/ 1,
+                ]);
+            }
         }
     }
 }

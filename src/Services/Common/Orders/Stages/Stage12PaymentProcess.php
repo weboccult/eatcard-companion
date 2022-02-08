@@ -268,13 +268,13 @@ trait Stage12PaymentProcess
                                 ];
                     } else {
                         $this->paymentResponse = [
-                                    'mollie_error' => 'Something went wrong from the payment gateway',
-                                ];
+                            'mollie_error' => 'Something went wrong from the payment gateway',
+                        ];
                     }
                 } else {
                     $this->paymentResponse = [
-                                'mollie_error' => 'Something went wrong from the payment gateway',
-                            ];
+                        'mollie_error' => 'Something went wrong from the payment gateway',
+                    ];
                 }
             }
         }

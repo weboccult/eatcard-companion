@@ -96,7 +96,11 @@ return [
              *  You can receive webhook from the payment gateways,
              *  Or you want mimic the behaviour of webhook same as production or staging environment.
              *
-             *  Note : exclude_webhook has a higher priority then exposed_webhook settings.
+             *  Note :
+             *   1. exclude_webhook has a higher priority then exposed_webhook settings.
+             *   2. Please set value false, In case you're in development mode.
+             *      Or set exposed_webhook URL using ngrok etc third-party and then set value true.
+             *
              */
             'enable_exposed_webhook' => env('COMPANION_ENABLE_EXPOSED_WEBHOOK', false),
         ],

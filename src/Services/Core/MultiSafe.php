@@ -124,7 +124,7 @@ class MultiSafe
     {
         $client = new Client(['headers' => ['api_key' => $this->apiKey]]);
         $issuerUrl = config('eatcardCompanion.payment.gateway.multisafe.endpoints.issuer');
-        $request = $client->request('GET', $this->paymentUrl.$$issuerUrl);
+        $request = $client->request('GET', $this->paymentUrl.$issuerUrl);
         $statusCode = $request->getStatusCode();
         $request->getHeaderLine('content-type');
         $response = json_decode($request->getBody()->getContents(), true);
