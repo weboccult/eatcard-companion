@@ -14,6 +14,7 @@ use Weboccult\EatcardCompanion\Services\Core\EatcardOrder;
 use Weboccult\EatcardCompanion\Services\Core\EatcardSms;
 use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
 use Weboccult\EatcardCompanion\Services\Core\OneSignal;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardRevenue;
 
 if (! function_exists('companionLogger')) {
     /**
@@ -76,8 +77,8 @@ if (! function_exists('__companionPrintTrans')) {
     {
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
-            // If not enabled then reset locale to EN
-            App::setLocale('en');
+            // If not enabled then reset locale to nl
+            App::setLocale('nl');
         }
 
         return __('eatcard-companion::'.$path);
@@ -142,6 +143,18 @@ if (! function_exists('eatcardOrder')) {
     function eatcardOrder(): EatcardOrder
     {
         return app('eatcard-order');
+    }
+}
+
+if (! function_exists('eatcardRevenue')) {
+    /**
+     * Access eatcardRevenue through helper.
+     *
+     * @return EatcardRevenue
+     */
+    function eatcardRevenue(): EatcardRevenue
+    {
+        return app('eatcard-revenue');
     }
 }
 

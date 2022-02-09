@@ -65,4 +65,12 @@ class OrderHistory extends Model
     {
         return $this->hasMany(SubOrder::class, 'parent_order_id');
     }
+
+    /**
+     * @return HasMany
+     */
+    public function voidOrder(): HasMany
+    {
+        return $this->hasMany(BackupRestore::class, 'order_id', 'id');
+    }
 }

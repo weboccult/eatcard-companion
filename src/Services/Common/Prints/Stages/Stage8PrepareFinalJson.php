@@ -8,6 +8,7 @@ use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
+use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
@@ -134,14 +135,14 @@ trait Stage8PrepareFinalJson
                 $titleTime = '';
                 $pickupTime = '';
             } else {
-                $title1 = 'Uw bestelling is '.__('eatcard-companion::general.'.($this->order['status'] ?? ''));
+                $title1 = 'Uw bestelling is '.__companionPrintTrans('general.'.($this->order['status'] ?? ''));
                 $title2 = $this->order['full_name'] ?? '';
                 $title3 = $this->order['contact_no'] ?? '';
                 if ($this->additionalSettings['is_print_exclude_email'] == 0) {
                     $title4 = $this->order['email'] ?? '';
                 }
                 $title5 = '#'.($this->order['order_id'] ?? '');
-                $title6 = __('eatcard-companion::general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
+                $title6 = __companionPrintTrans('general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 $titleTime = $this->order['paid_on'] ?? '';
@@ -196,7 +197,7 @@ trait Stage8PrepareFinalJson
         }
 
         if ($this->orderType == OrderTypes::SUB) {
-            $title1 = 'Uw bestelling is '.__('eatcard-companion::general.'.($this->subOrder['status'] ?? ''));
+            $title1 = 'Uw bestelling is '.__companionPrintTrans('general.'.($this->subOrder['status'] ?? ''));
             $title5 = '#'.($this->order['order_id'] ?? '');
             $titleTime = $this->subOrder['paid_on'] ?? '';
             $pickupTime = $this->order['order_time'] ?? '';
@@ -236,7 +237,7 @@ trait Stage8PrepareFinalJson
 
         if ($this->orderType == OrderTypes::PAID) {
             if (isset($this->order['order_type']) && $this->order['order_type'] == 'delivery') {
-                $deliveryTitle = __('eatcard-companion::general.'.$this->order['order_type']);
+                $deliveryTitle = __companionPrintTrans('general.'.$this->order['order_type']);
 //                $deliveryTitle = $this->order['order_type'] ?? '';
                 $deliveryAddress = $this->order['delivery_address'] ?? '';
                 $deliveryFontSize = $this->additionalSettings['delivery_address_font_size'];
@@ -351,7 +352,7 @@ trait Stage8PrepareFinalJson
         if ($this->orderType == OrderTypes::PAID) {
             $checkoutNo = $this->order['checkout_no'] ?? '';
 
-            $typeOrder = $this->additionalSettings['thirdPartyName'].__('eatcard-companion::general.'.($this->order['order_type'] ?? ''));
+            $typeOrder = $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.($this->order['order_type'] ?? ''));
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
 
             $customerComments = $this->order['comment'] ?? '';
@@ -359,7 +360,7 @@ trait Stage8PrepareFinalJson
             $total = $this->order['total_price'] ?? '0';
 
             if (! in_array($this->systemType, [SystemTypes::POS])) {
-                $orderType = ($this->order['dine_in_type']) ? __('eatcard-companion::general.'.$this->order['dine_in_type']) : '';
+                $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
             }
 
             if ($this->systemType == SystemTypes::KDS) {
@@ -403,7 +404,7 @@ trait Stage8PrepareFinalJson
         if ($this->orderType == OrderTypes::SUB) {
             $customerComments = $this->order['comment'] ?? '';
             $total = $this->subOrder['total_price'] ?? '0';
-            $orderType = ($this->order['dine_in_type']) ? __('eatcard-companion::general.'.$this->order['dine_in_type']) : '';
+            $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
             $tableName = '';
         }
 
@@ -427,7 +428,7 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['kitchenreceipt'] = $this->additionalSettings['kitchenreceipt'];
         $this->jsonFormatFullReceipt['itemsTitle'] = $itemTitle;
         $this->jsonFormatFullReceipt['Total'][0]['value1'] = changePriceFormat($total);
-        $this->jsonFormatFullReceipt['thankyounote'][] = __('eatcard-companion::general.thank_you_line_2');
+        $this->jsonFormatFullReceipt['thankyounote'][] = __companionPrintTrans('general.thank_you_line_2');
         $this->jsonFormatFullReceipt['categories_settings'] = $this->additionalSettings['categories_settings'];
         $this->jsonFormatFullReceipt['noofprints'] = $this->additionalSettings['no_of_prints'];
     }

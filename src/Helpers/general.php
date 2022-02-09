@@ -25,6 +25,8 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SaveOrderGenera
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SubOrderGenerator;
 use Illuminate\Support\Facades\Redis as LRedis;
 use GuzzleHttp\Client;
+use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\DailyRevenueGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\MonthlyRevenueGenerator;
 use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 
 if (! function_exists('eatcardSayHello')) {
@@ -528,7 +530,7 @@ if (! function_exists('changePriceFormat')) {
      */
     function changePriceFormat($val): string
     {
-        return ($val) ? number_format((float) $val, 2, ',', '') : '0,00';
+        return ($val) && (float) ($val) > 0 ? number_format((float) $val, 2, ',', '') : '0,00';
     }
 }
 
@@ -1226,6 +1228,68 @@ if (! function_exists('set_discount_with_prifix')) {
         }
 
         return $discount_with_prifix;
+    }
+}
+
+if (! function_exists('extractRevenuePayload')) {
+
+    /**
+     * @param $payload
+     *
+     * @return mixed
+     */
+    function extractRevenuePayload($payload)
+    {
+        $date = '';
+        $month = 0;
+        $year = 0;
+        $storeId = 0;
+        $requestType = '';
+        $generator = '';
+
+        $validProtocolRequestType = [
+            'daily', // Daily revenue print
+            'monthly', // monthly revenue print
+        ];
+
+        if (isset($payload['date']) && ! empty($payload['date'])) {
+            $date = $payload['date'];
+        }
+
+        if (isset($payload['month']) && ! empty($payload['month'])) {
+            $month = $payload['month'];
+        }
+
+        if (isset($payload['year']) && ! empty($payload['year'])) {
+            $year = $payload['year'];
+        }
+
+        if (isset($payload['store_id']) && ! empty($payload['store_id'])) {
+            if (strpos($payload['store_id'], '?') !== false) {
+                $payloadData = explode('?', $payload['store_id']);
+                $storeId = $payloadData[0];
+                $requestType = strpos($payloadData[1], 'daily') !== false ? 'daily' : (strpos($payloadData[1], 'monthly') !== false ? 'monthly' : $payloadData[1]);
+            } else {
+                $storeId = $payload['store_id'] ?? 0;
+            }
+        }
+
+        if ($requestType == 'daily') {
+            $generator = DailyRevenueGenerator::class;
+        } elseif ($requestType == 'monthly') {
+            $generator = MonthlyRevenueGenerator::class;
+        } elseif (! in_array($requestType, $validProtocolRequestType)) {
+            $requestType = '';
+        }
+
+        return [
+            'generator' => $generator,
+            'requestType' => $requestType,
+            'storeId' => $storeId,
+            'date' => $date,
+            'month' => $month,
+            'year' => $year,
+        ];
     }
 }
 

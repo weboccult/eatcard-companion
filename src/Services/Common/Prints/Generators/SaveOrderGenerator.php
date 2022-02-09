@@ -9,6 +9,7 @@ use Weboccult\EatcardCompanion\Models\DevicePrinter;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
+use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\discountCalc;
 use function Weboccult\EatcardCompanion\Helpers\set_discount_with_prifix;
@@ -47,9 +48,9 @@ class SaveOrderGenerator extends BaseGenerator
     protected int $isVoidProduct = 0;
     protected int $isOnTheHouseProduct = 0;
 
-    public function __construct()
+    public function __companionPrintTransconstruct()
     {
-        parent::__construct();
+        parent::__companionPrintTransconstruct();
     }
 
     /**
@@ -153,7 +154,7 @@ class SaveOrderGenerator extends BaseGenerator
             if ($item['size']) {
                 $size_price = isset($item['size']['price']) ? (float) $item['size']['price'] : 0;
                 $item_total += $size_price;
-                $current = __('eatcard-companion::print.'.$item['size']['name']);
+                $current = __companionPrintTrans('general.'.$item['size']['name']);
                 $newItem['itemaddons'][] = $current;
                 $newItem['kitchenitemaddons'][] = $current;
             }
@@ -380,19 +381,19 @@ class SaveOrderGenerator extends BaseGenerator
         $summary = [];
         if ($this->sub_total > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.sub_total'),
+                'key'   => __companionPrintTrans('general.sub_total'),
                 'value' => ''.changePriceFormat($this->sub_total),
             ];
         }
         if ($this->total_deposit > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.deposit'),
+                'key'   => __companionPrintTrans('general.deposit'),
                 'value' => ''.changePriceFormat($this->total_deposit),
             ];
         }
         if ($this->total_dis_wo_tax > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.discount_amount').$this->order_discount_amount_with_prefix,
+                'key'   => __companionPrintTrans('general.discount_amount').$this->order_discount_amount_with_prefix,
                 'value' => ''.changePriceFormat($this->total_dis_wo_tax),
             ];
         }
@@ -416,32 +417,32 @@ class SaveOrderGenerator extends BaseGenerator
         //           }
         //           if ($additional_fee > 0) {
         //               $summary[] = [
-        //                   'key'   => __('eatcard-companion::general.additional_fees'),
+        //                   'key'   => __companionPrintTrans('general.additional_fees'),
         //                   'value' => ''.changePriceFormat($additional_fee),
         //               ];
         //           }
         //           if ($plastic_bag_fee > 0) {
         //               $summary[] = [
-        //                   'key'   => __('eatcard-companion::general.bag'),
+        //                   'key'   => __companionPrintTrans('general.bag'),
         //                   'value' => ''.changePriceFormat($plastic_bag_fee),
         //               ];
         //           }
         //           if ($coupon_price > 0) {
         //               $summary[] = [
-        //                   'key'   => __('eatcard-companion::general.gift_voucher_cost'),
+        //                   'key'   => __companionPrintTrans('general.gift_voucher_cost'),
         //                   'value' => ''.changePriceFormat($coupon_price),
         //               ];
         //           }
         //           if ($cash_paid > 0 && $method == 'cash') {
         //               $summary[] = [
-        //                   'key'   => __('eatcard-companion::general.cash_paid_cost'),
+        //                   'key'   => __companionPrintTrans('general.cash_paid_cost'),
         //                   'value' => ''.changePriceFormat($cash_paid),
         //               ];
         //           }
         //           $cash_changes = $cash_paid - $total_price;
         //           if ($cash_paid > 0 && $cash_changes > 0 && $method == 'cash') {
         //               $summary[] = [
-        //                   'key'   => __('eatcard-companion::general.cash_changes'),
+        //                   'key'   => __companionPrintTrans('general.cash_changes'),
         //                   'value' => ''.changePriceFormat($cash_changes),
         //               ];
         //           }
