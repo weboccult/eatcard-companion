@@ -13,5 +13,4 @@ class DailyRevenueGenerator extends BaseGenerator
     {
         parent::__construct();
     }
-
 }
