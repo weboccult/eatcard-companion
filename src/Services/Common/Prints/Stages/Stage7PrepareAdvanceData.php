@@ -12,6 +12,7 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
+use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\set_discount_with_prifix;
@@ -56,7 +57,7 @@ trait Stage7PrepareAdvanceData
             if ($this->systemType == SystemTypes::KDS) {
                 $tableName = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             } elseif ($this->additionalSettings['dinein_guest_order'] && ! empty($tableName)) {
-                $tableName = ($this->order['table_name']) ? __('eatcard-companion::general.table_name').' '.$this->order['table_name'] : '';
+                $tableName = ($this->order['table_name']) ? __companionPrintTrans('general.table_name').' '.$this->order['table_name'] : '';
             }
         }
 
@@ -609,7 +610,7 @@ trait Stage7PrepareAdvanceData
                 if ($extra->size) {
                     $size_price = isset($extra->size->price) ? (float) $extra->size->price : 0;
                     $item_total += $size_price;
-                    $current = __('eatcard-companion::print.'.$extra->size->name);
+                    $current = __companionPrintTrans('general.'.$extra->size->name);
                     $newItem['itemaddons'][] = $current;
                     $newItem['kitchenitemaddons'][] = $current;
                 }
@@ -996,7 +997,7 @@ trait Stage7PrepareAdvanceData
 
         if ($sub_total > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.sub_total'),
+                'key'   => __companionPrintTrans('general.sub_total'),
                 'value' => ''.changePriceFormat($sub_total),
             ];
         }
@@ -1008,7 +1009,7 @@ trait Stage7PrepareAdvanceData
         }
         if ($discount_amount > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.discount_amount').$discount_type_sign_with_amount,
+                'key'   => __companionPrintTrans('general.discount_amount').$discount_type_sign_with_amount,
                 'value' => ''.changePriceFormat($discount_amount),
             ];
         }
@@ -1032,25 +1033,25 @@ trait Stage7PrepareAdvanceData
         }
         if ($additional_fee > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.additional_fees'),
+                'key'   => __companionPrintTrans('general.additional_fees'),
                 'value' => ''.changePriceFormat($additional_fee),
             ];
         }
         if ($plastic_bag_fee > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.bag'),
+                'key'   => __companionPrintTrans('general.bag'),
                 'value' => ''.changePriceFormat($plastic_bag_fee),
             ];
         }
         if ($coupon_price > 0) {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.gift_voucher_cost'),
+                'key'   => __companionPrintTrans('general.gift_voucher_cost'),
                 'value' => ''.changePriceFormat($coupon_price),
             ];
         }
         if ($method == 'cash') {
             $summary[] = [
-                'key'   => __('eatcard-companion::general.cash_paid_cost'),
+                'key'   => __companionPrintTrans('general.cash_paid_cost'),
                 'value' => ''.changePriceFormat($cash_paid),
             ];
 
@@ -1058,7 +1059,7 @@ trait Stage7PrepareAdvanceData
 
             if ($cash_paid > 0 && $cash_changes > 0) {
                 $summary[] = [
-                    'key'   => __('eatcard-companion::general.cash_changes'),
+                    'key'   => __companionPrintTrans('general.cash_changes'),
                     'value' => ''.changePriceFormat($cash_changes),
                 ];
             }

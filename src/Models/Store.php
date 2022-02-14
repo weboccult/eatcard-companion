@@ -41,4 +41,14 @@ class Store extends Model
     {
         return $this->hasOne(MultiSafePay::class, 'store_id', 'id');
     }
+
+    public function kioskDevices()
+    {
+        return $this->hasMany(KioskDevice::class, 'store_id', 'id');
+    }
+
+    public function storePosSetting()
+    {
+        return $this->hasMany(StorePosSetting::class, 'store_id');
+    }
 }

@@ -62,6 +62,7 @@
       "aliases": {
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
+        "EatcardRevenue": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardRevenue",
         "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
         "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
         "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
@@ -70,6 +71,7 @@
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardRevenueServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardSmsServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider"
