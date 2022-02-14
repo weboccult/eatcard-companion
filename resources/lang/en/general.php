@@ -50,7 +50,8 @@ return [
     'delivery_fee' => 'Bezorgkosten',
     'delivery_free_amount' => 'Gratis bezorgen vanaf',
     'delivery_cost' => 'Bezorgen',
-    'additional_fees_title' => 'Additional fees',
+    'additional_fees_title' => 'Additional Fee',
+    'plastic_bag_fee' => 'Plastic Bag Fee',
     'bag' => 'Bag',
     'gift_voucher_cost' => 'Gift card',
     'cash_paid_cost' => 'Cash received',
@@ -59,6 +60,8 @@ return [
     'summary' => 'Kaarten',
     'tip' => 'Tip',
     'reservation_deposit' => 'Booking deposit',
+    'split' => 'Split',
+    'payment_by' => 'Payment by',
 
     /*auto print*/
     'thank_you_line_1' => 'Eatcard',

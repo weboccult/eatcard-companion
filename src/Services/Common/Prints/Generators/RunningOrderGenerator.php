@@ -492,7 +492,7 @@ class RunningOrderGenerator extends BaseGenerator
 
         if (($this->reservation['total_price'] ?? 0) > 0) {
             $summary[] = [
-                'key'   => 'Reservation deposit',
+                'key'   =>  __companionPrintTrans('general.reservation_deposit'),
                 'value' => '-'.changePriceFormat(($this->reservation['total_price'] ?? 0)),
             ];
         }
@@ -507,7 +507,7 @@ class RunningOrderGenerator extends BaseGenerator
         if (isset($this->reservation['coupon_price']) && $this->reservation['coupon_price'] > 0) {
             $remaining_Coupon_price = GiftPurchaseOrder::where('id', $this->reservation['gift_purchase_id'])->first();
             $summary[] = [
-                'key'   => 'Gift card ('.changePriceFormat($remaining_Coupon_price->remaining_price).')',
+                'key'   => __companionPrintTrans('general.gift_voucher_cost').' ('.changePriceFormat($remaining_Coupon_price->remaining_price).')',
                 'value' => '-'.changePriceFormat($this->reservation['coupon_price']),
             ];
         }

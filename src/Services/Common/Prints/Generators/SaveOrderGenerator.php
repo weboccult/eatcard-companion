@@ -383,7 +383,7 @@ class SaveOrderGenerator extends BaseGenerator
 
         if ($statiege_deposite_total > 0) {
             $summary[] = [
-                'key'   => 'Deposit',
+                'key'   => __companionPrintTrans('general.deposit'),
                 'value' => ''.changePriceFormat($statiege_deposite_total),
             ];
         }

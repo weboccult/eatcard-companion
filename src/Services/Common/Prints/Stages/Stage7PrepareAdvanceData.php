@@ -1251,7 +1251,7 @@ trait Stage7PrepareAdvanceData
             if ($this->order['payment_split_type'] == PaymentSplitTypes::EQUAL_SPLIT && $this->order['payment_split_persons']) {
                 $split_no = ($this->subOrder['split_no']) ? ''.$this->subOrder['split_no'] : '';
                 $summary[] = [
-                    'key'   => 'Split',
+                    'key'   => __companionPrintTrans('general.split'),
                     'value' => $split_no.'/'.$this->order['payment_split_persons'],
                 ];
             }
@@ -1261,8 +1261,8 @@ trait Stage7PrepareAdvanceData
             $cash_changes = $cash_paid > 0 ? ($cash_paid - $total_price) : 0;
             $cash_received = $total_price + $cash_changes;
             $summary[] = [
-               'key'   => 'Payment by',
-               'value' => 'Cash',
+               'key'   => __companionPrintTrans('general.payment_by'),
+               'value' => __companionPrintTrans('general.cash'),
            ];
 
             $summary[] = [
