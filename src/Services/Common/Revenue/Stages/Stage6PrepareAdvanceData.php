@@ -249,7 +249,7 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereMonth('paid_on', $this->month);
                 $qDateMonth->whereYear('paid_on', $this->year);
             })
-            ->where('payment_status', 'paid')
+            ->whereIn('payment_status', ['paid', 'partial_refunded', 'refunded'])
             ->chunk(500, function ($reservations) {
                 foreach ($reservations as $reservation) {
                     $this->calcData['reservation_received_total_date'][Carbon::parse($reservation->paid_on)->format('Y-m-d')] += (float) ($reservation->original_total_price ?? 0);
@@ -267,7 +267,8 @@ trait Stage6PrepareAdvanceData
            })
            ->chunk(500, function ($reservations) {
                foreach ($reservations as $reservation) {
-                   $this->calcData['reservation_received_total_date'][Carbon::parse($reservation->refund_price_date)->format('Y-m-d')] -= (float) ($reservation->refund_price ?? 0);
+//                   $this->calcData['reservation_received_total_date'][Carbon::parse($reservation->refund_price_date)->format('Y-m-d')] -= (float) ($reservation->refund_price ?? 0);
+                   $this->calcData['reservation_refund_total_date'][Carbon::parse($reservation->refund_price_date)->format('Y-m-d')] += (float) ($reservation->refund_price ?? 0);
                }
            });
     }
@@ -347,6 +348,10 @@ trait Stage6PrepareAdvanceData
         foreach ($orders as $order) {
             $orderTotalPrice = (float) ($order->total_price ?? 0);
             $orderDate = Carbon::parse($order->created_at)->format('Y-m-d');
+            $tip_amount = (float) ($order->tip_amount ?? 0);
+
+            //as per discussion not need to calculate tip amount in turnover
+            $orderTotalPrice -= $tip_amount;
 
             //set third party flag
             $isThirdPartyOrder = false;
@@ -389,7 +394,7 @@ trait Stage6PrepareAdvanceData
             }
             //total tip amount
 
-            $this->calcData['total_tip_amount'] += (float) ($order->tip_amount ?? 0);
+            $this->calcData['total_tip_amount'] += $tip_amount;
 
             //total cash and pin payments for sub orders
             if (isset($order['subOrders']) && count($order['subOrders']) > 0) {
@@ -398,10 +403,24 @@ trait Stage6PrepareAdvanceData
                    ->where('method', '!=', 'cash')
                    ->sum('total_price');
 
+                $subOrderPinTipAmount = collect($order['subOrders'])
+                                   ->where('status', 'paid')
+                                   ->where('method', '!=', 'cash')
+                                   ->sum('tip_amount');
+
+                $this->calcData['total_pin_amount'] -= $subOrderPinTipAmount;
+
                 $this->calcData['total_cash_amount'] += collect($order['subOrders'])
                    ->where('status', 'paid')
                    ->where('method', 'cash')
                    ->sum('total_price');
+
+                $subOrderCashTipAmount = collect($order['subOrders'])
+                                   ->where('status', 'paid')
+                                   ->where('method', 'cash')
+                                   ->sum('tip_amount');
+
+                $this->calcData['total_cash_amount'] -= $subOrderCashTipAmount;
             }
 
             //total product deposit
@@ -622,11 +641,12 @@ trait Stage6PrepareAdvanceData
             $this->calcData['total_gift_card_amount'] += $this->calcData['total_gift_card_amount_date'][$date];
 
             $this->calcData['reservation_received_total'] += $this->calcData['reservation_received_total_date'][$date];
+            $this->calcData['reservation_refund_total'] += $this->calcData['reservation_refund_total_date'][$date];
 
             //additional calculations
 
             //total income with product, gift-card, reservation free,
-            $this->calcData['total_turn_over_with_tax_date'][$date] += $this->calcData['total_amount_inc_tax_date'][$date] + $this->calcData['total_gift_card_amount_date'][$date] + $this->calcData['reservation_received_total_date'][$date];
+            $this->calcData['total_turn_over_with_tax_date'][$date] += $this->calcData['total_amount_inc_tax_date'][$date] + $this->calcData['total_gift_card_amount_date'][$date] + $this->calcData['reservation_received_total_date'][$date] - $this->calcData['reservation_refund_total_date'][$date];
             if ($this->additionalSettings['third_party_revenue_status'] == 1) {
                 $this->calcData['total_turn_over_with_tax_date'][$date] += $this->calcData['total_third_party_total_date'][$date];
             }
@@ -650,13 +670,14 @@ trait Stage6PrepareAdvanceData
           $this->calcData['total_21_without_tax_subtotal'] + $this->calcData['total_21_tax'] - $this->calcData['total_21_discount_without_tax'];
 
         //all gift card always buy online payments
-        $this->calcData['total_ideal_amount'] += $this->calcData['total_gift_card_amount'] + $this->calcData['reservation_received_total'];
+        $this->calcData['total_ideal_amount'] += $this->calcData['total_gift_card_amount'] + $this->calcData['reservation_received_total'] - $this->calcData['reservation_refund_total'];
 
         $this->calcData['final_total_amount'] += $this->calcData['total_takeaway']
                                          + $this->calcData['total_dine_in']
                                          + $this->calcData['total_kiosk']
                                          + $this->calcData['total_gift_card_amount']
-                                         + $this->calcData['reservation_received_total'];
+                                         + $this->calcData['reservation_received_total']
+                                         - $this->calcData['reservation_refund_total'];
 
         $this->calcData['final_total_orders'] += $this->calcData['total_orders'];
         $this->calcData['final_product_count'] += $this->calcData['product_count'];

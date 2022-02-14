@@ -32,6 +32,8 @@ trait Stage5EnableSettings
         // 1=hide and 0=show for free, vod, onthehouse product
         if (isset($this->order['order_type']) && $this->order['order_type'] == 'all_you_eat') {
             $this->additionalSettings['hide_free_product'] = $store->storeSetting->show_free_print_item ?? 0;
+        } elseif (isset($this->reservation['reservation_type']) && $this->reservation['reservation_type'] == 'all_you_eat') {
+            $this->additionalSettings['hide_free_product'] = $store->storeSetting->show_free_print_item ?? 0;
         }
 
         $this->additionalSettings['hide_void_product'] = $store->storeSetting->show_void_print_item ?? 0;
@@ -67,6 +69,8 @@ trait Stage5EnableSettings
         $this->additionalSettings['show_delivery_address_in_kitchen_receipt'] = (int) ($store->storeSetting->show_delivery_address_in_kitchen_receipt ?? 0);
         $this->additionalSettings['print_custom_text'] = $store->storeSetting->print_custom_text ?? '';
         $this->additionalSettings['no_of_prints'] = ''.($store->storeSetting->no_of_prints ?? '1');
+        $this->additionalSettings['show_main_order_number_in_print'] = ($store->storeSetting->show_main_order_number_in_print ?? 0);
+        $this->additionalSettings['print_total_font_size'] = ($store->storeSetting->print_total_font_size ?? 0);
     }
 
     /**

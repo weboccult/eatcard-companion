@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 
@@ -39,6 +40,7 @@ trait Stage3PrepareBasicData
                 'kitchenheaderspace'     => 0,
                 'kitchenheaderformat'    => 0,
                 'kitchensubheader'       => 0,
+                'totalfontsize'       => 0,
                 'printcategory'          => '0',
                 'printproduct'           => '0',
                 'doubleheight'           => '0',
@@ -51,6 +53,7 @@ trait Stage3PrepareBasicData
                 'title3'                 => '',
                 'title4'                 => '',
                 'title5'                 => '#',
+                'mainreceiptordernumber' => '',
                 'ordernumber'            => '#',
                 'title6'                 => '',
                 'titteTime'              => [
@@ -94,6 +97,8 @@ trait Stage3PrepareBasicData
                 'noofprints'             => '1',
                 'itemsTitle'             => '',
                 'items'                  => [],
+                'preSubtotalSummary'     => [],
+                'subtotal'               => [],
                 'summary'                => [],
                 'Total'                  => [
                     [
@@ -101,6 +106,9 @@ trait Stage3PrepareBasicData
                         'value1' => '',
                     ],
                 ],
+                'summary4'               => [],
+                'MiscellaneousSummary1'  => [],
+                'miscellaneous'          => [],
                 'receipt'                => [],
                 'thankyounote'           => [],
                 'footertag'              => [],
@@ -150,6 +158,8 @@ trait Stage3PrepareBasicData
             'print_custom_text'         => '',
             'kiosk_data' => [],
             'no_of_prints' => '1',
+            'show_main_order_number_in_print' => 0,
+            'print_total_font_size' => 0,
 
             //kiosk device settings
             'kioskname' => '',
@@ -171,6 +181,7 @@ trait Stage3PrepareBasicData
         $this->advanceData = [
             'tableName' => '',
             'dynamicOrderNo' => '',
+            'show_discount_note' => '',
 
         ];
     }
@@ -200,6 +211,11 @@ trait Stage3PrepareBasicData
 
         if (isset($this->payload['kds_user_id']) && ! empty($this->payload['kds_user_id'])) {
             $this->kdsUserId = $this->payload['kds_user_id'];
+        }
+
+        //set print type main print for PDF and HTML
+        if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
+            $this->printType = PrintTypes::MAIN;
         }
     }
 

@@ -373,85 +373,63 @@ class SaveOrderGenerator extends BaseGenerator
      * @return void
      * Prepare summary based or related order data
      */
+    protected function preparePreSummary()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+        $summary = [];
+        $statiege_deposite_total = $this->total_deposit;
+
+        if ($statiege_deposite_total > 0) {
+            $summary[] = [
+                'key'   => 'Deposit',
+                'value' => ''.changePriceFormat($statiege_deposite_total),
+            ];
+        }
+
+        $this->jsonPreSummary = $summary;
+    }
+
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
+    protected function prepareSubTotal()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+        $subTotal = [];
+        $sub_total = $this->total_price + $this->total_dis_inc_tax;
+
+        if ($sub_total > 0) {
+            $subTotal[] = [
+                'key'   => __companionPrintTrans('general.sub_total'),
+                'value' => ''.changePriceFormat($sub_total),
+            ];
+        }
+        $this->jsonSubTotal = $subTotal;
+    }
+
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
     protected function prepareSummary()
     {
         if ($this->skipMainPrint) {
             return;
         }
         $summary = [];
-        if ($this->sub_total > 0) {
-            $summary[] = [
-                'key'   => __companionPrintTrans('general.sub_total'),
-                'value' => ''.changePriceFormat($this->sub_total),
-            ];
-        }
-        if ($this->total_deposit > 0) {
-            $summary[] = [
-                'key'   => __companionPrintTrans('general.deposit'),
-                'value' => ''.changePriceFormat($this->total_deposit),
-            ];
-        }
-        if ($this->total_dis_wo_tax > 0) {
+
+        if ($this->total_dis_inc_tax > 0) {
             $summary[] = [
                 'key'   => __companionPrintTrans('general.discount_amount').$this->order_discount_amount_with_prefix,
-                'value' => ''.changePriceFormat($this->total_dis_wo_tax),
+                'value' => '-'.changePriceFormat($this->total_dis_inc_tax),
             ];
         }
-        if ($this->total_tax > 0) {
-            $summary[] = [
-                'key'   => 'BTW laag',
-                'value' => ''.changePriceFormat($this->total_tax),
-            ];
-        }
-        if ($this->total_alcohol_tax > 0) {
-            $summary[] = [
-                'key'   => 'BTW hoog',
-                'value' => ''.changePriceFormat($this->total_alcohol_tax),
-            ];
-        }
-        //           if ($delivery_fee > 0) {
-        //               $summary[] = [
-        //                   'key'   => 'Bezorgkosten',
-        //                   'value' => ''.changePriceFormat($delivery_fee),
-        //               ];
-        //           }
-        //           if ($additional_fee > 0) {
-        //               $summary[] = [
-        //                   'key'   => __companionPrintTrans('general.additional_fees'),
-        //                   'value' => ''.changePriceFormat($additional_fee),
-        //               ];
-        //           }
-        //           if ($plastic_bag_fee > 0) {
-        //               $summary[] = [
-        //                   'key'   => __companionPrintTrans('general.bag'),
-        //                   'value' => ''.changePriceFormat($plastic_bag_fee),
-        //               ];
-        //           }
-        //           if ($coupon_price > 0) {
-        //               $summary[] = [
-        //                   'key'   => __companionPrintTrans('general.gift_voucher_cost'),
-        //                   'value' => ''.changePriceFormat($coupon_price),
-        //               ];
-        //           }
-        //           if ($cash_paid > 0 && $method == 'cash') {
-        //               $summary[] = [
-        //                   'key'   => __companionPrintTrans('general.cash_paid_cost'),
-        //                   'value' => ''.changePriceFormat($cash_paid),
-        //               ];
-        //           }
-        //           $cash_changes = $cash_paid - $total_price;
-        //           if ($cash_paid > 0 && $cash_changes > 0 && $method == 'cash') {
-        //               $summary[] = [
-        //                   'key'   => __companionPrintTrans('general.cash_changes'),
-        //                   'value' => ''.changePriceFormat($cash_changes),
-        //               ];
-        //           }
-        //        if (($this->reservation['reservation_paid'] ?? 0) > 0) {
-        //            $summary[] = [
-        //                'key'   => 'Booking deposit',
-        //                'value' => '' . changePriceFormat(($this->reservation['reservation_paid'] ?? 0)),
-        //            ];
-        //        }
+
         $this->jsonSummary = $summary;
     }
 }

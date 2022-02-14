@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Facade;
 use Weboccult\EatcardCompanion\Services\Core\EatcardRevenue as EatcardRevenueCore;
 
 /**
- * @method static mixed toJson()
+ * @method static mixed generate()
  *
  * @mixin EatcardRevenueCore
  *

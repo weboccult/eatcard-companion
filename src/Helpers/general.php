@@ -530,7 +530,7 @@ if (! function_exists('changePriceFormat')) {
      */
     function changePriceFormat($val): string
     {
-        return ($val) && (float) ($val) > 0 ? number_format((float) $val, 2, ',', '') : '0,00';
+        return ($val) && (float) ($val) != 0 ? number_format((float) $val, 2, ',', '') : '0,00';
     }
 }
 

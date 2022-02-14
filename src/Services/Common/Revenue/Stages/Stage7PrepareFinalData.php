@@ -24,6 +24,7 @@ trait Stage7PrepareFinalData
         $this->finalData['third_party_print_status'] = $this->additionalSettings['third_party_revenue_status'];
 
         $this->finalData['reservation_received_total'] = changePriceFormat($this->calcData['reservation_received_total']);
+        $this->finalData['reservation_refund_total'] = changePriceFormat($this->calcData['reservation_refund_total']);
 
         $this->finalData['total_9_tax'] = changePriceFormat($this->calcData['total_9_tax']);
         $this->finalData['total_21_tax'] = changePriceFormat($this->calcData['total_21_tax']);
@@ -271,6 +272,14 @@ trait Stage7PrepareFinalData
         $detailJson['value'] = '€'.$this->finalData['reservation_deducted_total'];
         $summaryTop['details'][] = $detailJson;
 
+        $detailJson['key'] = 'Reservation Refund';
+        $detailJson['value'] = '€'.$this->finalData['reservation_refund_total'];
+        $summaryTop['details'][] = $detailJson;
+
+        $detailJson['key'] = 'Tip';
+        $detailJson['value'] = '€'.$this->finalData['tip_amount'];
+        $summaryTop['details'][] = $detailJson;
+
         $totalJson['key1'] = '';
         $totalJson['value1'] = '';
         $summaryTop['total'][] = $totalJson;
@@ -336,6 +345,10 @@ trait Stage7PrepareFinalData
         $detailJson['key'] = 'Reservation Deposited';
         $detailJson['value'] = '€'.($this->finalData['reservation_received_total']);
         $summaryBottom['details'][] = $detailJson;
+
+//        $detailJson['key'] = 'Reservation refund';
+//        $detailJson['value'] = '€'.($this->finalData['reservation_refund_total']);
+//        $summaryBottom['details'][] = $detailJson;
 
         if ($this->additionalSettings['third_party_revenue_status'] == 1) {
             $detailJson['key'] = 'Thuisbezorgd';

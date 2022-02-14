@@ -124,6 +124,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
 //                //               '' => $this->,
 //            ];
         } catch (\Exception $e) {
+            dd($e);
             dd($e->getMessage(), $e->getFile(), $e->getLine());
             companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());
 

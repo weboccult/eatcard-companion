@@ -120,6 +120,7 @@ trait Stage5EnableSettings
 //        $this->calcData['additional_fee_total_date'][$date] = 0;
 //        $this->calcData['deposite_total_date'][$date] = 0;
         $this->calcData['reservation_received_total_date'][$date] = 0;
+        $this->calcData['reservation_refund_total_date'][$date] = 0;
         $this->calcData['reservation_deducted_total_date'][$date] = 0;
         $this->calcData['total_third_party_total_date'][$date] = 0;
         $this->calcData['total_amount_inc_tax_date'][$date] = 0;

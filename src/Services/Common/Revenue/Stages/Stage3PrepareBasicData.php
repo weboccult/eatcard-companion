@@ -139,6 +139,9 @@ trait Stage3PrepareBasicData
             'reservation_received_total' => 0,
             'reservation_received_total_date' => [],
 
+            'reservation_refund_total' => 0,
+            'reservation_refund_total_date' => [],
+
             'reservation_deducted_total' => 0,
 //            'reservation_deducted_total_date' => [],
 

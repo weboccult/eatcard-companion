@@ -1,4 +1,3 @@
-<?php ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
@@ -100,17 +99,17 @@
                 <div style="margin-top: 10px;border-bottom: 2px solid #000;"></div>
                 <div style="text-align: left">
                     <div style="padding-top: 5px;font-size: 11px;font-weight: 400;line-height: 12px">
-                        <p>{{__companionPrintTrans('general.print_date')}}: {{$data['current_date_time']}}</p>
-                        <p>{{__companionPrintTrans('general.from_date')}}: {{$data['start_date']}}</p>
-                        <p>{{__companionPrintTrans('general.to_date')}}: {{$data['end_date']}}</p>
+                        <p>@companionPrintTrans('general.print_date'): {{$data['current_date_time']}}</p>
+                        <p>@companionPrintTrans('general.from_date'): {{$data['start_date']}}</p>
+                        <p>@companionPrintTrans('general.to_date'): {{$data['end_date']}}</p>
                         <div style="margin-top: 10px;border-bottom: 2px solid #000;"></div>
                     </div>
                     <div style="font-size: 11px;line-height: 12px;padding-top: 5px">
-                        <h3>{{__companionPrintTrans('general.cash_title')}}</h3>
+                        <h3>@companionPrintTrans('general.cash_title')</h3>
                         <div style="padding-top: 0px">
                             <div style="display: inline-block;float: left">
-                                <p>{{__companionPrintTrans('general.cash')}}:</p>
-                                <p>{{__companionPrintTrans('general.cash_difference')}}:</p>
+                                <p>@companionPrintTrans('general.cash'):</p>
+                                <p>@companionPrintTrans('general.cash_difference'):</p>
                             </div>
                             <div style="display: inline-block;float: right;text-align: right">
                                 <p>€{{$data['total_cash_amount']}}</p>
@@ -120,7 +119,7 @@
                         <div style="border-bottom: 2px solid #000; width: 150px;margin-left: 255px;margin-top: 25px"></div>
                         <div style="padding-top: 5px">
                             <div style="display: inline-block;float: left">
-                                <p>{{__companionPrintTrans('general.total_cash_registered')}}:</p>
+                                <p>@companionPrintTrans('general.total_cash_registered'):</p>
                             </div>
                             <div style="display: inline-block;float: right;text-align: right">
                                 <p>€{{$data['total_cash_amount']}}</p>
@@ -128,11 +127,11 @@
                         </div>
                         <div style="border-bottom: 1px dashed #000; margin-top: 15px"></div>
                         <div style="font-size: 11px;line-height: 12px;padding-top: 5px">
-                            <h3>{{__companionPrintTrans('general.wireless_payment')}}</h3>
+                            <h3>@companionPrintTrans('general.wireless_payment')</h3>
                             <div style="padding-top: 5px">
                                 <div style="display: inline-block;float: left">
-                                    <p>{{__companionPrintTrans('general.pin')}}:</p>
-                                    <p>{{__companionPrintTrans('general.online_payment')}}:</p>
+                                    <p>@companionPrintTrans('general.pin'):</p>
+                                    <p>@companionPrintTrans('general.online_payment'):</p>
                                 </div>
                                 <div style="display: inline-block;float: right;text-align: right">
                                     <p>€{{$data['total_pin_amount']}}</p>
@@ -142,8 +141,8 @@
                             <div style="border-bottom: 2px solid #000; width: 150px;margin-left: 255px;margin-top: 25px"></div>
                             <div style="padding-top: 3px">
                                 <div style="display: inline-block;float: left">
-                                    <p>{{__companionPrintTrans('general.digital_payment')}}:</p>
-                                    <p>{{__companionPrintTrans('general.total_registered')}}:</p>
+                                    <p>@companionPrintTrans('general.digital_payment'):</p>
+                                    <p>@companionPrintTrans('general.total_registered'):</p>
                                 </div>
                                 <div style="display: inline-block;float: right;text-align: right">
                                     <p>€{{ $data['total_pin_ideal_amount'] }}</p>
@@ -154,19 +153,19 @@
                             <div style="font-size: 11px;line-height: 12px;padding-top: 0px">
                                 <div style="padding-top: 5px">
                                     <div style="display: inline-block;float: left">
-                                        <p>{{__companionPrintTrans('general.number_receipt')}}:</p>
-                                        <p>{{__companionPrintTrans('general.number_of_cashdrawer_open')}}:</p>
-                                        <p>{{__companionPrintTrans('general.total_cash')}}:</p>
-                                        <p>{{__companionPrintTrans('general.total_pin')}}:</p>
-                                        <p>{{__companionPrintTrans('general.gift_card_count')}} ontvangen:</p>
-                                        <p>{{__companionPrintTrans('general.gift_card_count')}} used:</p>
-                                        <p>{{__companionPrintTrans('general.total_online')}}:</p>
+                                        <p>@companionPrintTrans('general.number_receipt'):</p>
+                                        <p>@companionPrintTrans('general.number_of_cashdrawer_open'):</p>
+                                        <p>@companionPrintTrans('general.total_cash'):</p>
+                                        <p>@companionPrintTrans('general.total_pin'):</p>
+                                        <p>@companionPrintTrans('general.gift_card_count') ontvangen:</p>
+                                        <p>@companionPrintTrans('general.gift_card_count') used:</p>
+                                        <p>@companionPrintTrans('general.total_online'):</p>
                                         @if(isset($data['third_party_print_status']) && $data['third_party_print_status'])
                                         <p>Thuisbezorgd:</p>
                                         <p>Ubereats:</p>
                                         @endif
-                                        <p>{{__companionPrintTrans('general.total_products')}}:</p>
-                                        <p>{{__companionPrintTrans('general.average_spending')}}:</p>
+                                        <p>@companionPrintTrans('general.total_products'):</p>
+                                        <p>@companionPrintTrans('general.average_spending'):</p>
                                         <p>Discount:</p>
                                         <p>Plastic Bag Fee:</p>
                                         <p>Additional Fee:</p>
@@ -176,6 +175,7 @@
                                         @endif
                                         <p>Deposit:</p>
                                         <p>Reservation Deposit Deducted :</p>
+                                        <p>Reservation Refund :</p>
                                         <p>Tip :</p>
                                     </div>
                                     <div style="display: inline-block;float: right;text-align: right">
@@ -201,33 +201,31 @@
                                         @endif
                                         <p>€{{$data['deposit_total']}}</p>
                                         <p>€{{$data['reservation_deducted_total']}}</p>
+                                        <p>€{{$data['reservation_refund_total']}}</p>
                                         <p>€{{$data['tip_amount']}}</p>
                                     </div>
                                 </div>
 {{--                                <div style="border-bottom: 1px dashed #000; margin-top: 150px"></div>--}}
                                 @if(isset($data['third_party_print_status']) && $data['third_party_print_status'] && $data['on_the_house_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 230px"></div>
-                                    <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 240px"></div>
                                 @elseif(isset($data['third_party_print_status']) && $data['third_party_print_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 220px"></div>
-                                    <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 230px"></div>
                                 @elseif(isset($data['on_the_house_status']))
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 193px"></div>
-                                    <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 220px"></div>
                                 @else
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 183px"></div>
-                                    <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 205px"></div>
                                 @endif
-                                    <h3>{{__companionPrintTrans('general.day_wise_data')}}</h3>
+                                <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
+                                    <h3>@companionPrintTrans('general.day_wise_data')</h3>
                                     <table style="padding-top: 5px;">
                                         <tr>
-                                            <td style="text-align: left;font-size: 10px">{{__companionPrintTrans('general.date')}}</td>
-                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">{{__companionPrintTrans('general.revenue_with_tax')}}</td>
+                                            <td style="text-align: left;font-size: 10px">@companionPrintTrans('general.date')</td>
+                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">@companionPrintTrans('general.revenue_with_tax')</td>
                                             <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">Tax (21%)</td>
                                             <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">Tax (9%)</td>
-                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">{{__companionPrintTrans('general.tax_amount')}}</td>
-                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">{{__companionPrintTrans('general.revenue_ex_tax')}}</td>
-                                            <td style="text-align: right;padding: 0 0px 0 0;font-size: 10px">{{__companionPrintTrans('general.discount_price')}}</td>
+                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">@companionPrintTrans('general.tax_amount')</td>
+                                            <td style="text-align: right;padding: 0 7px 0 0;font-size: 10px">@companionPrintTrans('general.revenue_ex_tax')</td>
+                                            <td style="text-align: right;padding: 0 0px 0 0;font-size: 10px">@companionPrintTrans('general.discount_price')</td>
                                             <td style="text-align: right;padding: 0 0px 0 0;font-size: 10px">Gift cards</td>
                                         </tr>
                                         @foreach($order_detail as $key => $order_data)
@@ -246,11 +244,11 @@
                                     </table>
                                     <div style="border-bottom: 1px dashed #000; margin-top: 7px"></div>
                                     <div style="font-size: 11px;line-height: 12px;margin-top: 5px">
-                                        <h3>{{__companionPrintTrans('general.total_sales_per_channel')}}</h3>
+                                        <h3>@companionPrintTrans('general.total_sales_per_channel')</h3>
                                         <div style="padding-top: 5px">
                                             <div style="">
                                                 <div>
-                                                    <span style="float: left;float:left;"><p>{{__companionPrintTrans('general.takeaway')}}:</p></span>
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.takeaway'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{($data['total_takeaway'])}}</p></span>
                                                 </div>
                                                 @foreach($store->kioskDevices as $device)
@@ -260,17 +258,21 @@
                                                     </div>
                                                 @endforeach
                                                 <div style="padding-top: 13px">
-                                                    <span style="float: left;float:left;"><p>{{__companionPrintTrans('general.dine_in_revenue')}}:</p></span>
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.dine_in_revenue'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{($data['total_dine_in'])}}</p></span>
                                                 </div>
                                                 <div style="padding-top: 13px">
-                                                    <span style="float: left;float:left;"><p>{{__companionPrintTrans('general.gift_card_revenue')}}:</p></span>
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.gift_card_revenue'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{$data['total_gift_card_amount']}}</p></span>
                                                 </div>
                                                 <div style="padding-top: 13px">
                                                     <span style="float: left;float:left;"><p>Reservation Deposited:</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{$data['reservation_received_total']}}</p></span>
                                                 </div>
+{{--                                                <div style="padding-top: 13px">--}}
+{{--                                                    <span style="float: left;float:left;"><p>Reservation Refunded:</p></span>--}}
+{{--                                                    <span style="text-align: right;float: right;"><p>€{{$data['reservation_refund_total']}}</p></span>--}}
+{{--                                                </div>--}}
                                                 @if(isset($data['third_party_print_status']) && $data['third_party_print_status'])
                                                     <div style="padding-top: 13px">
                                                     <span style="float: left;float:left;"><p>Thuisbezorgd:</p></span>
@@ -282,7 +284,7 @@
                                                 </div>
                                                 @endif
                                                 <div style="padding-top: 13px">
-                                                    <span style="float: left;float:left;"><p>{{__companionPrintTrans('general.counter')}}:</p></span>
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.counter'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€0,00</p></span>
                                                 </div>
                                                 <div style="border-bottom: 2px solid #000; margin-left: 250px;width: 157px;margin-top: 13px;margin-bottom: 3px"></div>
@@ -295,12 +297,13 @@
                                                     <span style="text-align: right;float: right;"><p>€{{ $data['total_21_tax'] }}</p></span>
                                                 </div>
                                                 <div style="padding-top: 13px">
-                                                    <span style="float: left;float:left;"><p>{{__companionPrintTrans('general.total_sumup_from')}}:</p></span>
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.total_sumup_from'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{$data['final_total']}}</p></span>
                                                 </div>
                                                 <div style="border-bottom: 2px solid #000; margin-left: 0px;margin-top: 15px;"></div>
                                             </div>
-                                            <div style="font-size:16px; font-weight: bold; text-align: center; line-height: 24px;margin-top: 20px">{{__companionPrintTrans('general.end_report')}}</div>
+                                            <div style="font-size:16px; font-weight: bold; text-align: center;
+                                            line-height: 24px;margin-top: 20px">@companionPrintTrans('general.end_report')</div>
                                         </div>
                                     </div>
                                 </div>

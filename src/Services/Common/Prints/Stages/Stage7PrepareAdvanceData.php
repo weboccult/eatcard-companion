@@ -10,6 +10,7 @@ use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
@@ -570,6 +571,12 @@ trait Stage7PrepareAdvanceData
                 $newItem['itemname'] .= set_discount_with_prifix($is_euro_discount, $item_discount);
             }
 
+            //set not discount product for created from takeaway orders
+            if ($this->order['created_from'] == 'takeaway' && $order_discount > 0 && $item_discount == 0) {
+                $newItem['itemname'] .= ' *';
+                $this->advanceData['show_discount_note'] = 'Note :- * This product(s) will be excluded from discount.';
+            }
+
             //prepare product categories setting array
             if (isset($item['product']['category']['id'])) {
                 if (! in_array($item['product']['category']['id'], $categories)) {
@@ -658,6 +665,20 @@ trait Stage7PrepareAdvanceData
                 if ((isset($item['on_the_house']) && $item['on_the_house'] == 1) || (isset($item['void_id']) && $item['void_id'] > 0)) {
                     $newItem['price'] = '0';
                     $newItem['original_price'] = 0;
+                }
+            }
+
+            //calculate 21% tax amount for print in tax summary
+            if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
+                $this->total_21_tax_amount += (float) $item['total_price'] - (float) $item['statiege_deposite_total'];
+            }
+
+            //need to store both for item wise split
+            if ($isSubOrderItems) {
+                if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
+                    $this->total_21_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'];
+                } elseif ($item['tax_percentage'] == 9 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
+                    $this->total_9_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'];
                 }
             }
 
@@ -924,7 +945,7 @@ trait Stage7PrepareAdvanceData
      * @return void
      * Prepare summary based or related order data
      */
-    protected function prepareSummary()
+    protected function preparePreSummary()
     {
         if ($this->skipMainPrint) {
             return;
@@ -932,108 +953,41 @@ trait Stage7PrepareAdvanceData
 
         $summary = [];
 
-        $sub_total = 0;
         $statiege_deposite_total = 0;
-        $order_discount = 0;
-        $discount_amount = 0;
-        $is_euro_discount_order = 0;
-        $discount_type_sign_with_amount = '';
-        $total_tax = 0;
-        $total_alcohol_tax = 0;
         $delivery_fee = 0;
         $additional_fee = 0;
         $plastic_bag_fee = 0;
-        $coupon_price = 0;
-        $cash_paid = 0;
-        $method = '';
-        $total_price = 0;
-        $cash_changes = 0;
-        $reservation_paid = 0;
+        $tip_amount = 0;
 
         if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
-            $sub_total = $this->order['sub_total'] ?? 0;
             $statiege_deposite_total = $this->order['statiege_deposite_total'] ?? 0;
-
-            $order_discount = $this->order['discount'] ?? 0;
-            $is_euro_discount_order = $this->order['discount_type'] == 'EURO' ? 1 : 0;
-            $discount_amount = $this->order['discount_amount'] ?? 0;
-            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
-
-            $total_tax = $this->order['total_tax'] ?? 0;
-            $total_alcohol_tax = $this->order['total_alcohol_tax'] ?? 0;
             $delivery_fee = $this->order['delivery_fee'] ?? 0;
             $additional_fee = $this->order['additional_fee'] ?? 0;
             $plastic_bag_fee = $this->order['plastic_bag_fee'] ?? 0;
-            $coupon_price = $this->order['coupon_price'] ?? 0;
-            $cash_paid = $this->order['cash_paid'] ?? 0;
-            $method = $this->order['method'] ?? '';
-            $total_price = $this->order['total_price'] ?? 0;
-            $reservation_paid = $this->order['reservation_paid'] ?? 0;
+            $tip_amount = $this->order['tip_amount'] ?? 0;
         } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
-            $sub_total = $this->subOrder['sub_total'] ?? 0;
+//            $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
             $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
-
-            $order_discount = $this->subOrder['discount'] ?? 0;
-            $is_euro_discount_order = $this->subOrder['discount_type'] == 'EURO' ? 1 : 0;
-            $discount_amount = $this->subOrder['discount_amount'] ?? 0;
-            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
-
-            $total_tax = $this->subOrder['total_tax'] ?? 0;
-            $total_alcohol_tax = $this->subOrder['total_alcohol_tax'] ?? 0;
-            $coupon_price = $this->subOrder['coupon_price'] ?? 0;
-            $cash_paid = $this->subOrder['cash_paid'] ?? 0;
-            $method = $this->subOrder['method'] ?? '';
-            $total_price = $this->subOrder['total_price'] ?? 0;
-            $reservation_paid = $this->subOrder['reservation_paid'] ?? 0;
-
-            if ($this->order['payment_split_type'] == PaymentSplitTypes::EQUAL_SPLIT && $this->order['payment_split_persons']) {
-                $split_no = ($this->subOrder['split_no']) ? ''.$this->subOrder['split_no'] : '';
-                $summary[] = [
-                    'key'   => 'spliting',
-                    'value' => $split_no.'/'.$this->order['payment_split_persons'],
-                ];
-            }
+            $delivery_fee = $this->subOrder['delivery_fee'] ?? 0;
+            $additional_fee = $this->subOrder['additional_fee'] ?? 0;
+            $tip_amount = $this->subOrder['tip_amount'] ?? 0;
         }
 
-        if ($sub_total > 0) {
-            $summary[] = [
-                'key'   => __companionPrintTrans('general.sub_total'),
-                'value' => ''.changePriceFormat($sub_total),
-            ];
-        }
         if ($statiege_deposite_total > 0) {
             $summary[] = [
-                'key'   => 'Deposit',
+                'key'   => __companionPrintTrans('general.deposit'),
                 'value' => ''.changePriceFormat($statiege_deposite_total),
-            ];
-        }
-        if ($discount_amount > 0) {
-            $summary[] = [
-                'key'   => __companionPrintTrans('general.discount_amount').$discount_type_sign_with_amount,
-                'value' => ''.changePriceFormat($discount_amount),
-            ];
-        }
-        if ($total_tax > 0) {
-            $summary[] = [
-                'key'   => 'BTW laag',
-                'value' => ''.changePriceFormat($total_tax),
-            ];
-        }
-        if ($total_alcohol_tax > 0) {
-            $summary[] = [
-                'key'   => 'BTW hoog',
-                'value' => ''.changePriceFormat($total_alcohol_tax),
             ];
         }
         if ($delivery_fee > 0) {
             $summary[] = [
-                'key'   => 'Bezorgkosten',
+                'key'   => __companionPrintTrans('general.delivery_fee'),
                 'value' => ''.changePriceFormat($delivery_fee),
             ];
         }
         if ($additional_fee > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.additional_fees'),
+                'key'   => __companionPrintTrans('general.additional_fees_title'),
                 'value' => ''.changePriceFormat($additional_fee),
             ];
         }
@@ -1043,19 +997,278 @@ trait Stage7PrepareAdvanceData
                 'value' => ''.changePriceFormat($plastic_bag_fee),
             ];
         }
-        if ($coupon_price > 0) {
+        if ($tip_amount > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.gift_voucher_cost'),
-                'value' => ''.changePriceFormat($coupon_price),
+                'key'   => __companionPrintTrans('general.tip'),
+                'value' => ''.changePriceFormat($tip_amount),
             ];
         }
+
+        $this->jsonPreSummary = $summary;
+    }
+
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
+    protected function prepareSubTotal()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+        $subTotal = [];
+        $sub_total = 0;
+
+        if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
+            $sub_total = $this->order['original_order_total'] ?? 0;
+//            $sub_total = ($this->order['total_price'] ?? 0) + ($this->order['discount_inc_tax'] ?? 0);
+        } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
+            $sub_total = ($this->subOrder['total_price'] ?? 0) + ($this->subOrder['discount_inc_tax'] ?? 0);
+        }
+
+        if ($sub_total > 0) {
+            $subTotal[] = [
+                'key'   => __companionPrintTrans('general.sub_total'),
+                'value' => ''.changePriceFormat($sub_total),
+            ];
+        }
+        $this->jsonSubTotal = $subTotal;
+    }
+
+    /**
+     * @return void
+     * Prepare tax summary based or related order data
+     */
+    protected function prepareTaxDetail()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+
+        //for third party order we are not showing tax details
+        if (! empty($this->additionalSettings['thirdPartyName'])) {
+            return;
+        }
+
+        $total_0_tax = 0;
+        $total_9_tax = 0;
+        $total_21_tax = 0;
+
+        $total_0_tax_amount = 0;
+        $total_9_tax_amount = 0;
+        $total_21_tax_amount = 0;
+
+        $total_price = 0;
+        $reservation_paid = 0;
+        $coupon_price = 0;
+        $statiege_deposite_total = 0;
+        $additional_fee = 0;
+        $delivery_fee = 0;
+        $plastic_bag_fee = 0;
+        $tip_amount = 0;
+
+        if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
+            $total_price = $this->order['total_price'] ?? 0;
+            $statiege_deposite_total = $this->order['statiege_deposite_total'] ?? 0;
+            $delivery_fee = $this->order['delivery_fee'] ?? 0;
+            $additional_fee = $this->order['additional_fee'] ?? 0;
+            $plastic_bag_fee = $this->order['plastic_bag_fee'] ?? 0;
+            $tip_amount = $this->order['tip_amount'] ?? 0;
+            $coupon_price = $this->order['coupon_price'] ?? 0;
+            $reservation_paid = $this->order['reservation_paid'] ?? 0;
+
+            $total_0_tax_amount = $statiege_deposite_total;
+            $total_21_tax_amount = $this->total_21_tax_amount + $delivery_fee + $plastic_bag_fee;
+            $total_9_tax_amount = ($total_price + $reservation_paid + $coupon_price)
+                                - ($total_21_tax_amount + $additional_fee + $tip_amount);
+        } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
+            $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
+            //                $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
+            $total_0_tax_amount = $statiege_deposite_total;
+            if ($this->order['payment_split_type'] == PaymentSplitTypes::PRODUCT_SPLIT) {
+                $total_21_tax_amount = $this->total_21_tax_amount ?? 0;
+                $total_9_tax_amount = $this->total_9_tax_amount ?? 0;
+            } else {
+                $total_21_tax_amount = $this->subOrder['alcohol_product_total'] ?? 0;
+                $total_9_tax_amount = $this->subOrder['normal_product_total'] ?? 0;
+            }
+        } elseif ($this->orderType == OrderTypes::SAVE) {
+            //note : here all variable are declared in individual generator class file
+            $total_0_tax_amount = $this->total_deposit ?? 0;
+            $total_9_tax_amount = ($this->normal_sub_total ?? 0) + ($this->total_tax ?? 0);
+            $total_21_tax_amount = ($this->alcohol_sub_total ?? 0) + ($this->total_alcohol_tax ?? 0);
+        } elseif ($this->orderType == OrderTypes::RUNNING) {
+            $total_0_tax_amount = $this->total_deposit ?? 0;
+            $total_9_tax_amount = ($this->normal_sub_total ?? 0) + ($this->total_tax ?? 0);
+            $total_21_tax_amount = ($this->alcohol_sub_total ?? 0) + ($this->total_alcohol_tax ?? 0);
+        }
+
+        $total_9_tax = ($total_9_tax_amount * 9) / 109;
+        $total_21_tax = ($total_21_tax_amount * 21) / 121;
+
+        $this->jsonTaxDetail = [
+            [
+                'column1' => 'Tax',
+                'column2' => 'Over',
+                'column3' => '',
+                'column4' => 'tax',
+            ],
+            [
+                'column1' => '0%',
+                'column2' => ''.changePriceFormat($total_0_tax_amount),
+                'column3' => '',
+                'column4' => '0,00',
+            ],
+            [
+                'column1' => '9%',
+                'column2' => ''.changePriceFormat($total_9_tax_amount),
+                'column3' => '',
+                'column4' => ''.changePriceFormat($total_9_tax),
+            ],
+            [
+                'column1' => '21%',
+                'column2' => ''.changePriceFormat($total_21_tax_amount),
+                'column3' => '',
+                'column4' => ''.changePriceFormat($total_21_tax),
+            ],
+            [
+                'column1' => 'Total',
+                'column2' => ''.changePriceFormat($total_0_tax_amount + $total_9_tax_amount + $total_21_tax_amount),
+                'column3' => '',
+                'column4' => ''.changePriceFormat($total_9_tax + $total_21_tax),
+            ],
+        ];
+    }
+
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
+    protected function prepareGeneralComments()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+
+        if (! empty($this->advanceData['show_discount_note'])) {
+            $this->jsonGeneralComments[] = [
+                'column1' => $this->advanceData['show_discount_note'],
+                'column2' => '',
+                'column3' => '',
+                'column4' => '',
+            ];
+        }
+    }
+
+    /**
+     * @return void
+     * Prepare summary based or related order data
+     */
+    protected function prepareSummary()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+
+        $summary = [];
+
+        $order_discount = 0;
+        $discount_amount = 0;
+        $is_euro_discount_order = 0;
+        $discount_type_sign_with_amount = '';
+        $coupon_price = 0;
+        $reservation_paid = 0;
+
+        if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
+            $order_discount = $this->order['discount'] ?? 0;
+            $is_euro_discount_order = $this->order['discount_type'] == 'EURO' ? 1 : 0;
+            $discount_amount = $this->order['discount_inc_tax'] ?? 0;
+            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
+            $coupon_price = $this->order['coupon_price'] ?? 0;
+            $reservation_paid = $this->order['reservation_paid'] ?? 0;
+            $remaining_Coupon_price = GiftPurchaseOrder::where('id', $this->order['gift_purchase_id'])->first();
+        } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
+            $order_discount = $this->subOrder['discount'] ?? 0;
+            $is_euro_discount_order = $this->subOrder['discount_type'] == 'EURO' ? 1 : 0;
+            $discount_amount = $this->subOrder['discount_inc_tax'] ?? 0;
+            $discount_type_sign_with_amount = $order_discount > 0 ? ' '.set_discount_with_prifix($is_euro_discount_order, $order_discount) : '';
+            $coupon_price = $this->subOrder['coupon_price'] ?? 0;
+            $reservation_paid = $this->subOrder['reservation_paid'] ?? 0;
+            $remaining_Coupon_price = GiftPurchaseOrder::where('id', $this->subOrder['gift_purchase_id'])->first();
+        }
+
+        if ($discount_amount > 0) {
+            $summary[] = [
+                'key'   => __companionPrintTrans('general.discount_amount').$discount_type_sign_with_amount,
+                'value' => '-'.changePriceFormat($discount_amount),
+            ];
+        }
+
+        if ($reservation_paid > 0) {
+            $summary[] = [
+                'key'   => 'Booking deposit',
+                'value' => '-'.changePriceFormat($reservation_paid),
+            ];
+        }
+
+        if ($coupon_price > 0) {
+            $summary[] = [
+                'key'   => __companionPrintTrans('general.gift_voucher_cost').'('.changePriceFormat($remaining_Coupon_price->remaining_price ?? 0).')',
+                'value' => '-'.changePriceFormat($coupon_price),
+            ];
+        }
+
+        $this->jsonSummary = $summary;
+    }
+
+    /**
+     * @return void
+     * Prepare payment summary based or related order data
+     */
+    protected function preparePaymentSummary()
+    {
+        if ($this->skipMainPrint) {
+            return;
+        }
+
+        $summary = [];
+
+        $cash_paid = 0;
+        $method = '';
+        $total_price = 0;
+        $cash_changes = 0;
+        $cash_received = 0;
+
+        if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
+            $cash_paid = $this->order['cash_paid'] ?? 0;
+            $method = $this->order['method'] ?? '';
+            $total_price = $this->order['total_price'] ?? 0;
+        } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
+            $cash_paid = $this->subOrder['cash_paid'] ?? 0;
+            $method = $this->subOrder['method'] ?? '';
+            $total_price = $this->subOrder['total_price'] ?? 0;
+
+            if ($this->order['payment_split_type'] == PaymentSplitTypes::EQUAL_SPLIT && $this->order['payment_split_persons']) {
+                $split_no = ($this->subOrder['split_no']) ? ''.$this->subOrder['split_no'] : '';
+                $summary[] = [
+                    'key'   => 'Split',
+                    'value' => $split_no.'/'.$this->order['payment_split_persons'],
+                ];
+            }
+        }
+
         if ($method == 'cash') {
+            $cash_changes = $cash_paid > 0 ? ($cash_paid - $total_price) : 0;
+            $cash_received = $total_price + $cash_changes;
+            $summary[] = [
+               'key'   => 'Payment by',
+               'value' => 'Cash',
+           ];
+
             $summary[] = [
                 'key'   => __companionPrintTrans('general.cash_paid_cost'),
-                'value' => ''.changePriceFormat($cash_paid),
+                'value' => ''.changePriceFormat($cash_received),
             ];
-
-            $cash_changes = $cash_paid - $total_price;
 
             if ($cash_paid > 0 && $cash_changes > 0) {
                 $summary[] = [
@@ -1065,13 +1278,6 @@ trait Stage7PrepareAdvanceData
             }
         }
 
-        if ($reservation_paid > 0) {
-            $summary[] = [
-                'key'   => 'Booking deposit',
-                'value' => ''.changePriceFormat($reservation_paid),
-            ];
-        }
-
-        $this->jsonSummary = $summary;
+        $this->jsonPaymentSummary = $summary;
     }
 }

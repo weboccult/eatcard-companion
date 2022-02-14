@@ -119,10 +119,12 @@ trait Stage8PrepareFinalJson
         $title3 = '';
         $title4 = '';
         $title5 = '';
+        $mainreceiptordernumber = '';
         $orderNo = '';
         $title6 = '';
         $titleTime = '';
         $pickupTime = '';
+        $dynamicOrderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
 
         if ($this->orderType == OrderTypes::PAID) {
             if ($this->systemType == SystemTypes::KDS) {
@@ -130,7 +132,7 @@ trait Stage8PrepareFinalJson
                 $title2 = '';
                 $title3 = '';
                 $title4 = '';
-                $title5 = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+                $title5 = $dynamicOrderNo;
                 $title6 = date('Y-m-d').' om '.date('H:i');
                 $titleTime = '';
                 $pickupTime = '';
@@ -152,8 +154,9 @@ trait Stage8PrepareFinalJson
             // for reservation order need to add table name prefix before name
             if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
                 $orderNo = 'Table '.$this->advanceData['tableName'];
+                $orderNo .= $this->additionalSettings['show_main_order_number_in_print'] == 0 ? ' '.$dynamicOrderNo : '';
             } else {
-                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+                $orderNo = $dynamicOrderNo;
             }
         }
 
@@ -204,14 +207,20 @@ trait Stage8PrepareFinalJson
             // for reservation order need to add table name prefix before name
             if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
                 $orderNo = 'Table '.$this->advanceData['tableName'];
+                $orderNo .= $this->additionalSettings['show_main_order_number_in_print'] == 0 ? ' '.$dynamicOrderNo : '';
             } else {
-                $orderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+                $orderNo = $dynamicOrderNo;
             }
         }
+
         if (! empty($titleTime)) {
             $this->jsonFormatFullReceipt['titteTime'][0]['value2'] = $titleTime;
         } else {
             unset($this->jsonFormatFullReceipt['titteTime']);
+        }
+
+        if ($this->additionalSettings['show_main_order_number_in_print'] == 1) {
+            $mainreceiptordernumber = $title5;
         }
 
         $this->jsonFormatFullReceipt['title1'] = $title1;
@@ -219,6 +228,7 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['title3'] = $title3;
         $this->jsonFormatFullReceipt['title4'] = $title4;
         $this->jsonFormatFullReceipt['title5'] = $title5;
+        $this->jsonFormatFullReceipt['mainreceiptordernumber'] = $mainreceiptordernumber;
         $this->jsonFormatFullReceipt['ordernumber'] = $orderNo;
         $this->jsonFormatFullReceipt['title6'] = $title6;
         $this->jsonFormatFullReceipt['pickuptime'] = $pickupTime;
@@ -368,6 +378,10 @@ trait Stage8PrepareFinalJson
                 $dateTime = date('Y-m-d').' om '.date('H:i');
                 $orderType = '';
             }
+
+            if ($tableName != '' && $this->additionalSettings['show_main_order_number_in_print'] == 0) {
+                $tableName .= ! empty($this->advanceData['dynamicOrderNo']) ? (' #'.$this->advanceData['dynamicOrderNo']) : '';
+            }
         }
 
         if ($this->orderType == OrderTypes::RUNNING) {
@@ -375,8 +389,8 @@ trait Stage8PrepareFinalJson
                 $itemTitle = 'Table #'.($this->reservationOrderItems->table->name ?? '');
             }
 
+            $dateTime = date('Y-m-d').' om '.date('H:i');
             if ($this->systemType == SystemTypes::KDS) {
-                $dateTime = date('Y-m-d').' om '.date('H:i');
                 $typeOrder = 'Dine-in';
             }
 
@@ -403,6 +417,7 @@ trait Stage8PrepareFinalJson
 
         if ($this->orderType == OrderTypes::SUB) {
             $customerComments = $this->order['comment'] ?? '';
+            $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
             $total = $this->subOrder['total_price'] ?? '0';
             $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
             $tableName = '';
@@ -431,6 +446,7 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['thankyounote'][] = __companionPrintTrans('general.thank_you_line_2');
         $this->jsonFormatFullReceipt['categories_settings'] = $this->additionalSettings['categories_settings'];
         $this->jsonFormatFullReceipt['noofprints'] = $this->additionalSettings['no_of_prints'];
+        $this->jsonFormatFullReceipt['totalfontsize'] = $this->additionalSettings['print_total_font_size'];
     }
 
     /**
@@ -455,8 +471,53 @@ trait Stage8PrepareFinalJson
      * @return void
      * set bill summary in final json
      */
+    protected function setPreSummary()
+    {
+        $this->jsonFormatFullReceipt['preSubtotalSummary'] = $this->jsonPreSummary;
+    }
+
+    /**
+     * @return void
+     * set bill summary in final json
+     */
+    protected function setSubTotal()
+    {
+        $this->jsonFormatFullReceipt['subtotal'] = $this->jsonSubTotal;
+    }
+
+    /**
+     * @return void
+     * set bill summary in final json
+     */
+    protected function setTaxDetail()
+    {
+        $this->jsonFormatFullReceipt['MiscellaneousSummary1'] = $this->jsonTaxDetail;
+    }
+
+    /**
+     * @return void
+     * set bill summary in final json
+     */
+    protected function setGeneralComments()
+    {
+        $this->jsonFormatFullReceipt['miscellaneous'] = $this->jsonGeneralComments;
+    }
+
+    /**
+     * @return void
+     * set bill summary in final json
+     */
     protected function setSummary()
     {
         $this->jsonFormatFullReceipt['summary'] = $this->jsonSummary;
+    }
+
+    /**
+     * @return void
+     * set bill summary in final json
+     */
+    protected function setPaymentSummary()
+    {
+        $this->jsonFormatFullReceipt['summary4'] = $this->jsonPaymentSummary;
     }
 }

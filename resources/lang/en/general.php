@@ -35,9 +35,10 @@ return [
     'kiosk' => 'Kiosk',
     'all_you_eat' => 'all you eat',
     'pos' => 'POS',
+    'qr_code_type' => 'QR Order',
 
     /*dine_in_type type */
-    'dine_in' => 'Bezorgen',
+//    'dine_in' => 'Bezorgen',
     'take_out' => 'Meenemen',
 
     /* Order label*/
@@ -51,11 +52,12 @@ return [
     'delivery_cost' => 'Bezorgen',
     'additional_fees_title' => 'Additional fees',
     'bag' => 'Bag',
-    'gift_voucher_cost' => 'Gift voucher',
-    'cash_paid_cost' => 'Cash paid',
+    'gift_voucher_cost' => 'Gift card',
+    'cash_paid_cost' => 'Cash received',
     'cash_changes' => 'Cash changes',
     'deposit' => 'Deposit',
     'summary' => 'Kaarten',
+    'tip' => 'Tip',
 
     /*auto print*/
     'thank_you_line_1' => 'Eatcard',

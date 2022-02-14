@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
@@ -18,7 +19,10 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage7PrepareAdvanc
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage8PrepareFinalJson;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\MagicAccessors;
+use function Weboccult\EatcardCompanion\Helpers\__companionPDF;
+use function Weboccult\EatcardCompanion\Helpers\__companionViews;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 
 /**
  * @mixin MagicAccessors
@@ -87,10 +91,19 @@ abstract class BaseGenerator implements BaseGeneratorContract
 
     protected $categories = null;
 
+    protected float $total_0_tax_amount = 0;
+    protected float $total_9_tax_amount = 0;
+    protected float $total_21_tax_amount = 0;
+
     protected int $jsonItemsIndex = 0;
     protected array $jsonItems = [];
     protected array $jsonReceipt = [];
+    protected array $jsonPreSummary = [];
+    protected array $jsonSubTotal = [];
+    protected array $jsonTaxDetail = [];
     protected array $jsonSummary = [];
+    protected array $jsonPaymentSummary = [];
+    protected array $jsonGeneralComments = [];
 
     protected bool $skipMainPrint = false;
     protected bool $skipKitchenLabelPrint = false;
@@ -116,7 +129,21 @@ abstract class BaseGenerator implements BaseGeneratorContract
             $this->stage7_PrepareAdvanceData();
             $this->stage8_PrepareFinalJson();
 
-            return $this->jsonFormatFullReceipt;
+            $data = $this->jsonFormatFullReceipt;
+            $store = $this->store;
+            $kiosk = $this->kiosk;
+            $order = $this->order;
+            $test = __companionPrintTrans('general.online_payment');
+
+            if ($this->printMethod == PrintMethod::PROTOCOL || $this->printType == PrintMethod::SQS) {
+                return $this->jsonFormatFullReceipt;
+            } elseif ($this->printMethod == PrintMethod::HTML && ! empty($data)) {
+                return __companionViews('order.order-details', ['data'=>$data, 'order' => $order, 'store'=> $store, 'kiosk'=>$kiosk, 'test' => $test])
+                                       ->render();
+            } elseif ($this->printMethod == PrintMethod::PDF && ! empty($data)) {
+                return __companionPDF('order.order-details', ['data'=>$data, 'order' => $order, 'store'=> $store, 'kiosk'=>$kiosk, 'test' => $test])
+                       ->download('orderno-'.$this->globalOrderId.'.pdf');
+            }
         } catch (\Exception $e) {
             companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());
 
@@ -205,7 +232,12 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->prepareSaveOrderItems();
         $this->sortItems();
         $this->preparePaymentReceipt();
+        $this->preparePreSummary();
+        $this->prepareSubTotal();
+        $this->prepareTaxDetail();
+        $this->prepareGeneralComments();
         $this->prepareSummary();
+        $this->preparePaymentSummary();
     }
 
     /**
@@ -223,7 +255,12 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setOtherDetails();
         $this->setItems();
         $this->setReceipt();
+        $this->setPreSummary();
+        $this->setSubTotal();
+        $this->setTaxDetail();
+        $this->setGeneralComments();
         $this->setSummary();
+        $this->setPaymentSummary();
     }
 
     //global functions

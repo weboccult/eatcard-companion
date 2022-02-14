@@ -3,10 +3,12 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\OrderTypeEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\PrintMethodEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\PrintMethodNotSupportedException;
 use Weboccult\EatcardCompanion\Exceptions\PrintPayloadEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\PrintTypeEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\PrintTypeNotSupportedException;
@@ -37,6 +39,11 @@ trait Stage1PrepareValidationRules
         if ($this->orderType == OrderTypes::SAVE) {
             //proforma print not supported for save orders
             $this->addRuleToGeneratorSpecificRules(PrintTypeNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
+        }
+
+        if ($this->orderType != OrderTypes::PAID && in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
+            //PDF and HTML only supported for paid orders
+            $this->addRuleToGeneratorSpecificRules(PrintMethodNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
         }
     }
 }

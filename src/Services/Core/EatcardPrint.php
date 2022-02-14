@@ -99,7 +99,7 @@ class EatcardPrint
     /**
      * @return array
      */
-    public function toJson()
+    public function generate()
     {
         return $this->generator->dispatch();
     }

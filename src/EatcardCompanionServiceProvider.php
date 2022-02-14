@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion;
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Weboccult\EatcardCompanion\Commands\EatcardCompanionPublishCommand;
 use Weboccult\EatcardCompanion\Commands\EatcardSmsPublishCommand;
@@ -42,6 +43,14 @@ class EatcardCompanionServiceProvider extends ServiceProvider
                 __DIR__.'/../migrations/create_sms_histories_table.php.stub' => $this->getMigrationFileName($filesystem),
             ], 'eatcardsms-migration');
         }
+
+        Blade::directive('companionPrintTrans', function ($value) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\__companionPrintTrans($value); ?>";
+        });
+
+        Blade::directive('companionTrans', function ($value) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\__companionTrans($value); ?>";
+        });
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
