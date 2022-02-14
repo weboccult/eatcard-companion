@@ -56,6 +56,8 @@ return [
     'enable_translation'       => env('COMPANION_TRANSLATION_STATUS', true),
     'enable_print_translation' => env('COMPANION_PRINT_TRANSLATION_STATUS', false),
 
+    'enable_legacy_print' => env('COMPANION_LEGACY_PRINT', true),
+
     /*
     |--------------------------------------------------------------------------
     | System Endpoints
