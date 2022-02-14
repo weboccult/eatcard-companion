@@ -43,8 +43,7 @@ class SubOrder extends Model
      */
     public function parentOrder(): BelongsTo
     {
-//        return $this->belongsTo(Order::class, 'parent_order_id', 'id');
-        return $this->belongsTo(OrderHistory::class, 'parent_order_id', 'id');
+        return $this->belongsTo(Order::class, 'parent_order_id', 'id');
     }
 
     /**
