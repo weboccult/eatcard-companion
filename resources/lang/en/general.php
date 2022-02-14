@@ -58,6 +58,7 @@ return [
     'deposit' => 'Deposit',
     'summary' => 'Kaarten',
     'tip' => 'Tip',
+    'reservation_deposit' => 'Booking deposit',
 
     /*auto print*/
     'thank_you_line_1' => 'Eatcard',

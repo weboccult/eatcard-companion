@@ -1206,7 +1206,7 @@ trait Stage7PrepareAdvanceData
 
         if ($reservation_paid > 0) {
             $summary[] = [
-                'key'   => 'Booking deposit',
+                'key'   => __companionPrintTrans('general.reservation_deposit'),
                 'value' => '-'.changePriceFormat($reservation_paid),
             ];
         }
