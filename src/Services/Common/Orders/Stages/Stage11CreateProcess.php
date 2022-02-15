@@ -47,6 +47,7 @@ trait Stage11CreateProcess
     protected function createOrder()
     {
         $this->createdOrder = Order::query()->create($this->orderData);
+        $this->createdOrder->refresh();
     }
 
     protected function createOrderItems()

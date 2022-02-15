@@ -1173,7 +1173,7 @@ if (! function_exists('sendAppNotificationHelper')) {
             }
             $one_signal_user_devices_ods = [];
             if ($new_notification && $user_ids) {
-                $new_notification->users()->attach($user_ids);
+                $new_notification->generalNotificationUsers()->attach($user_ids);
                 $devices = Device::query()->whereIn('user_id', $user_ids)->get();
                 if (count($devices) > 0) {
                     $one_signal_user_devices_ods = $devices->pluck('onesignal_id')->toArray();
@@ -1190,7 +1190,7 @@ if (! function_exists('sendAppNotificationHelper')) {
                 try {
                     $is_send_push = OneSignal::sendPushNotification($push_notification_data);
                     if ($is_send_push) {
-                        $new_notification->users()->detach($user_ids);
+                        $new_notification->generalNotificationUsers()->detach($user_ids);
                         $new_notification->delete();
                     }
                 } catch (\Exception $exception) {
