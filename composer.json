@@ -1,21 +1,12 @@
 {
   "name": "weboccult/eatcard-companion",
   "description": "To handle all generic function and features.",
+  "license": "MIT",
+  "type": "library",
   "keywords": [
     "weboccult",
     "eatcard-companion"
   ],
-  "type": "library",
-  "require": {
-    "php": "^7.4|^8.0",
-    "illuminate/support": "^8.0",
-    "ext-bcmath": "*",
-    "nunomaduro/collision": "^5.10",
-    "pestphp/pest": "^1.21",
-    "phpunit/phpunit": "^9.5"
-  },
-  "homepage": "https://github.com/weboccult/eatcard-helpers",
-  "license": "MIT",
   "authors": [
     {
       "name": "Darshit Hedpara",
@@ -23,23 +14,72 @@
       "role": "Developer"
     }
   ],
+  "homepage": "https://github.com/weboccult/eatcard-helpers",
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "ext-bcmath": "*",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "ext-openssl": "*",
+    "barryvdh/laravel-dompdf": "^0.9.0",
+    "cmgmyr/messenger": "^2.22",
+    "guzzlehttp/guzzle": "^7.0.1",
+    "illuminate/collections": "^8.0",
+    "illuminate/console": "^8.0",
+    "illuminate/contracts": "^8.80",
+    "illuminate/database": "^8.0",
+    "illuminate/support": "^8.0",
+    "mollie/laravel-mollie": "^2.17",
+    "nunomaduro/collision": "^5.0",
+    "pestphp/pest": "^1.0",
+    "phpunit/phpunit": "^9.0",
+    "spatie/laravel-newsletter": "^4.11",
+    "twilio/sdk": "^6.33"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "autoload": {
     "psr-4": {
       "Weboccult\\EatcardCompanion\\": "src"
     },
-    "files":[
-        "src/Helpers/general.php"
+    "files": [
+      "src/Helpers/UriHelper.php",
+      "src/Helpers/pacakgeHelper.php",
+      "src/Helpers/general.php",
+      "src/Helpers/cacheTags.php"
     ]
   },
   "autoload-dev": {
-      "psr-4": {
-          "Weboccult\\EatcardCompanion\\Tests\\": "tests"
-      }
+    "psr-4": {
+      "Weboccult\\EatcardCompanion\\Tests\\": "tests"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "laravel": {
+      "aliases": {
+        "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
+        "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
+        "EatcardRevenue": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardRevenue",
+        "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
+        "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
+        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
+      },
+      "providers": [
+        "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardRevenueServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardSmsServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider"
+      ]
+    }
   },
   "scripts": {
-      "test": "vendor/bin/pest",
-      "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "test": "vendor/bin/pest",
+    "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  }
 }

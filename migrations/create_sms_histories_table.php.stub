@@ -1,0 +1,43 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ *
+ * @author Darshit Hedpara
+ */
+class CreateSmsHistoriesTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('sms_histories', function (Blueprint $table) {
+            $table->id();
+            $table->nullableMorphs('responsible');
+            $table->longtext("message");
+            $table->string("type");
+            $table->string("channel")->nullable();
+            $table->integer("store_id")->nullable();
+            $table->tinyInteger("is_sent")->default(0);
+            $table->tinyInteger("is_error")->default(0);
+            $table->string("recipient")->default(0);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('sms_histories');
+    }
+}
