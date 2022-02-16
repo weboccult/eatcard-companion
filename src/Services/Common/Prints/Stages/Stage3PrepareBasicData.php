@@ -183,6 +183,10 @@ trait Stage3PrepareBasicData
             'dynamicOrderNo' => '',
             'show_discount_note' => '',
 
+
+            //PDF, HTML ViewName
+            'viewPath' => '',
+
         ];
     }
 
@@ -217,6 +221,8 @@ trait Stage3PrepareBasicData
         if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
             $this->printType = PrintTypes::MAIN;
         }
+
+        $this->takeawayEmailType = $this->payload['takeawayEmailType'] ?? '';
     }
 
     /**

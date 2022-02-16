@@ -17,6 +17,7 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage5EnableSetting
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage6DatabaseInteraction;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage7PrepareAdvanceData;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage8PrepareFinalJson;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage9PrepareResponse;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\MagicAccessors;
 use function Weboccult\EatcardCompanion\Helpers\__companionPDF;
@@ -40,6 +41,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     use Stage6DatabaseInteraction;
     use Stage7PrepareAdvanceData;
     use Stage8PrepareFinalJson;
+    use Stage9PrepareResponse;
 
     protected array $itemFormat = [];
     protected array $jsonFormatFullReceipt = [];
@@ -49,6 +51,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected string $printType = '';
     protected string $printMethod = '';
     protected string $systemType = '';
+    protected string $takeawayEmailType = '';
 
     protected array $payload = [];
     protected int $globalOrderId = 0;
@@ -108,6 +111,8 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected bool $skipMainPrint = false;
     protected bool $skipKitchenLabelPrint = false;
 
+    protected $returnResponseData;
+
     public function __construct()
     {
     }
@@ -128,23 +133,12 @@ abstract class BaseGenerator implements BaseGeneratorContract
             $this->stage6_DatabaseInteraction();
             $this->stage7_PrepareAdvanceData();
             $this->stage8_PrepareFinalJson();
+            $this->stage9_PrepareResponse();
 
-            $data = $this->jsonFormatFullReceipt;
-            $store = $this->store;
-            $kiosk = $this->kiosk;
-            $order = $this->order;
-            $test = __companionPrintTrans('general.online_payment');
+            return $this->returnResponseData;
 
-            if ($this->printMethod == PrintMethod::PROTOCOL || $this->printType == PrintMethod::SQS) {
-                return $this->jsonFormatFullReceipt;
-            } elseif ($this->printMethod == PrintMethod::HTML && ! empty($data)) {
-                return __companionViews('order.order-details', ['data'=>$data, 'order' => $order, 'store'=> $store, 'kiosk'=>$kiosk, 'test' => $test])
-                                       ->render();
-            } elseif ($this->printMethod == PrintMethod::PDF && ! empty($data)) {
-                return __companionPDF('order.order-details', ['data'=>$data, 'order' => $order, 'store'=> $store, 'kiosk'=>$kiosk, 'test' => $test])
-                       ->download('orderno-'.$this->globalOrderId.'.pdf');
-            }
         } catch (\Exception $e) {
+//            dd($e->getMessage(), $e->getFile(), $e->getLine());
             companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());
 
             return [];
@@ -238,6 +232,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->prepareGeneralComments();
         $this->prepareSummary();
         $this->preparePaymentSummary();
+        $this->prepareViewName();
     }
 
     /**
@@ -261,6 +256,16 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setGeneralComments();
         $this->setSummary();
         $this->setPaymentSummary();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function stage9_PrepareResponse()
+    {
+        $this->jsonResponce();
+        $this->htmlResponse();
+        $this->pdfResponse();
     }
 
     //global functions

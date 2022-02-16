@@ -668,18 +668,19 @@ trait Stage7PrepareAdvanceData
                 }
             }
 
-            //calculate 21% tax amount for print in tax summary
-            if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
-                $this->total_21_tax_amount += (float) $item['total_price'] - (float) $item['statiege_deposite_total'];
-            }
 
             //need to store both for item wise split
             if ($isSubOrderItems) {
                 if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
-                    $this->total_21_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'];
+                    $this->total_21_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'] - (float) $item['statiege_deposite_total'];
                 } elseif ($item['tax_percentage'] == 9 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
-                    $this->total_9_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'];
+                    $this->total_9_tax_amount += (float) $newItem['original_price'] - (float) $item['discount_inc_tax'] - (float) $item['statiege_deposite_total'];
                 }
+            } else {
+                //calculate 21% tax amount for print in tax summary
+               if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
+                   $this->total_21_tax_amount += (float) $item['total_price'] - (float) $item['statiege_deposite_total'];
+               }
             }
 
             /*set kitchen and label printer for each product*/
@@ -862,7 +863,8 @@ trait Stage7PrepareAdvanceData
         $hideOnTheHouseProducts = $this->additionalSettings['hide_onthehouse_product'];
 
         foreach ($this->jsonItems as $keyItem=>$item) {
-            if ($item['void_id'] == 0 && $item['on_the_house'] == 0 && $item['original_price'] > 0) {
+            // negative price consider for return orders
+            if ($item['void_id'] == 0 && $item['on_the_house'] == 0 && ($item['original_price'] > 0 || $item['original_price'] < 0)) {
                 $normalItems[] = $item;
             } elseif ($item['void_id'] != 0 && $hideVoidProducts == 0) {
                 $voidItems[] = $item;
@@ -878,8 +880,6 @@ trait Stage7PrepareAdvanceData
         }
 
         $items = array_merge($normalItems, $voidItems, $onTheHouseItems, $zeroPriceItems);
-
-        companionLogger('Eatcard companion hide or remove due to sort products : ', $hideAndNotSortedItems);
 
         //reassign sorted items
         $this->jsonItems = $items;
@@ -1080,7 +1080,7 @@ trait Stage7PrepareAdvanceData
             $total_0_tax_amount = $statiege_deposite_total;
             $total_21_tax_amount = $this->total_21_tax_amount + $delivery_fee + $plastic_bag_fee;
             $total_9_tax_amount = ($total_price + $reservation_paid + $coupon_price)
-                                - ($total_21_tax_amount + $additional_fee + $tip_amount);
+                                - ($total_21_tax_amount + $additional_fee + $tip_amount + $statiege_deposite_total);
         } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
             $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
             //                $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
@@ -1279,5 +1279,20 @@ trait Stage7PrepareAdvanceData
         }
 
         $this->jsonPaymentSummary = $summary;
+    }
+
+    protected  function prepareViewName() {
+
+        if (!in_array($this->printMethod,[PrintMethod::PDF,PrintMethod::HTML])) {
+            return;
+        }
+
+       if ($this->takeawayEmailType == 'user') {
+           $this->advanceData['viewPath'] = 'takeaway.takeaway-order-user';
+       } elseif ($this->takeawayEmailType == 'owner') {
+           $this->advanceData['viewPath'] = 'takeaway.takeaway-order-owner-new';
+       } else {
+           $this->advanceData['viewPath'] = 'order.order-details';
+       }
     }
 }

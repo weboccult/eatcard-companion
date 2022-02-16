@@ -37,6 +37,11 @@ return [
     'pos' => 'POS',
     'qr_code_type' => 'QR Order',
 
+    'pending' => 'In afwachting',
+    'approved' => 'Bevestigen',
+    'declined' => 'Afwijzen',
+    'cancelled' => 'Geannuleerd',
+
     /*dine_in_type type */
 //    'dine_in' => 'Bezorgen',
     'take_out' => 'Meenemen',

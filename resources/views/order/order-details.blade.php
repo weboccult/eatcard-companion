@@ -111,10 +111,12 @@
                     @if(isset($data['title4']) && $data['title4'] != '')
                         <p>{{$data['title4']}}</p>
                     @endif
+                    @if(isset($data['titteTime'][0]['key2']) && $data['titteTime'][0]['key2'] != '')
                     <div style="margin-top: 5px">
                         <p style="float: left">{{$data['titteTime'][0]['key2']}}</p>
                         <p style="float: right">{{$data['titteTime'][0]['value2']}}</p>
                     </div>
+                    @endif
                     @if(!empty($data['kioskname']))
                         <p>{{$data['kioskname']}}</p>
                     @endif
