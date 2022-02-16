@@ -2,7 +2,6 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
-use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
@@ -20,10 +19,7 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage8PrepareFinalJ
 use Weboccult\EatcardCompanion\Services\Common\Prints\Stages\Stage9PrepareResponse;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Traits\MagicAccessors;
-use function Weboccult\EatcardCompanion\Helpers\__companionPDF;
-use function Weboccult\EatcardCompanion\Helpers\__companionViews;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
-use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 
 /**
  * @mixin MagicAccessors
@@ -136,7 +132,6 @@ abstract class BaseGenerator implements BaseGeneratorContract
             $this->stage9_PrepareResponse();
 
             return $this->returnResponseData;
-
         } catch (\Exception $e) {
 //            dd($e->getMessage(), $e->getFile(), $e->getLine());
             companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());

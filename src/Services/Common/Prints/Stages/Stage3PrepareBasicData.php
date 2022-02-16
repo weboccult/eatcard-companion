@@ -183,7 +183,6 @@ trait Stage3PrepareBasicData
             'dynamicOrderNo' => '',
             'show_discount_note' => '',
 
-
             //PDF, HTML ViewName
             'viewPath' => '',
 

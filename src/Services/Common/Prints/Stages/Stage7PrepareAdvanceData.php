@@ -668,7 +668,6 @@ trait Stage7PrepareAdvanceData
                 }
             }
 
-
             //need to store both for item wise split
             if ($isSubOrderItems) {
                 if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
@@ -678,9 +677,9 @@ trait Stage7PrepareAdvanceData
                 }
             } else {
                 //calculate 21% tax amount for print in tax summary
-               if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
-                   $this->total_21_tax_amount += (float) $item['total_price'] - (float) $item['statiege_deposite_total'];
-               }
+                if ($item['tax_percentage'] == 21 && (int) $item['on_the_house'] == 0 && (int) $item['void_id'] == 0) {
+                    $this->total_21_tax_amount += (float) $item['total_price'] - (float) $item['statiege_deposite_total'];
+                }
             }
 
             /*set kitchen and label printer for each product*/
@@ -1281,18 +1280,18 @@ trait Stage7PrepareAdvanceData
         $this->jsonPaymentSummary = $summary;
     }
 
-    protected  function prepareViewName() {
-
-        if (!in_array($this->printMethod,[PrintMethod::PDF,PrintMethod::HTML])) {
+    protected function prepareViewName()
+    {
+        if (! in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
             return;
         }
 
-       if ($this->takeawayEmailType == 'user') {
-           $this->advanceData['viewPath'] = 'takeaway.takeaway-order-user';
-       } elseif ($this->takeawayEmailType == 'owner') {
-           $this->advanceData['viewPath'] = 'takeaway.takeaway-order-owner-new';
-       } else {
-           $this->advanceData['viewPath'] = 'order.order-details';
-       }
+        if ($this->takeawayEmailType == 'user') {
+            $this->advanceData['viewPath'] = 'takeaway.takeaway-order-user';
+        } elseif ($this->takeawayEmailType == 'owner') {
+            $this->advanceData['viewPath'] = 'takeaway.takeaway-order-owner-new';
+        } else {
+            $this->advanceData['viewPath'] = 'order.order-details';
+        }
     }
 }
