@@ -12,6 +12,7 @@ use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Weboccult\EatcardCompanion\Services\Core\EatcardPrint;
 use Weboccult\EatcardCompanion\Services\Core\EatcardOrder;
 use Weboccult\EatcardCompanion\Services\Core\EatcardSms;
+use Weboccult\EatcardCompanion\Services\Core\EatcardEmail;
 use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
 use Weboccult\EatcardCompanion\Services\Core\OneSignal;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardRevenue;
@@ -191,5 +192,17 @@ if (! function_exists('eatcardSms')) {
     function eatcardSms(): EatcardSms
     {
         return app('eatcard-sms');
+    }
+}
+
+if (! function_exists('eatcardEmail')) {
+    /**
+     * Access EmailManager through helper.
+     *
+     * @return EatcardEmail
+     */
+    function eatcardEmail(): EatcardEmail
+    {
+        return app('eatcard-email');
     }
 }

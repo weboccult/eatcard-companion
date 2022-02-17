@@ -44,6 +44,8 @@ class EatcardThirdPartyOrder
     public static function setData(array $data): self
     {
         static::$data = $data;
+
+        return static::getInstance();
     }
 
     /**

@@ -14,11 +14,13 @@ use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\OrderDeliveryDetails;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\Supplement;
+use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\RunningOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\SaveOrderGenerator;
@@ -27,6 +29,7 @@ use Illuminate\Support\Facades\Redis as LRedis;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\DailyRevenueGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\MonthlyRevenueGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardSms;
 use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 
 if (! function_exists('eatcardSayHello')) {
@@ -808,6 +811,36 @@ if (! function_exists('sendWebNotification')) {
     }
 }
 
+if (! function_exists('sendOrderSms')) {
+    /**
+     * @param $store
+     * @param $order_eloquent
+     *
+     * @return void
+     */
+    function sendOrderSms($store, $order_eloquent)
+    {
+        if ($store->is_sms_enabled) {
+            $sms_settings = json_decode($store->sms_settings);
+            $order_received_notification_enabled = data_get($sms_settings, 'order_received');
+            if ($order_received_notification_enabled == true) {
+                try {
+                    EatcardSms::send("We have received your order. OrderNo:{$order_eloquent->order_id}.")
+                        ->responsible($order_eloquent) // it is optional but if you want to attach any model then you
+                        // need to pass eloquent instance
+                        ->storeId($store) // it will accept ID as well as store eloquent instance
+                        ->channel(Channel::$takeaway)
+                        ->type(Type::$orderReceived)
+                        ->to([$order_eloquent->contact_no])
+                        ->dispatch();
+                } catch (\Exception $e) {
+                    companionLogger('order_received sms sent fail.', 'Error : '.$e->getMessage(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+                }
+            }
+        }
+    }
+}
+
 if (! function_exists('getDistance')) {
     /**
      * @param $from
@@ -1374,5 +1407,60 @@ if (! function_exists('extractRequestType')) {
             'systemType' => $systemType,
 
         ];
+    }
+}
+
+if (! function_exists('extractRequestType')) {
+    /**
+     * @param $orderId
+     *
+     * @return void
+     */
+    function createDeliveryDetail($orderId)
+    {
+        try {
+            $driver_to_store_time = '10 mins';
+            $buffer_time = '2 mins';
+            $order = Order::with(['store'])->where('id', $orderId)->first();
+            $approx_distance = 0;
+            $approx_duration = 0;
+            $takeawaySetting = TakeawaySetting::where('store_id', $order->store_id)->first();
+            if ($order && $order['store'] && $order['store']->is_delivery_app_enabled) {
+                $delivery_time = $order->order_date.' '.$order->order_time;
+                $delivery_buffer_time = date('Y-m-d H:i:s', strtotime($delivery_time.' -'.$buffer_time));
+                if ($takeawaySetting->delivery_radius_setting == 1 || $takeawaySetting->delivery_radius_setting == '1') {
+                    $preparing_time = $takeawaySetting && $takeawaySetting->delivery_prep_time ? $takeawaySetting->delivery_prep_time.' mins' : '15 mins';
+                } else {
+                    $preparing_time = $takeawaySetting && $takeawaySetting->zipcode_delivery_prep_time ? $takeawaySetting->zipcode_delivery_prep_time.' mins' : '15 mins';
+                }
+                if ($order['store']['store_latitude'] && $order['delivery_latitude']) {
+                    $distance_data = getDistanceBetweenTwoPoints($order['store']['store_latitude'], $order['store']['store_longitude'], $order['delivery_latitude'], $order['delivery_longitude']);
+                    companionLogger('distance data between store and deliveery location - ', json_encode($distance_data), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+                    if (! empty($distance_data)) {
+                        $approx_distance = @$distance_data['rows'][0]['elements'][0]['distance']['text'];
+                        $approx_duration = @$distance_data['rows'][0]['elements'][0]['duration']['text'];
+                    }
+                }
+                companionLogger('distance data between store and deliveery location approx_distance - ', $approx_distance);
+                if ($approx_distance) {
+                    $driver_pickup_time = date('Y-m-d H:i:s', strtotime($delivery_buffer_time.' -'.$approx_duration));
+                    $driver_sent_request_time = date('Y-m-d H:i:s', strtotime($driver_pickup_time.' -'.$driver_to_store_time));
+                    $order_preparation_time = date('Y-m-d H:i:s', strtotime($driver_pickup_time.' -'.$preparing_time));
+                    OrderDeliveryDetails::create([
+                        'store_id'                            => $order->store_id,
+                        'order_id'                            => $order->id,
+                        'approx_distance'                     => $approx_distance,
+                        'approx_trip_time'                    => $approx_duration,
+                        'approx_preparation_time'             => $preparing_time,
+                        'approx_restaurant_pickup_time'       => $driver_pickup_time,
+                        'approx_driver_request_time'          => $driver_sent_request_time,
+                        'approx_order_start_preparation_time' => $order_preparation_time,
+                        'cron_status'                         => 0,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            companionLogger('make delivery detail request takeaway error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+        }
     }
 }
