@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders;
+namespace Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders;
 
 use Carbon\Carbon;
 use Exception;

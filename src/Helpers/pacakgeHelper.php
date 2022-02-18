@@ -131,7 +131,7 @@ if (! function_exists('eatcardPrint')) {
      */
     function eatcardPrint(): EatcardPrint
     {
-        return app('eatcard-print');
+        return app(EatcardPrint::class);
     }
 }
 
@@ -143,7 +143,7 @@ if (! function_exists('eatcardOrder')) {
      */
     function eatcardOrder(): EatcardOrder
     {
-        return app('eatcard-order');
+        return app(EatcardOrder::class);
     }
 }
 
@@ -155,7 +155,7 @@ if (! function_exists('eatcardRevenue')) {
      */
     function eatcardRevenue(): EatcardRevenue
     {
-        return app('eatcard-revenue');
+        return app(EatcardRevenue::class);
     }
 }
 
@@ -167,7 +167,7 @@ if (! function_exists('multiSafe')) {
      */
     function multiSafe(): MultiSafe
     {
-        return app('multi-safe');
+        return app(MultiSafe::class);
     }
 }
 
@@ -179,7 +179,7 @@ if (! function_exists('oneSignal')) {
      */
     function oneSignal(): OneSignal
     {
-        return app('sms');
+        return app(OneSignal::class);
     }
 }
 
@@ -191,7 +191,7 @@ if (! function_exists('eatcardSms')) {
      */
     function eatcardSms(): EatcardSms
     {
-        return app('eatcard-sms');
+        return app(EatcardSms::class);
     }
 }
 
@@ -203,6 +203,6 @@ if (! function_exists('eatcardEmail')) {
      */
     function eatcardEmail(): EatcardEmail
     {
-        return app('eatcard-email');
+        return app(EatcardEmail::class);
     }
 }

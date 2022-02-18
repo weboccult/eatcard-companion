@@ -2,6 +2,8 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints;
 
+use Illuminate\Contracts\View\View;
+use Throwable;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
@@ -107,6 +109,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected bool $skipMainPrint = false;
     protected bool $skipKitchenLabelPrint = false;
 
+    /** @var array|null|object|View */
     protected $returnResponseData;
 
     public function __construct()
@@ -114,9 +117,9 @@ abstract class BaseGenerator implements BaseGeneratorContract
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      *
-     * @return array|void
+     * @return array|View
      */
     public function dispatch()
     {
@@ -150,7 +153,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      *
      * @return void
      */
@@ -178,7 +181,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      *
      * @return void
      */

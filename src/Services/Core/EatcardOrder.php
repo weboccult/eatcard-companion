@@ -6,6 +6,9 @@ use Exception;
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
 
+/**
+ * @author Darshit Hedpara
+ */
 class EatcardOrder
 {
     protected BaseProcessor $processor;

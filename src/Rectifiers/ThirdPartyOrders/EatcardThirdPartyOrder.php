@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders;
+namespace Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders;
 
 use Exception;
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
@@ -12,7 +12,7 @@ class EatcardThirdPartyOrder
 {
     private static ?EatcardThirdPartyOrder $instance = null;
 
-    private static ThirdPartyOrders $processor;
+    private static ThirdPartyOrders $action;
     private static array $data = [];
 
     /**
@@ -30,12 +30,12 @@ class EatcardThirdPartyOrder
     /**
      * @throws Exception
      */
-    public static function run(string $processor, $data = []): self
+    public static function action(string $action, $data = []): self
     {
-        if (class_exists($processor)) {
-            static::$processor = new $processor();
+        if (class_exists($action)) {
+            static::$action = new $action();
         } else {
-            throw new ClassNotFoundException($processor);
+            throw new ClassNotFoundException($action);
         }
 
         return static::getInstance();
@@ -53,14 +53,14 @@ class EatcardThirdPartyOrder
      */
     public static function dispatch()
     {
-        return static::$processor->handle(static::$data);
+        return static::$action->handle(static::$data);
     }
 }
 
 // usage
 //try {
 //    EatcardThirdPartyOrder::
-//        run(Deliveroo::class)
+//        action(Deliveroo::class)
 //        ->setData([])
 //        ->dispatch();
 //}

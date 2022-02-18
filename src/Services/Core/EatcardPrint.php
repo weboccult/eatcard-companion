@@ -2,6 +2,8 @@
 
 namespace Weboccult\EatcardCompanion\Services\Core;
 
+use Throwable;
+use Illuminate\Contracts\View\View;
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\extractRequestType;
@@ -97,7 +99,9 @@ class EatcardPrint
     }
 
     /**
-     * @return array
+     * @throws Throwable
+     *
+     * @return array|View|object|null
      */
     public function generate()
     {

@@ -3,6 +3,8 @@
 namespace Weboccult\EatcardCompanion\Services\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Weboccult\EatcardCompanion\Services\Core\EatcardSms as EatcardSmsCore;
+use RuntimeException;
 
 /**
  * @method static test()
@@ -16,19 +18,19 @@ use Illuminate\Support\Facades\Facade;
  * @method static dispatch()
  * @method static getDriverInstance()
  *
- * @see \Weboccult\EatcardCompanion\Services\Core\EatcardSms
+ * @see EatcardSmsCore
  */
 class EatcardSms extends Facade
 {
     /**
      * Get the registered name of the component.
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return string
      */
     protected static function getFacadeAccessor()
     {
-        return 'eatcard-sms';
+        return EatcardSmsCore::class;
     }
 }

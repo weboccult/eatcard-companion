@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Weboccult\EatcardCompanion\Models\Device;
+use Weboccult\EatcardCompanion\Models\EmailCount;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
 use Weboccult\EatcardCompanion\Models\Message;
 use Weboccult\EatcardCompanion\Models\Notification;
@@ -1461,6 +1462,22 @@ if (! function_exists('extractRequestType')) {
             }
         } catch (\Exception $e) {
             companionLogger('make delivery detail request takeaway error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+        }
+    }
+}
+
+if (! function_exists('updateEmailCount')) {
+    /**
+     * @param string $type
+     */
+    function updateEmailCount(string $type)
+    {
+        $now = Carbon::now()->format('Y-m-d');
+        $email_count = EmailCount::firstOrCreate(['date' => $now]);
+        if ($type == 'success') {
+            $email_count->update(['success_count' => (int) $email_count->success_count + 1]);
+        } elseif ($type == 'error') {
+            $email_count->update(['error_count' => (int) $email_count->error_count + 1]);
         }
     }
 }

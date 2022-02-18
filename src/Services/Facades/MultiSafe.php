@@ -10,16 +10,16 @@ use Weboccult\EatcardCompanion\Services\Core\MultiSafe as MultiSafeCore;
  * @mixin MultiSafeCore
  *
  * @see MultiSafeCore
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::getMode
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::setMode
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::getPaymentUrl
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::setPaymentUrl
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::getApiKey
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::setApiKey
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::getIssuers
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::postOrder
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::getOrder
- * @see \Weboccult\EatcardCompanion\Services\Core\MultiSafe::refundOrder
+ * @see MultiSafeCore::getMode
+ * @see MultiSafeCore::setMode
+ * @see MultiSafeCore::getPaymentUrl
+ * @see MultiSafeCore::setPaymentUrl
+ * @see MultiSafeCore::getApiKey
+ * @see MultiSafeCore::setApiKey
+ * @see MultiSafeCore::getIssuers
+ * @see MultiSafeCore::postOrder
+ * @see MultiSafeCore::getOrder
+ * @see MultiSafeCore::refundOrder
  *
  * @method static string getMode()
  * @method static MultiSafe setMode(string $mode)
@@ -43,6 +43,6 @@ class MultiSafe extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'multi-safe';
+        return MultiSafeCore::class;
     }
 }

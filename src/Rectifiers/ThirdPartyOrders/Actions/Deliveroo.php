@@ -1,16 +1,16 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\Processors;
+namespace Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\Actions;
 
+use Carbon\Carbon;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderItem;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\Supplement;
-use Carbon\Carbon;
-use GuzzleHttp\Client;
-use Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\ThirdPartyOrders;
+use Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\ThirdPartyOrders;
 
 /**
  * @author Darshit Hedpara

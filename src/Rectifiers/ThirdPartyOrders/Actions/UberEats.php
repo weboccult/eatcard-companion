@@ -1,9 +1,10 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\Processors;
+namespace Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\Actions;
 
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use Weboccult\EatcardCompanion\Models\Order;
@@ -12,8 +13,7 @@ use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreUberEatsSetting;
 use Weboccult\EatcardCompanion\Models\Supplement;
-use GuzzleHttp\Client;
-use Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\ThirdPartyOrders;
+use Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\ThirdPartyOrders;
 
 /**
  * @author Darshit Hedpara

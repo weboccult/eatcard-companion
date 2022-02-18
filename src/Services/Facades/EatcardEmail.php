@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Weboccult\EatcardCompanion\Services\Core\EatcardEmail as EatcardEmailCore;
 use RuntimeException;
 
 /**
@@ -28,8 +29,8 @@ class EatcardEmail extends Facade
      *
      * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
-        return 'eatcard-email';
+        return EatcardEmailCore::class;
     }
 }

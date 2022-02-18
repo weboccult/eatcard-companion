@@ -171,6 +171,7 @@ class EatcardEmail
         if (! empty($this->bcc) && count($this->bcc) > 0) {
             $mailData['bcc'] = implode(',', $this->bcc);
         }
+        dd($mailData);
         MailJob::create($mailData);
     }
 }
