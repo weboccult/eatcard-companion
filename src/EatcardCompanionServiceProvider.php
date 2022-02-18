@@ -27,8 +27,10 @@ class EatcardCompanionServiceProvider extends ServiceProvider
                 EatcardSmsPublishCommand::class,
             ]);
 
+            $isLaravel9 = version_compare($this->app->version(), '9.0.0', '>=');
+
             $this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/eatcard-companion'),
+                __DIR__.'/../resources/lang' => $isLaravel9 ? lang_path('vendor/eatcard-companion') : resource_path('lang/vendor/eatcard-companion'),
             ], 'eatcardcompanion-translations');
 
             $this->publishes([
