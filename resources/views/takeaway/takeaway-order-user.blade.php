@@ -525,7 +525,9 @@
                                                                 <tr>
                                                                     <td align="center" style="font-family:Arial, Tahoma; font-size:16px; line-height:24px; font-weight:normal; font-style:normal; color:#000000; padding:18px 10px 18px 10px">
                                                                         Track Your Order <br class="em_hide" />
-                                                                        Get updates about your Order status by click <a href="{{ env('ADMIN_APP_URL').'/order-detail/'.phpEncrypt($order['id']) }}" style="color:#1B68AA; font-weight:bold">here.</a>
+                                                                        Get updates about your Order status by click
+                                                                        <a href="{{ env('ADMIN_APP_URL').'/order-detail/'}}@phpEncrypt($order['id'])" style="color:#1B68AA;
+                                                                        font-weight:bold">here.</a>
                                                                     </td>
                                                                 </tr>
                                                             </table>
@@ -538,9 +540,10 @@
                                                                     <tr>
                                                                         <td align="center" style="font-family:Arial, Tahoma; font-size:16px; line-height:24px; font-weight:normal; font-style:normal; color:#000000; padding:18px 10px 18px 10px">
                                                                             Check Your Order <br class="em_hide" />
-                                                                            Get updates about your Order status by click <a href="{{ env('ADMIN_APP_URL').'/order-detail/'.phpEncrypt($order['id']) }}" style="color:#1B68AA; font-weight:bold">here.</a>
+                                                                            Get updates about your Order status by click <a href="{{ env('ADMIN_APP_URL').'/order-detail/'}}@phpEncrypt($order['id'])" style="color:#1B68AA; font-weight:bold">here.</a>
                                                                         </td>
-                                                                  </tr>                                                                </table>
+                                                                  </tr>
+                                                                </table>
                                                             </td>
                                                         </tr>
                                                     @endif
@@ -553,8 +556,7 @@
                                                 <table class="em_wrapper" align="center" width="330" border="0" cellspacing="0" cellpadding="0" style="width:380px;">
                                                     <tr>
                                                         <td align="center" style="font-family:Verdana, Arial, Tahoma; font-size:12px; line-height:15px; font-weight:normal; font-style:normal; color:#000000; padding:20px 0 0 0">
-                                                            Uw order word verwerkt door Eatcard, onze partner
-                                                            voor Takeaway
+                                                            Uw order word verwerkt door Eatcard, onze partner voor Takeaway
                                                         </td>
                                                     </tr>
                                                     <tr>

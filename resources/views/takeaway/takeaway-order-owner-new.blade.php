@@ -527,7 +527,7 @@
                                                 <table class="em_wrapper" align="center" width="330" border="0" cellspacing="0" cellpadding="0" style="width:380px;">
                                                     <tr>
                                                         <td align="center" style="font-family:Verdana, Arial, Tahoma; font-size:12px; line-height:15px; font-weight:normal; font-style:normal; color:#000000; padding:20px 0 0 0">
-                                                            Uw order word verwerkt door Eatcard, onze partner voor takeaway
+                                                            Uw order word verwerkt door Eatcard, onze partner voor Takeaway
                                                         </td>
                                                     </tr>
                                                     <tr>

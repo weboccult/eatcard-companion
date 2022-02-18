@@ -38,8 +38,8 @@ trait Stage9PrepareResponse
      */
     protected function pdfResponse()
     {
-        if ($this->printMethod == PrintMethod::PDF && ! empty($data)) {
-            $this->returnResponseData = __companionPDF($this->advanceData['viewPath'], ['data'=>$data, 'order' => $this->order, 'store'=> $this->store, 'kiosk'=>$this->kiosk])
+        if ($this->printMethod == PrintMethod::PDF && ! empty($this->jsonFormatFullReceipt)) {
+            $this->returnResponseData = __companionPDF($this->advanceData['viewPath'], ['data'=>$this->jsonFormatFullReceipt, 'order' => $this->order, 'store'=> $this->store, 'kiosk'=>$this->kiosk])
                    ->download('orderno-'.$this->globalOrderId.'.pdf');
         }
     }
