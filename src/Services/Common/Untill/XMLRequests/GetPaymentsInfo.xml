@@ -1,0 +1,14 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:TPAPIPosIntfU-ITPAPIPOS">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <urn:GetPaymentsInfo soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+            <Request xsi:type="urn:TGetPaymentsInfoRequest" xmlns:urn="urn:TPAPIPosIntfU">
+                <Password xsi:type="xsd:string">@PASSWORD@</Password>
+                <UserName xsi:type="xsd:string">@USER_NAME@</UserName>
+                <AppToken xsi:type="xsd:string">@APP_TOKEN@</AppToken>
+                <AppName xsi:type="xsd:string">@APP_NAME@</AppName>
+            </Request>
+        </urn:GetPaymentsInfo>
+    </soapenv:Body>
+</soapenv:Envelope>

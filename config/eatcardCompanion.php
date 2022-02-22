@@ -243,6 +243,11 @@ return [
         ],
     ],
 
+    'untill' => [
+        'app_token' => env('COMPANION_UNTILL_APP_TOKEN', null),
+        'app_name' => env('COMPANION_UNTILL_APP_NAME', null),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Other Endpoints
