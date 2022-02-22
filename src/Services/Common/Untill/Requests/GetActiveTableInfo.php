@@ -7,11 +7,11 @@ use Weboccult\EatcardCompanion\Services\Core\Untill;
 /**
  * @description Prepare Table Info API
  * @mixin Untill
+ *
  * @author Darshit Hedpara
  */
 trait GetActiveTableInfo
 {
-
     /**
      * @return Untill
      */
@@ -19,5 +19,4 @@ trait GetActiveTableInfo
     {
         return $this->build('GetActiveTableInfo.xml')->setCredentials()->setTableNumber();
     }
-
 }

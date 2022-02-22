@@ -7,6 +7,7 @@ use Weboccult\EatcardCompanion\Services\Core\Untill;
 /**
  * @description Prepare Close Order API
  * @mixin Untill
+ *
  * @author Darshit Hedpara
  */
 trait PropertyAccessor

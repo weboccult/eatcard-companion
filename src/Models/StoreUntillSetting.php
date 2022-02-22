@@ -4,7 +4,6 @@ namespace Weboccult\EatcardCompanion\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Log;
 
 class StoreUntillSetting extends Model
 {
