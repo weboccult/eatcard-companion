@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Redis as LRedis;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\DailyRevenueGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\MonthlyRevenueGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Sms\Channel;
+use Weboccult\EatcardCompanion\Services\Common\Sms\Type;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardSms;
 use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 
@@ -586,7 +588,7 @@ if (! function_exists('sendResWebNotification')) {
                         ->get()
                         ->toArray();
                     foreach ($orders as $key => $order) {
-                        $orders[$key]['dutch_order_status'] = __('eatcard-companion::general.'.$order['order_status']);
+                        $orders[$key]['dutch_order_status'] = __companionTrans('general.'.$order['order_status']);
                     }
                     $reservation->reservation->orders = $orders;
                 }
@@ -709,7 +711,7 @@ if (! function_exists('sendResWebNotification')) {
                 $redis = LRedis::connection();
                 $redis->publish('reservation_booking', json_encode([
                     'store_id'        => $store_id,
-                    'channel'         => $channel ? $channel : 'new_booking',
+                    'channel'         => ! empty($channel) ? $channel : 'new_booking',
                     'notification_id' => 0,
                     'additional_data' => $additionalData,
                 ]));
@@ -765,7 +767,7 @@ if (! function_exists('sendWebNotification')) {
         try {
             $notification = Notification::query()->create([
                 'store_id'        => $order['store_id'],
-                'notification'    => __('eatcard-companion::general.new_order_notification', [
+                'notification'    => __companionTrans('general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),
@@ -781,7 +783,7 @@ if (! function_exists('sendWebNotification')) {
                     'contact_no'            => $order['contact_no'],
                     'order_status'          => $order['order_status'],
                     'table_name'            => $order['table_name'],
-                    'dutch_order_status'    => __('eatcard-companion::general.'.$order['order_status']),
+                    'dutch_order_status'    => __companionTrans('general.'.$order['order_status']),
                     'date'                  => $data['orderDate'],
                     'delivery_address'      => $order['delivery_address'],
                     'method'                => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? '' : $order['method'],

@@ -30,6 +30,14 @@ class Store extends Model
     /**
      * @return HasOne
      */
+    public function notificationSetting(): HasOne
+    {
+        return $this->hasOne(NotificationSetting::class, 'store_id', 'id');
+    }
+
+    /**
+     * @return HasOne
+     */
     public function store_owner(): HasOne
     {
         return $this->hasOne(StoreOwner::class, 'store_id', 'id');

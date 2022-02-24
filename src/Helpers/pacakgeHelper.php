@@ -56,7 +56,7 @@ if (! function_exists('__companionTrans')) {
      *
      * @return string
      */
-    function __companionTrans(string $path): string
+    function __companionTrans(string $path, $replace = []): string
     {
         $isTranslationEnabled = config('eatcardCompanion.enable_translation');
         if (! $isTranslationEnabled) {
@@ -64,7 +64,7 @@ if (! function_exists('__companionTrans')) {
             App::setLocale('en');
         }
 
-        return __('eatcard-companion::'.$path);
+        return __('eatcard-companion::'.$path, $replace);
     }
 }
 
@@ -74,7 +74,7 @@ if (! function_exists('__companionPrintTrans')) {
      *
      * @return string
      */
-    function __companionPrintTrans(string $path): string
+    function __companionPrintTrans(string $path, $replace = []): string
     {
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
@@ -82,7 +82,7 @@ if (! function_exists('__companionPrintTrans')) {
             App::setLocale('nl');
         }
 
-        return __('eatcard-companion::'.$path);
+        return __('eatcard-companion::'.$path, $replace);
     }
 }
 

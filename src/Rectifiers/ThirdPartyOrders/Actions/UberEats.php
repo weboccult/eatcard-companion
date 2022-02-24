@@ -14,6 +14,7 @@ use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreUberEatsSetting;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\ThirdPartyOrders;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 
 /**
  * @author Darshit Hedpara
@@ -151,7 +152,7 @@ class UberEats extends ThirdPartyOrders
                 self::CANCELED_ACTION,
                 self::DENIED_ACTION,
             ])) {
-            $this->existedOrder->dutch_order_status = __('eatcard-companion::general.'.$this->existedOrder->order_status);
+            $this->existedOrder->dutch_order_status = __companionTrans('general.'.$this->existedOrder->order_status);
             $redis = Redis::connection();
             $redis->publish('order_status_update', json_encode([
                 'id'                   => $this->existedOrder->id,
@@ -162,9 +163,9 @@ class UberEats extends ThirdPartyOrders
                 'dutch_order_status'   => $this->existedOrder->dutch_order_status,
                 'method'               => $this->existedOrder->method,
                 'payment_status'       => $this->existedOrder->status,
-                'dutch_payment_status' => __('messages.'.$this->existedOrder->status),
+                'dutch_payment_status' => __companionTrans('general.'.$this->existedOrder->status),
                 'uber_eats_order_id'   => $this->existedOrder->uber_eats_order_id,
-                'message'              => __('messages.dine_in_order_notification_message', ['status' => $this->existedOrder->dutch_order_status]),
+                'message'              => __companionTrans('dinein.dine_in_order_notification_message', ['status' => $this->existedOrder->dutch_order_status]),
             ]));
         }
     }

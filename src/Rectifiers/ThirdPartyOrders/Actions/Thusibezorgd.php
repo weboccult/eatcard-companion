@@ -16,6 +16,7 @@ use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\ThirdPartyOrders;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 class Thusibezorgd extends ThirdPartyOrders
@@ -348,7 +349,7 @@ class Thusibezorgd extends ThirdPartyOrders
             /*web notification*/
             $createdNotification = Notification::create([
                 'store_id'        => $store->id,
-                'notification'    => __('messages.new_order_notification', [
+                'notification'    => __companionTrans('general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),

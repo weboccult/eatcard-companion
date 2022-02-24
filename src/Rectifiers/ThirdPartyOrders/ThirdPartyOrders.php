@@ -9,6 +9,7 @@ use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Store;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 /**
@@ -41,7 +42,7 @@ abstract class ThirdPartyOrders
             /*web notification*/
             $this->createdNotification = Notification::create([
                 'store_id'        => $this->store->id,
-                'notification'    => __('messages.new_order_notification', [
+                'notification'    => __companionTrans('general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),
