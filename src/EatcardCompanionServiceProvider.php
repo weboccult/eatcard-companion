@@ -59,9 +59,10 @@ class EatcardCompanionServiceProvider extends ServiceProvider
         });
 
         Blade::directive('companionGeneralHelper', function ($arguments) {
-            list($function, $value) = explode(',',$arguments);
+            list($function, $value) = explode(',', $arguments);
             $function = str_replace("'", '', $function);
-            $value = eval('return '. $value.';');
+            $value = eval('return '.$value.';');
+
             return "<?php echo Weboccult\EatcardCompanion\Helpers\\$function('$value'); ?>";
         });
 

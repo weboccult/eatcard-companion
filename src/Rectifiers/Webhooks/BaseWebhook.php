@@ -146,8 +146,9 @@ abstract class BaseWebhook
     {
         return $this->fetchedOrder = SubOrder::where(['worldline_ssai' => $ssai])->firstOrFail();
     }
-        /**
-        }
+
+    /**
+    }
      * @return Builder|Model|object|null
      */
     protected function fetchAndSetOrder()

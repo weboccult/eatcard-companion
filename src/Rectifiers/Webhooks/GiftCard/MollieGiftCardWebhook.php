@@ -4,12 +4,9 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard;
 
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Redis as LRedis;
 use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
-use function Weboccult\EatcardCompanion\Helpers\createDeliveryDetail;
-use function Weboccult\EatcardCompanion\Helpers\sendOrderSms;
 
 /**
  * @author Darshit Hedpara
@@ -36,7 +33,6 @@ class MollieGiftCardWebhook extends BaseWebhook
         $oldStatus = $this->fetchedGiftPurchaseOrder->status;
 
         companionLogger('Mollie status response', json_encode(['payment_status' => $payment->status], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
-
 
         $update_data = [];
         $update_data['mollie_payment_id'] = $payment->id;

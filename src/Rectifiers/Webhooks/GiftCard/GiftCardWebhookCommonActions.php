@@ -6,21 +6,16 @@ use Exception;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
-use Weboccult\EatcardCompanion\Enums\PrintMethod;
-use Weboccult\EatcardCompanion\Enums\PrintTypes;
-use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Device;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
 use Illuminate\Support\Facades\Redis as LRedis;
 use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
-use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\__companionViews;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
-use function Weboccult\EatcardCompanion\Helpers\eatcardPrint;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
@@ -31,32 +26,33 @@ use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
  */
 trait GiftCardWebhookCommonActions
 {
-
     /**
      * @return string
      */
     public function generateQRCode(): string
     {
         $image = QrCode::format('png')->size(500)->generate($this->fetchedGiftPurchaseOrder->qr_code);
-        $qr_image = '/store/' . $this->fetchedStore->store_slug . '/qr-codes/' . base64_encode($this->fetchedStore->id) . '-' . time() . '.png';
+        $qr_image = '/store/'.$this->fetchedStore->store_slug.'/qr-codes/'.base64_encode($this->fetchedStore->id).'-'.time().'.png';
         Storage::disk('s3')->put($qr_image, $image);
-        return config('eatcardCompanion.aws_url') . '/' . ltrim($qr_image, '/');
+
+        return config('eatcardCompanion.aws_url').'/'.ltrim($qr_image, '/');
     }
+
     /**
      * @return array|void
      */
     public function sendAppNotification()
     {
-        $name = "";
+        $name = '';
         if ($this->fetchedGiftPurchaseOrder->first_name || $this->fetchedGiftPurchaseOrder->last_name) {
-            $name = '| ' . $this->fetchedGiftPurchaseOrder->first_name . ' ' . $this->fetchedGiftPurchaseOrder->last_name;
+            $name = '| '.$this->fetchedGiftPurchaseOrder->first_name.' '.$this->fetchedGiftPurchaseOrder->last_name;
         }
-        $desc_title = $this->fetchedStore->store_name . ' ' . $name;
-        $desc = $this->fetchedGiftPurchaseOrder->date . ' | ' . $this->fetchedGiftPurchaseOrder->order_time . ' | €' . changePriceFormat($this->fetchedGiftPurchaseOrder->total_price);
+        $desc_title = $this->fetchedStore->store_name.' '.$name;
+        $desc = $this->fetchedGiftPurchaseOrder->date.' | '.$this->fetchedGiftPurchaseOrder->order_time.' | €'.changePriceFormat($this->fetchedGiftPurchaseOrder->total_price);
         $notificationData = [
             'type' => 'takeaway',
             'description' => $desc,
-            'description_title' => $desc_title
+            'description_title' => $desc_title,
         ];
         $notificationData['additional_data'] = ['order_id' => $this->fetchedGiftPurchaseOrder->id, 'date' => $this->fetchedGiftPurchaseOrder->date];
         $notificationData['additional_data'] = json_encode($notificationData['additional_data']);
@@ -85,10 +81,10 @@ trait GiftCardWebhookCommonActions
                     'title' => 'Eatcard',
                     'text' => $notificationData['description'],
                     'type' => $notificationData['type'],
-                    'description_title' => (!empty($notificationData['description_title'])) ? $notificationData['description_title'] : "",
+                    'description_title' => (! empty($notificationData['description_title'])) ? $notificationData['description_title'] : '',
                     'additional_data' => $notificationData['additional_data'],
                     'player_ids' => $one_signal_user_devices_oids,
-                    'store_id' => $this->fetchedGiftPurchaseOrder->store_id
+                    'store_id' => $this->fetchedGiftPurchaseOrder->store_id,
                 ];
                 try {
                     $is_send_push = OneSignal::sendPushNotification($push_notification_data);
@@ -101,7 +97,7 @@ trait GiftCardWebhookCommonActions
                 }
             }
         } catch (\Exception $e) {
-            companionLogger('reservation status change push notification error: => ' . $e->getMessage(). ', IP address : '.request()->ip(). ', browser : '. request()->header('User-Agent'));
+            companionLogger('reservation status change push notification error: => '.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
     }
 
@@ -109,6 +105,7 @@ trait GiftCardWebhookCommonActions
      * @param $store
      * @param $order
      * @param $data
+     *
      * @return void
      */
     public function sendWebNotification($store, $order, $data)
@@ -118,7 +115,7 @@ trait GiftCardWebhookCommonActions
                 'store_id' => $order->store_id,
                 'notification' => __('messages.new_order_notification', [
                     'order_id' => $order->order_id,
-                    'username' => $order->full_name
+                    'username' => $order->full_name,
                 ]),
                 'type' => 'gift-card',
                 'additional_data' => json_encode([
@@ -133,24 +130,25 @@ trait GiftCardWebhookCommonActions
                     'date' => $data['orderDate'],
                     'dutch_date' => getDutchDate($data['orderDate']),
                     'is_auto_print' => (/*$store->app_pos_print &&*/$store->is_auto_print_takeaway),
-                    'is_notification' => ($data['is_notification'])
+                    'is_notification' => ($data['is_notification']),
                 ]),
-                'read_at' => /*(!$data['is_notification']) ? Carbon::now()->format('Y-m-d H:i:s') : */null
+                'read_at' => /*(!$data['is_notification']) ? Carbon::now()->format('Y-m-d H:i:s') : */null,
             ]);
             //redis option
             $redis = LRedis::connection();
             $redis->publish('new_order', json_encode([
                 'store_id' => $order->store_id,
                 'notification_id' => $notification->id,
-                'additional_data' => $notification->additional_data
+                'additional_data' => $notification->additional_data,
             ]));
         } catch (\Exception $e) {
-            companionLogger('giftcard - web notification error' . $e->getMessage(). ', IP address : '.request()->ip(). ', browser : '. request()->header('User-Agent'));
+            companionLogger('giftcard - web notification error'.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
     }
 
     /**
      * @param $qrImage
+     *
      * @return void
      */
     public function sendUserEmails($qrImage)
@@ -162,7 +160,7 @@ trait GiftCardWebhookCommonActions
                                 'storeRes' => $this->fetchedReservation,
                                 'store' => $this->fetchedStore,
                                 'qr_image' => $qrImage,
-                                'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? ''
+                                'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? '',
                             ])->render();
                 $translatedSubject = __companionTrans('giftcard.gift_purchase_friend_subject').': '.getDutchDate($this->fetchedGiftPurchaseOrder->date).' - '.$this->fetchedGiftPurchaseOrder->time.' - '.__companionTrans('general.'.$this->fetchedGiftPurchaseOrder->status);
                 eatcardEmail()
@@ -188,9 +186,9 @@ trait GiftCardWebhookCommonActions
                     'storeRes'  => $this->fetchedReservation,
                     'store'     => $this->fetchedStore,
                     'qr_image'  => $qrImage,
-                    'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? ''
+                    'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? '',
                 ])->render();
-                $translatedSubject = __companionTrans('giftcard.gift_purchase_user_subject') . ': ' . getDutchDate($this->fetchedGiftPurchaseOrder->date) . ' - ' . $this->fetchedGiftPurchaseOrder->time . ' - ' . __companionTrans('general.' . $this->fetchedGiftPurchaseOrder->status);
+                $translatedSubject = __companionTrans('giftcard.gift_purchase_user_subject').': '.getDutchDate($this->fetchedGiftPurchaseOrder->date).' - '.$this->fetchedGiftPurchaseOrder->time.' - '.__companionTrans('general.'.$this->fetchedGiftPurchaseOrder->status);
                 eatcardEmail()
                     ->entityType('giftcard_purchase_user')
                     ->entityId($this->fetchedGiftPurchaseOrder->id)
@@ -201,7 +199,7 @@ trait GiftCardWebhookCommonActions
                     ->content($content)
                     ->dispatch();
                 updateEmailCount('success');
-                companionLogger('Mollie | Gift purchase User create mail success', '#OrderId : ' . $this->fetchedGiftPurchaseOrder->id, '#Email : ' . $this->fetchedGiftPurchaseOrder->email, 'IP address : ' . request()->ip(), 'browser : ' . request()->header('User-Agent'));
+                companionLogger('Mollie | Gift purchase User create mail success', '#OrderId : '.$this->fetchedGiftPurchaseOrder->id, '#Email : '.$this->fetchedGiftPurchaseOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
         } catch (Exception | Throwable $e) {
             updateEmailCount('error');
@@ -211,6 +209,7 @@ trait GiftCardWebhookCommonActions
 
     /**
      * @param $qrImage
+     *
      * @return void
      */
     public function sendOwnerEmail($qrImage)
@@ -221,9 +220,9 @@ trait GiftCardWebhookCommonActions
                     'storeRes'  => $this->fetchedReservation,
                     'store'     => $this->fetchedStore,
                     'qr_image'  => $qrImage,
-                    'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? ''
+                    'gift_card' => $this->fetchedGiftPurchaseOrder->giftCard ?? '',
                 ])->render();
-                $translatedSubject = __companionTrans('giftcard.gift_purchase_owner_subject') . ': ' . getDutchDate($this->fetchedGiftPurchaseOrder->date) . ' - ' . $this->fetchedGiftPurchaseOrder->time . ' - ' . __companionTrans('general.' . $this->fetchedGiftPurchaseOrder->status);
+                $translatedSubject = __companionTrans('giftcard.gift_purchase_owner_subject').': '.getDutchDate($this->fetchedGiftPurchaseOrder->date).' - '.$this->fetchedGiftPurchaseOrder->time.' - '.__companionTrans('general.'.$this->fetchedGiftPurchaseOrder->status);
                 eatcardEmail()
                     ->entityType('giftcard_purchase_admin')
                     ->entityId($this->fetchedGiftPurchaseOrder->id)
@@ -234,7 +233,7 @@ trait GiftCardWebhookCommonActions
                     ->content($content)
                     ->dispatch();
                 updateEmailCount('success');
-                companionLogger('Mollie | Gift purchase User create mail success', '#OrderId : ' . $this->fetchedGiftPurchaseOrder->id, '#Email : ' . $this->fetchedGiftPurchaseOrder->email, 'IP address : ' . request()->ip(), 'browser : ' . request()->header('User-Agent'));
+                companionLogger('Mollie | Gift purchase User create mail success', '#OrderId : '.$this->fetchedGiftPurchaseOrder->id, '#Email : '.$this->fetchedGiftPurchaseOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
         } catch (Exception | Throwable $e) {
             updateEmailCount('error');
