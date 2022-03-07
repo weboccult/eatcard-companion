@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Actions;
 
 use Exception;
+use Illuminate\Support\Facades\Redis as LRedis;
 use Throwable;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
@@ -56,7 +57,11 @@ trait TakeawayWebhookCommonActions
             'orderDate'       => $this->fetchedOrder->order_date,
             'is_notification' => $is_notification,
         ];
-        sendWebNotification($this->fetchedStore, $this->fetchedOrder, $takeaway_data);
+        $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder, $takeaway_data);
+        if ($socket_data) {
+            $redis = LRedis::connection();
+            $redis->publish('new_order', json_encode($socket_data));
+        }
     }
 
     public function sendTakeawayUserEmail()

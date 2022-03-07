@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Session;
 use Mollie\Api\Exceptions\ApiException;
 use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 
@@ -30,7 +31,7 @@ class MollieReservationSuccessRedirect extends BaseWebhook
         $payment = Mollie::api()->payments()->get($this->fetchedReservation->mollie_payment_id);
 
         if ($payment->isFailed() || $payment->isCanceled() || $payment->isExpired()) {
-            Session::put('booking_payment_update', ['status' => $payment->status, 'message' => __('messages.booking_failed_msg')]);
+            Session::put('booking_payment_update', ['status' => $payment->status, 'message' => __companionTrans('reservation.booking_failed_msg')]);
             companionLogger('Mollie booking payment failed order', 'OrderId #'.$this->fetchedReservation->id, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         }
 
@@ -45,7 +46,7 @@ class MollieReservationSuccessRedirect extends BaseWebhook
             $data['end_time'] = $this->fetchedReservation->end_time;
             $data['payment_type'] = $this->fetchedReservation->payment_type;
             if ($this->fetchedReservation->status == 'cancelled' || $this->fetchedReservation->status == 'declined') {
-                Session::put('booking_payment_update', ['status' => 'Geannuleerd', 'message' => __('messages.booking_failed_msg')]);
+                Session::put('booking_payment_update', ['status' => 'Geannuleerd', 'message' => __companionTrans('reservation.booking_failed_msg')]);
             } else {
                 Session::put('booking_payment_update', ['status' => $payment->status, 'extra' => $data]);
             }

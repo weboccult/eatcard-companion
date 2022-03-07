@@ -58,6 +58,13 @@ class EatcardCompanionServiceProvider extends ServiceProvider
             return "<?php echo Weboccult\EatcardCompanion\Helpers\phpEncrypt($value); ?>";
         });
 
+        Blade::directive('companionGeneralHelper', function ($arguments) {
+            list($function, $value) = explode(',',$arguments);
+            $function = str_replace("'", '', $function);
+            $value = eval('return '. $value.';');
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\\$function('$value'); ?>";
+        });
+
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
     }

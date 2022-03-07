@@ -116,7 +116,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 										<tr>
 											<td align="center" style="padding:20px 0 0 0">
                                                 @if($store->page_logo)
-												    <img src="{{ getS3File($store->email_page_logo) }}" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Eatcard"/>
+												    <img src="@companionGeneralHelper('getS3File',{{$store->email_page_logo}})" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Eatcard"/>
 											    @endif
                                             </td>
 										</tr>
@@ -290,7 +290,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                                             <table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
                                                                 <tr>
                                                                     <td align="left" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:normal; font-style:normal; color:#000000; padding:0 0 0 0">
-                                                                        <b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€{{changePriceFormat(@$storeRes->meal->price)}})
+                                                                        <b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€@companionGeneralHelper('changePriceFormat', {{@$storeRes->meal->price}}))
                                                                     </td>
                                                                 </tr>
                                                             </table>
@@ -299,7 +299,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                                             <table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
                                                                 <tr>
                                                                     <td align="right" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:bold; font-style:normal; color:#000000; padding:0 0 0 0">
-                                                                        €{{changePriceFormat($storeRes->total_price)}}
+                                                                        €@companionGeneralHelper('changePriceFormat',{{$storeRes->total_price}})
                                                                     </td>
                                                                 </tr>
                                                             </table>
@@ -319,7 +319,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                     <table class="em_wrapper" align="center" width="478" border="0" cellspacing="0" cellpadding="0" style="width:478px; background-color:#F7F7F7; border-radius:12px">
                                         <tr>
                                             <td align="center" style="padding:20px 0 0 0">
-                                                <a href=""><img src="{{ env('AWS_URL').'assets/btn2.png' }}" style="display:block;" width="98" height="24" border="0" alt="Opmerking"/></a>
+                                                <a href=""><img src="{{ env('COMPANION_AWS_URL').'/assets/btn2.png' }}" style="display:block;" width="98" height="24" border="0" alt="Opmerking"/></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -388,13 +388,13 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                                                 <tr>
                                                                     @if($store->facebook_url)
                                                                     <td align="center">
-                                                                        <a href="{{ $store->facebook_url }}"><img class="em_img" src="{{ env('AWS_URL').'assets/facebook2.png' }}" style="display:block" width="24" height="24" border="0" alt="FB"/></a>
+                                                                        <a href="{{ $store->facebook_url }}"><img class="em_img" src="{{ env('COMPANION_AWS_URL').'/assets/facebook2.png' }}" style="display:block" width="24" height="24" border="0" alt="FB"/></a>
                                                                     </td>
                                                                     @endif
                                                                     <td width="5"></td>
                                                                     @if($store->instagram_url)
                                                                     <td align="center">
-                                                                        <a href="{{ $store->instagram_url }}"><img class="em_img" src="{{ env('AWS_URL').'assets/instagram.png' }}" style="display:block" width="24" height="24" border="0" alt="IG"/></a>
+                                                                        <a href="{{ $store->instagram_url }}"><img class="em_img" src="{{ env('COMPANION_AWS_URL').'/assets/instagram.png' }}" style="display:block" width="24" height="24" border="0" alt="IG"/></a>
                                                                     </td>
                                                                     @endif
                                                                 </tr>
@@ -425,7 +425,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                         </tr>
                                         <tr>
                                             <td align="center" style="padding:10px 0 30px 0">
-                                                <img src="{{ env('AWS_URL').'assets/eat_card.png' }}" style="display:block" width="56" height="25" border="0" alt="et card"/>
+                                                <img src="{{ env('COMPANION_AWS_URL').'/assets/eat_card.png' }}" style="display:block" width="56" height="25" border="0" alt="et card"/>
                                             </td>
                                         </tr>
                                     </table>

@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Redis as LRedis;
 use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
@@ -372,7 +373,11 @@ trait Stage12PaymentProcess
                 'is_notification' => 1,
             ];
             $order = $this->createdOrder->toArray();
-            sendWebNotification($this->store, $order, $current_data, 0, 0);
+            $socket_data = sendWebNotification($this->store, $order, $current_data, 0, 0);
+            if ($socket_data) {
+                $redis = LRedis::connection();
+                $redis->publish('new_order', json_encode($socket_data));
+            }
             $this->paymentResponse = [
                 'store_slug' => $this->store->store_slug,
             ];

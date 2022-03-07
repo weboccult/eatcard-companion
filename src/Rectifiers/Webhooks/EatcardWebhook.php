@@ -5,6 +5,11 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks;
 use Exception;
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\WebhookActionNotSupportedException;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MollieGiftCardSuccessRedirect;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MollieGiftCardWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\WorldLineGetFinalPaymentStatusAction;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\WorldLineWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Sms\TwilioSmsWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MollieTakeawayOrderSuccessRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MollieTakeawayOrderWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Reservation\MollieReservationWebhook;
@@ -26,14 +31,17 @@ class EatcardWebhook
     /** @var string|int|null */
     private static $orderId;
 
+    /** @var string */
+    private static $orderType;
+
     /** @var array|null */
-    private static $payload;
+    private static ?array $payload;
 
     /** @var string|int|null */
     private static $reservationId;
 
     /** @var string|int|null */
-    private static $giftCardPurchaseId;
+    private static $giftCardPurchaseOrderId;
 
     /** @var string */
     private static string $domainUrl = '';
@@ -101,6 +109,30 @@ class EatcardWebhook
     }
 
     /**
+     * @param string $orderType
+     *
+     * @return static
+     */
+    public static function setOrderType(string $orderType): self
+    {
+        static::$orderType = $orderType;
+
+        return static::getInstance();
+    }
+
+    /**
+     * @param string|int $giftPurchaseOrderId
+     *
+     * @return static
+     */
+    public static function setGiftPurchaseOrderId($giftPurchaseOrderId): self
+    {
+        static::$giftCardPurchaseOrderId = $giftPurchaseOrderId;
+
+        return static::getInstance();
+    }
+
+    /**
      * @param string|int $reservationId
      *
      * @return static
@@ -142,6 +174,18 @@ class EatcardWebhook
                 break;
             case MollieReservationWebhook::class:
                 static::$webhook->setReservationId(static::$reservationId)->setStoreId(static::$storeId);
+                break;
+            case MollieGiftCardWebhook::class:
+            case MollieGiftCardSuccessRedirect::class:
+                static::$webhook->setGiftCardPurchaseOrderId(static::$giftCardPurchaseOrderId)->setStoreId(static::$storeId);
+                break;
+            case TwilioSmsWebhook::class:
+                // only payload is required, which is already being set before running handle method.
+                break;
+            case WorldLineWebhook::class:
+            case WorldLineGetFinalPaymentStatusAction::class:
+                static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId);
+                // only payload is required, which is already being set before running handle method.
                 break;
             default:
                 throw new WebhookActionNotSupportedException($class);

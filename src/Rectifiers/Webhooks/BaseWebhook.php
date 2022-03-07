@@ -5,10 +5,12 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 
 /**
  * @author Darshit Hedpara
@@ -19,7 +21,13 @@ abstract class BaseWebhook
     public $orderId = null;
 
     /** @var string|int|null */
+    public $orderType = 'order'; // sub_order
+
+    /** @var string|int|null */
     public $storeId = null;
+
+    /** @var string|int|null */
+    public $giftCardPurchaseOrderId = null;
 
     /** @var string|int|null */
     public $reservationId = null;
@@ -35,6 +43,9 @@ abstract class BaseWebhook
 
     /** @var StoreReservation|null|object */
     protected $fetchedReservation = null;
+
+    /** @var GiftPurchaseOrder|null|object */
+    protected $fetchedGiftPurchaseOrder = null;
 
     /** @var string */
     protected string $domainUrl = '';
@@ -76,6 +87,30 @@ abstract class BaseWebhook
     }
 
     /**
+     * @param string $orderType
+     *
+     * @return BaseWebhook
+     */
+    public function setOrderType(string $orderType): self
+    {
+        $this->orderType = $orderType;
+
+        return $this;
+    }
+
+    /**
+     * @param int|string|null $giftCardPurchaseOrderId
+     *
+     * @return BaseWebhook
+     */
+    public function setGiftCardPurchaseOrderId($giftCardPurchaseOrderId): self
+    {
+        $this->giftCardPurchaseOrderId = $giftCardPurchaseOrderId;
+
+        return $this;
+    }
+
+    /**
      * @param array
      *
      * @return BaseWebhook
@@ -107,9 +142,18 @@ abstract class BaseWebhook
     /**
      * @return Builder|Model|object|null
      */
+    protected function fetchAndSetSubOrder($ssai)
+    {
+        return $this->fetchedOrder = SubOrder::where(['worldline_ssai' => $ssai])->firstOrFail();
+    }
+        /**
+        }
+     * @return Builder|Model|object|null
+     */
     protected function fetchAndSetOrder()
     {
         $this->fetchedOrder = Order::with([
+            'kiosk',
             'orderItems' => function ($q1) {
                 $q1->with([
                     'product' => function ($q2) {
@@ -123,6 +167,7 @@ abstract class BaseWebhook
         ])->where('id', $this->orderId)->first();
         if (empty($this->fetchedOrder)) {
             $this->fetchedOrder = OrderHistory::with([
+                'kiosk',
                 'orderItems' => function ($q1) {
                     $q1->with([
                         'product' => function ($q2) {
@@ -154,9 +199,20 @@ abstract class BaseWebhook
         $this->fetchedReservation->refresh();
     }
 
+    protected function updateGiftCardPurchaseOrder(array $data)
+    {
+        $this->fetchedGiftPurchaseOrder->update($data);
+        $this->fetchedGiftPurchaseOrder->refresh();
+    }
+
     protected function fetchAndSetStore()
     {
         $this->fetchedStore = Store::with('store_manager', 'store_owner', 'sqs', 'notificationSetting')->findOrFail($this->storeId);
+    }
+
+    protected function fetchAndSetGiftCardPurchaseOrder()
+    {
+        $this->fetchedGiftPurchaseOrder = GiftPurchaseOrder::with('giftCard')->findOrFail($this->giftCardPurchaseOrderId);
     }
 
     protected function fetchAndSetReservation()

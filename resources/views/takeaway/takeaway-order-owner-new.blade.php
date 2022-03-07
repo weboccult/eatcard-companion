@@ -496,7 +496,7 @@
                                                     </tr>
                                                     <tr>
                                                         <td align="center" style="padding:16px 0 0 0">
-                                                            <a href="http://maps.google.com/maps?q=<?=$store->address?>"><img src="{{ env('AWS_URL').'assets/show-on-map.png' }}" style="display:block" width="115" height="42" border="0" alt="Toon op kaart"/></a>
+                                                            <a href="http://maps.google.com/maps?q=<?=$store->address?>"><img src="{{ env('COMPANION_AWS_URL').'/assets/show-on-map.png' }}" style="display:block" width="115" height="42" border="0" alt="Toon op kaart"/></a>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -505,13 +505,13 @@
                                                                 <tr>
                                                                     @if($store->facebook_url)
                                                                         <td align="center">
-                                                                            <a href="{{ $store->facebook_url }}"><img class="em_img" src="{{ env('AWS_URL').'assets/facebook2.png' }}" style="display:block" width="34" height="34" border="0" alt="FB"/></a>
+                                                                            <a href="{{ $store->facebook_url }}"><img class="em_img" src="{{ env('COMPANION_AWS_URL').'/assets/facebook2.png' }}" style="display:block" width="34" height="34" border="0" alt="FB"/></a>
                                                                         </td>
                                                                     @endif
                                                                     <td width="10"></td>
                                                                     @if($store->instagram_url)
                                                                         <td align="center">
-                                                                            <a href="{{ $store->instagram_url }}"><img class="em_img" src="{{ env('AWS_URL').'assets/instagram.png' }}" style="display:block" width="34" height="34" border="0" alt="IG"/></a>
+                                                                            <a href="{{ $store->instagram_url }}"><img class="em_img" src="{{ env('COMPANION_AWS_URL').'/assets/instagram.png' }}" style="display:block" width="34" height="34" border="0" alt="IG"/></a>
                                                                         </td>
                                                                     @endif
                                                                 </tr>
@@ -532,7 +532,7 @@
                                                     </tr>
                                                     <tr>
                                                         <td align="center" style="padding:15px 0 80px 0">
-                                                            <a href=""><img src="{{ env('AWS_URL').'assets/eat_card.png' }}" style="display:block" width="56" height="25" border="0" alt="eat card"/></a>
+                                                            <a href=""><img src="{{ env('COMPANION_AWS_URL').'/assets/eat_card.png' }}" style="display:block" width="56" height="25" border="0" alt="eat card"/></a>
                                                         </td>
                                                     </tr>
                                                 </table>

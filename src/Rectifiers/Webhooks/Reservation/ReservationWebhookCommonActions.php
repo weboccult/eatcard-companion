@@ -93,7 +93,7 @@ trait ReservationWebhookCommonActions
                     try {
                         $is_send_push = OneSignal::sendPushNotification($push_notification_data);
                         if ($is_send_push) {
-                            $newNotification->users()->detach($userIds);
+                            $newNotification->generalNotificationUsers()->detach($userIds);
                             $newNotification->delete();
                         }
                     } catch (\Exception $exception) {

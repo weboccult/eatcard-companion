@@ -325,14 +325,14 @@
                                         @if($store->facebook_url)
                                             <a style="display: inline-block" href="{{ $store->facebook_url }}"><img
                                                         class="em_img"
-                                                        src="{{ getS3File(env('AWS_URL').'assets/facebook2.png') }}"
+                                                        src="@companionGeneralHelper('getS3File',env('COMPANION_AWS_URL').'/assets/facebook2.png')"
                                                         style="display:block" width="34" height="34" border="0"
                                                         alt="FB"/></a>
                                         @endif
                                         @if($store->instagram_url)
                                             <a style="display: inline-block" href="{{ $store->instagram_url }}"><img
                                                         class="em_img"
-                                                        src="{{ getS3File(env('AWS_URL').'assets/instagram.png') }}"
+                                                        src="@companionGeneralHelper('getS3File',env('COMPANION_AWS_URL').'/assets/instagram.png')"
                                                         style="display:block" width="34" height="34" border="0"
                                                         alt="IG"/></a>
                                         @endif
@@ -345,7 +345,7 @@
                                                 @endif
                                                 <p>Uw order word verwerkt door Eatcard, onze<br/> partner voor takeaway
                                                 </p>
-                                                <img src="{{ getS3File(env('AWS_URL').'assets/eatcard-logo-print.png') }}"
+                                                <img src="@companionGeneralHelper('getS3File',env('COMPANION_AWS_URL').'/assets/eatcard-logo-print.png')"
                                                      style="display:block;padding-top: 5px" width="56" height="25"
                                                      border="0" alt="eat card"/>
                                             </div>
