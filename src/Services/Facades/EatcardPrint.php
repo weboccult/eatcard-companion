@@ -23,6 +23,6 @@ class EatcardPrint extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'eatcard-print';
+        return EatcardPrintCore::class;
     }
 }

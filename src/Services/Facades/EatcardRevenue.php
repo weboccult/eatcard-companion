@@ -23,6 +23,6 @@ class EatcardRevenue extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'eatcard-revenue';
+        return EatcardRevenueCore::class;
     }
 }

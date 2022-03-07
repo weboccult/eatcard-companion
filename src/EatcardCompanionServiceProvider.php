@@ -27,8 +27,10 @@ class EatcardCompanionServiceProvider extends ServiceProvider
                 EatcardSmsPublishCommand::class,
             ]);
 
+            $isLaravel9 = version_compare($this->app->version(), '9.0.0', '>=');
+
             $this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/eatcard-companion'),
+                __DIR__.'/../resources/lang' => $isLaravel9 ? lang_path('vendor/eatcard-companion') : resource_path('lang/vendor/eatcard-companion'),
             ], 'eatcardcompanion-translations');
 
             $this->publishes([
@@ -50,6 +52,18 @@ class EatcardCompanionServiceProvider extends ServiceProvider
 
         Blade::directive('companionTrans', function ($value) {
             return "<?php echo Weboccult\EatcardCompanion\Helpers\__companionTrans($value); ?>";
+        });
+
+        Blade::directive('phpEncrypt', function ($value) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\phpEncrypt($value); ?>";
+        });
+
+        Blade::directive('companionGeneralHelper', function ($arguments) {
+            list($function, $value) = explode(',', $arguments);
+            $function = str_replace("'", '', $function);
+            $value = eval('return '.$value.';');
+
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\\$function('$value'); ?>";
         });
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');

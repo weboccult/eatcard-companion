@@ -25,6 +25,6 @@ class EatcardOrder extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'eatcard-order';
+        return EatcardOrderCore::class;
     }
 }

@@ -27,6 +27,6 @@ class OneSignal extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return 'one-signal';
+        return OneSignalCore::class;
     }
 }

@@ -20,6 +20,7 @@ use Weboccult\EatcardCompanion\Exceptions\TakeawaySettingNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\WorldLineSecretsNotFoundException;
 use Weboccult\EatcardCompanion\Models\ZipCode;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\checkRadiusDistance;
 use function Weboccult\EatcardCompanion\Helpers\checkZipCodeRange;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -78,7 +79,7 @@ trait Stage1PrepareValidationRules
         if ($this->system == SystemTypes::TAKEAWAY) {
             $gift_card_amount = $this->payload['gift_card_amount'] ?? 0;
             if ($this->payload['order_type'] == 'pickup' && ((! $gift_card_amount && $this->takeawaySetting->pickup_min_amount > $this->payload['total']) || ($gift_card_amount && $this->takeawaySetting->pickup_min_amount > $this->payload['old_total']))) {
-                Session::flash('error', __('eatcard-companion::takeaway.order_must_greater', ['min_amount' => $this->takeawaySetting['pickup_min_amount']]));
+                Session::flash('error', __companionTrans('takeaway.order_must_greater', ['min_amount' => $this->takeawaySetting['pickup_min_amount']]));
                 $this->setDumpDieValue(['error' => 'error']);
             }
         }
@@ -184,7 +185,7 @@ trait Stage1PrepareValidationRules
                         $this->setDumpDieValue(['distance_error' => $radius_data['error']]);
                     } else {
                         if ((! $gift_card_amount && $radius_data['delivery_minimum_amount'] > (float) $this->payload['total']) || ($gift_card_amount && $radius_data['delivery_minimum_amount'] > (float) $this->payload['old_total'])) {
-                            Session::flash('error', __('eatcard-companion::takeaway.order_must_greater', ['min_amount' => $radius_data['delivery_minimum_amount']]));
+                            Session::flash('error', __companionTrans('takeaway.order_must_greater', ['min_amount' => $radius_data['delivery_minimum_amount']]));
                             $this->setDumpDieValue([
                                 'minimum_amount_radius' => $radius_data['delivery_minimum_amount'],
                                 'distance' => $radius_data['distance'],

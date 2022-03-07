@@ -16,6 +16,7 @@ use Weboccult\EatcardCompanion\Exceptions\TakeawayPaymentMethodMisMatchedExcepti
 use Weboccult\EatcardCompanion\Exceptions\TakeawayPaymentMethodNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawayPickupDeliveryNotAvailableException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawaySettingNotFoundException;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 
 /**
  * @description Stag 2
@@ -66,7 +67,7 @@ trait Stage2ValidateValidations
         } catch (TakeawayPaymentMethodNotFoundException $e) {
             $this->setDumpDieValue(['payment_method_not_found' => 'error']);
         } catch (TakeawayPickupDeliveryNotAvailableException $e) {
-            Session::flash('error', __('eatcard-companion::takeaway.pickup_delivery_not_available'));
+            Session::flash('error', __companionTrans('takeaway.pickup_delivery_not_available'));
             $this->setDumpDieValue(['error' => 'error']);
         } catch (TakeawayDateNotAvailableException $e) {
             $this->setDumpDieValue(['date_not_available' => 'error']);

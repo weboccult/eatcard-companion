@@ -12,6 +12,7 @@ use Weboccult\EatcardCompanion\Enums\LoggerTypes;
 use Weboccult\EatcardCompanion\Services\Core\EatcardPrint;
 use Weboccult\EatcardCompanion\Services\Core\EatcardOrder;
 use Weboccult\EatcardCompanion\Services\Core\EatcardSms;
+use Weboccult\EatcardCompanion\Services\Core\EatcardEmail;
 use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
 use Weboccult\EatcardCompanion\Services\Core\OneSignal;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardRevenue;
@@ -55,7 +56,7 @@ if (! function_exists('__companionTrans')) {
      *
      * @return string
      */
-    function __companionTrans(string $path): string
+    function __companionTrans(string $path, $replace = []): string
     {
         $isTranslationEnabled = config('eatcardCompanion.enable_translation');
         if (! $isTranslationEnabled) {
@@ -63,7 +64,7 @@ if (! function_exists('__companionTrans')) {
             App::setLocale('en');
         }
 
-        return __('eatcard-companion::'.$path);
+        return __('eatcard-companion::'.$path, $replace);
     }
 }
 
@@ -73,7 +74,7 @@ if (! function_exists('__companionPrintTrans')) {
      *
      * @return string
      */
-    function __companionPrintTrans(string $path): string
+    function __companionPrintTrans(string $path, $replace = []): string
     {
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
@@ -81,7 +82,7 @@ if (! function_exists('__companionPrintTrans')) {
             App::setLocale('nl');
         }
 
-        return __('eatcard-companion::'.$path);
+        return __('eatcard-companion::'.$path, $replace);
     }
 }
 
@@ -130,7 +131,7 @@ if (! function_exists('eatcardPrint')) {
      */
     function eatcardPrint(): EatcardPrint
     {
-        return app('eatcard-print');
+        return app(EatcardPrint::class);
     }
 }
 
@@ -142,7 +143,7 @@ if (! function_exists('eatcardOrder')) {
      */
     function eatcardOrder(): EatcardOrder
     {
-        return app('eatcard-order');
+        return app(EatcardOrder::class);
     }
 }
 
@@ -154,7 +155,7 @@ if (! function_exists('eatcardRevenue')) {
      */
     function eatcardRevenue(): EatcardRevenue
     {
-        return app('eatcard-revenue');
+        return app(EatcardRevenue::class);
     }
 }
 
@@ -166,7 +167,7 @@ if (! function_exists('multiSafe')) {
      */
     function multiSafe(): MultiSafe
     {
-        return app('multi-safe');
+        return app(MultiSafe::class);
     }
 }
 
@@ -178,7 +179,7 @@ if (! function_exists('oneSignal')) {
      */
     function oneSignal(): OneSignal
     {
-        return app('sms');
+        return app(OneSignal::class);
     }
 }
 
@@ -190,6 +191,18 @@ if (! function_exists('eatcardSms')) {
      */
     function eatcardSms(): EatcardSms
     {
-        return app('eatcard-sms');
+        return app(EatcardSms::class);
+    }
+}
+
+if (! function_exists('eatcardEmail')) {
+    /**
+     * Access EmailManager through helper.
+     *
+     * @return EatcardEmail
+     */
+    function eatcardEmail(): EatcardEmail
+    {
+        return app(EatcardEmail::class);
     }
 }

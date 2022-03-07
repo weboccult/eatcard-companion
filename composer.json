@@ -21,18 +21,20 @@
     "ext-curl": "*",
     "ext-json": "*",
     "ext-openssl": "*",
-    "barryvdh/laravel-dompdf": "^0.9.0",
+    "ext-simplexml": "*",
+    "barryvdh/laravel-dompdf": "^0.9.0 || ^1.0.0",
     "cmgmyr/messenger": "^2.22",
     "guzzlehttp/guzzle": "^7.0.1",
-    "illuminate/collections": "^8.0",
-    "illuminate/console": "^8.0",
-    "illuminate/contracts": "^8.80",
-    "illuminate/database": "^8.0",
-    "illuminate/support": "^8.0",
+    "illuminate/collections": "^8.0 || ^9.0",
+    "illuminate/console": "^8.0 || ^9.0",
+    "illuminate/contracts": "^8.80 || ^9.0",
+    "illuminate/database": "^8.0 || ^9.0",
+    "illuminate/support": "^8.0 || ^9.0",
     "mollie/laravel-mollie": "^2.17",
-    "nunomaduro/collision": "^5.0",
+    "nunomaduro/collision": "^5.0 || ^6.1",
     "pestphp/pest": "^1.0",
     "phpunit/phpunit": "^9.0",
+    "simplesoftwareio/simple-qrcode": "^4.2",
     "spatie/laravel-newsletter": "^4.11",
     "twilio/sdk": "^6.33"
   },
@@ -60,21 +62,25 @@
   "extra": {
     "laravel": {
       "aliases": {
+        "EatcardEmail": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardEmail",
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
         "EatcardRevenue": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardRevenue",
         "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
         "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
-        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal"
+        "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal",
+        "Untill": "Weboccult\\EatcardCompanion\\Services\\Facades\\Untill"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardEmailServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardOrderServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardPrintServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardRevenueServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardSmsServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider",
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider"
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\UntillServiceProvider"
       ]
     }
   },

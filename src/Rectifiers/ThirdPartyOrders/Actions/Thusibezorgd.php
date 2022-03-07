@@ -1,9 +1,10 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\Processors;
+namespace Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\Actions;
 
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
@@ -11,10 +12,11 @@ use Weboccult\EatcardCompanion\Models\Notification;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\OrderItem;
+use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\Supplement;
-use Weboccult\EatcardCompanion\Services\Common\ThirdPartyOrders\ThirdPartyOrders;
-use GuzzleHttp\Client;
+use Weboccult\EatcardCompanion\Rectifiers\ThirdPartyOrders\ThirdPartyOrders;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 
 class Thusibezorgd extends ThirdPartyOrders
@@ -213,7 +215,7 @@ class Thusibezorgd extends ThirdPartyOrders
                                     'users'       => [],
                                 ]);
                                 unset($item['supplements']);
-                                $product = Product::where('store_id', $orderData['store_id'])
+                                $product = Product::query()->where('store_id', $orderData['store_id'])
                                     ->where('thuisbezorgd_id', $item['product_id'])
                                     ->whereNull('deleted_at') //need to remove after add soft deleted
                                     ->first();
@@ -347,7 +349,7 @@ class Thusibezorgd extends ThirdPartyOrders
             /*web notification*/
             $createdNotification = Notification::create([
                 'store_id'        => $store->id,
-                'notification'    => __('messages.new_order_notification', [
+                'notification'    => __companionTrans('general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),
