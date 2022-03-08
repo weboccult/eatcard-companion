@@ -161,6 +161,7 @@ return [
                 'production' => 'https://redirect.jforce.be/api/v1',
                 'endpoints'  => [
                     'createOrder' => '/payment',
+                    'fetchOrder' => '/transaction?reference=',
                 ],
                 'webhook'    => [
                     'pos'   => [
