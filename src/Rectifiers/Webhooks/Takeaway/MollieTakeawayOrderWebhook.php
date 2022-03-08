@@ -5,7 +5,6 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway;
 use Carbon\Carbon;
 use Exception;
 use Mollie\Laravel\Facades\Mollie;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Actions\TakeawayDineInCommonActions;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\createDeliveryDetail;
@@ -16,7 +15,7 @@ use function Weboccult\EatcardCompanion\Helpers\sendOrderSms;
  */
 class MollieTakeawayOrderWebhook extends BaseWebhook
 {
-    use TakeawayDineInCommonActions;
+    use TakeawayWebhookCommonActions;
 
     /**
      * @throws Exception

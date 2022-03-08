@@ -4,7 +4,6 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway;
 
 use Carbon\Carbon;
 use Exception;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Actions\TakeawayDineInCommonActions;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
@@ -16,7 +15,7 @@ use function Weboccult\EatcardCompanion\Helpers\sendOrderSms;
  */
 class MultiSafeTakeawayOrderWebhook extends BaseWebhook
 {
-    use TakeawayDineInCommonActions;
+    use TakeawayWebhookCommonActions;
 
     /**
      * @throws Exception

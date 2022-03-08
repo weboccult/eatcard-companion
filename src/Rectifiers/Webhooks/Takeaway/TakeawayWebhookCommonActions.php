@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Actions;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway;
 
 use Exception;
 use Illuminate\Support\Facades\Redis as LRedis;
