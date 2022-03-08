@@ -85,10 +85,24 @@ trait Stage8PrepareAdvanceData
             }
         }
         if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['is_paylater_order'] = 0;
+            if (isset($this->payload['is_pay_later_order']) && $this->payload['is_pay_later_order'] != 1) {
+                if ($this->payload['type'] == 'mollie') {
+                    $this->orderData['payment_method_type'] = 'mollie';
+                } elseif ($this->payload['type'] == 'multisafepay') {
+                    $this->orderData['payment_method_type'] = 'multisafepay';
+                } else {
+                    $this->setDumpDieValue(['payment_type_not_valid' => 'error']);
+                }
+            } else {
+                $this->orderData['method'] = '';
+                $this->orderData['is_paylater_order'] = 1;
+                $this->orderData['status'] = 'pending';
+            }
             if ($this->orderData['method'] == 'cash') {
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             }
-            $this->orderData['payment_method_type'] = $this->payload['type'];
+            // $this->orderData['payment_method_type'] = $this->payload['type'];
         }
         if ($this->system == SystemTypes::KIOSK) {
             if (isset($this->payload['bop']) && ($this->payload['bop'] != '' || $this->payload['bop'] != null) && $this->payload['bop'] == 'wot@kiosk') {
@@ -601,6 +615,9 @@ trait Stage8PrepareAdvanceData
             if ($this->settings['additional_fee']['status'] == true) {
                 $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
+            }
+            if (isset($this->payload['is_pay_later_order']) && $this->payload['is_pay_later_order'] == 1) {
+                $this->orderData['additional_fee'] = 0;
             }
             if ($this->settings['plastic_bag_fee']['status'] == true) {
                 $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];

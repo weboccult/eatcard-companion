@@ -90,7 +90,7 @@ trait Stage11CreateProcess
 
     protected function deductCouponAmountFromPurchaseOrderOperation()
     {
-        if ($this->orderData['method'] == 'cash' && in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::TAKEAWAY])) {
+        if (($this->orderData['method'] == 'cash' || $this->orderData['is_paylater_order'] == 1) && in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::TAKEAWAY])) {
             if (! empty($this->coupon) && ! empty($this->couponRemainingPrice)) {
                 if ($this->coupon->is_multi_usage == 1) {
                     $this->coupon->update(['remaining_price' => $this->couponRemainingPrice]);
