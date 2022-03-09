@@ -1,21 +1,25 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Pos;
 
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis as LRedis;
+use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 
 /**
  * @author Darshit Hedpara
  */
-class CcvKioskOrderWebhook extends BaseWebhook
+class CcvPosSubOrderWebhook extends BaseWebhook
 {
-    use KioskWebhookCommonActions;
+    use PosWebhookCommonActions;
 
     /**
      * @throws Exception|GuzzleException
@@ -29,8 +33,13 @@ class CcvKioskOrderWebhook extends BaseWebhook
         // this will fetch order from db and set into class property
         $this->fetchAndSetStore();
 
-        $this->fetchAndSetOrder();
-        $device = $this->fetchedOrder->kiosk;
+        $this->fetchedOrder = SubOrder::query()->findOrFail($this->orderId);
+        $parentOrder = Order::query()->with([
+            'orderItems',
+            'subOrders.subOrderItems',
+        ])->where('id', $this->fetchedOrder->parent_order_id)->first();
+
+        $device = KioskDevice::query()->where('id', $this->fetchedOrder->kiosk_id);
 
         $client = new Client();
         $url = $device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
@@ -49,28 +58,33 @@ class CcvKioskOrderWebhook extends BaseWebhook
         $response = json_decode($request->getBody()->getContents(), true);
         companionLogger('CCV api res', $response);
 
-        $oldStatus = $this->fetchedOrder->status;
-
         companionLogger('CCV status response', json_encode(['payment_status' => $response['status']], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
         $update_data['status'] = ($response['status'] == 'success') ? 'paid' : $response['status'];
         if ($response['status'] == 'success' && $this->fetchedOrder->status != 'paid') {
             $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             $update_data['ccv_customer_receipt'] = isset($response['details']) ? $response['details']['customerReceipt'] : '';
+            $this->parentOrderCoupon_ReservationCheckout_OrderIgnore_Socket($parentOrder);
+            $this->applyCouponLogic();
         }
         $this->updateOrder($update_data);
-        Cache::forget('get-order-'.$this->fetchedOrder->id);
-        Cache::tags([ORDERS])->flush();
 
-        if ($response['status'] == 'success' && $oldStatus != 'paid') {
-            $notificationResponse = $this->sendNotifications();
-            if (isset($notificationResponse['exception'])) {
-                return $notificationResponse;
-            }
-            $this->sendPrintJsonToSQS();
-            $this->sendTakeawayOwnerEmail();
+        $lastPayment = isset($this->req->is_last_payment) && $this->req->is_last_payment == 1 ? 1 : 0;
+        $current_data = [
+            'orderDate'       => $parentOrder->order_date,
+            'is_notification' => 1,
+        ];
+        $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder, $current_data, $lastPayment);
+        $socket_data['type'] = 'kiosk';
+        $socket_data['kiosk_id'] = $this->fetchedOrder->kiosk_id;
+        if ($socket_data) {
+            $redis = LRedis::connection();
+            $redis->publish('new_order', json_encode($socket_data));
         }
 
-        return true;
+        return [
+            'parent_order' => $parentOrder,
+            'sub_order'    => $this->fetchedOrder,
+        ];
     }
 }

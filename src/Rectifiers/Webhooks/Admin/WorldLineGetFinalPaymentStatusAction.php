@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Weboccult\EatcardCompanion\Models\SubOrder;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineWebhookCommonActions;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
@@ -17,6 +18,8 @@ use function Weboccult\EatcardCompanion\Helpers\companionLogger;
  */
 class WorldLineGetFinalPaymentStatusAction extends BaseWebhook
 {
+    use WorldLineWebhookCommonActions;
+
     /**
      * @throws Exception|GuzzleException
      *
@@ -83,6 +86,12 @@ class WorldLineGetFinalPaymentStatusAction extends BaseWebhook
             $update_data['is_uncertain_status'] = 1;
         }
         $this->updateOrder($update_data);
+
+        if ($this->orderType == 'order') {
+            $this->sendNotifications();
+            $this->sendEmails();
+            $this->sendPrintJsonToSQS();
+        }
 
         return $this->fetchedOrder;
     }

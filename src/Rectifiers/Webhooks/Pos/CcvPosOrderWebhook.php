@@ -1,21 +1,20 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Pos;
 
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @author Darshit Hedpara
  */
-class CcvKioskOrderWebhook extends BaseWebhook
+class CcvPosOrderWebhook extends BaseWebhook
 {
-    use KioskWebhookCommonActions;
+    use PosWebhookCommonActions;
 
     /**
      * @throws Exception|GuzzleException
@@ -57,10 +56,11 @@ class CcvKioskOrderWebhook extends BaseWebhook
         if ($response['status'] == 'success' && $this->fetchedOrder->status != 'paid') {
             $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             $update_data['ccv_customer_receipt'] = isset($response['details']) ? $response['details']['customerReceipt'] : '';
+            $this->applyCouponLogic();
+            $this->checkoutReservation();
+            $this->updateRefOrders();
         }
         $this->updateOrder($update_data);
-        Cache::forget('get-order-'.$this->fetchedOrder->id);
-        Cache::tags([ORDERS])->flush();
 
         if ($response['status'] == 'success' && $oldStatus != 'paid') {
             $notificationResponse = $this->sendNotifications();

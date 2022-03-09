@@ -47,7 +47,7 @@ trait DineInWebhookCommonActions
     public function checkoutReservationAndForgetSession()
     {
         if ($this->fetchedReservation && $this->fetchedReservation->is_dine_in == 1) {
-            $butler_data = isset($store->StoreButler) && $store->StoreButler ? $store->StoreButler : '';
+            $butler_data = isset($this->fetchedStore->StoreButler) && $this->fetchedStore->StoreButler ? $this->fetchedStore->StoreButler : '';
             if ($butler_data && $butler_data->autocheckout_after_payment == 1) {
                 //auto checkout after payment if setting is on
                 $this->updateReservation([
@@ -55,10 +55,10 @@ trait DineInWebhookCommonActions
                     'is_checkout'   => 1,
                     'checkout_from' => 'dine_in',
                 ]);
-                Session::forget('dine-reservation-id-'.$store->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
-                Session::forget('dine-user-name-'.$store->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
-                Session::forget('res_dine_in_id-'.$store->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
-                sendResWebNotification($this->fetchedReservation->id, $store->id, 'remove_booking');
+                Session::forget('dine-reservation-id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+                Session::forget('dine-user-name-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+                Session::forget('res_dine_in_id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
             }
         }
     }
@@ -67,13 +67,13 @@ trait DineInWebhookCommonActions
     {
         // Todo : get print JSON data from EatcardPrint Service
         $printRes = [];
-        if ($printRes && ! empty($printRes)) {
+        if (! empty($printRes)) {
             config([
-                'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
-                'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
-                'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
+                'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,
+                'queue.connections.sqs.queue'  => $this->fetchedStore->sqs->sqs_queue_name,
+                'queue.connections.sqs.prefix' => $this->fetchedStore->sqs->sqs_url,
             ]);
-            Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+            Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->fetchedStore->sqs->sqs_queue_name);
         }
     }
 }

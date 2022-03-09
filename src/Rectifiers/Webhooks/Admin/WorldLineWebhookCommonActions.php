@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin;
 
 use Exception;
 use Illuminate\Support\Facades\Queue;
@@ -15,6 +15,7 @@ use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
 use function Weboccult\EatcardCompanion\Helpers\eatcardPrint;
+use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
 use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
@@ -24,7 +25,7 @@ use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
  *
  * @author Darshit Hedpara
  */
-trait KioskWebhookCommonActions
+trait WorldLineWebhookCommonActions
 {
     /**
      * @return array|void
@@ -53,8 +54,38 @@ trait KioskWebhookCommonActions
         }
     }
 
-    public function sendTakeawayOwnerEmail()
+    public function sendEmails()
     {
+        if ($this->fetchedOrder->email && filter_var($this->fetchedOrder->email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                $content = eatcardPrint()
+                    ->generator(PaidOrderGenerator::class)
+                    ->method(PrintMethod::HTML)
+                    ->type(PrintTypes::MAIN)
+                    ->system(SystemTypes::TAKEAWAY)
+                    ->payload([
+                        'order_id'          => ''.$this->fetchedOrder->id,
+                        'takeawayEmailType' => 'user',
+                    ])
+                    ->generate();
+                $translatedSubject = __companionTrans('takeaway.takeaway_order_user_mail_subject').': '.getDutchDate($this->fetchedOrder->order_date).' - '.$this->fetchedOrder->order_time.' - '.__companionTrans('general.'.$this->fetchedOrder->status);
+                eatcardEmail()
+                    ->entityType('takeaway_user_email')
+                    ->entityId($this->fetchedOrder->id)
+                    ->email($this->fetchedOrder->email)
+                    ->mailType('Takeaway user email')
+                    ->mailFromName($this->fetchedStore->store_name)
+                    ->subject($translatedSubject)
+                    ->content($content)
+                    ->dispatch();
+                updateEmailCount('success');
+                companionLogger('Takeaway order create mail success', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            } catch (Exception | Throwable $e) {
+                updateEmailCount('error');
+                companionLogger('Takeaway order create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            }
+        }
+
         if ($this->fetchedStore->store_email && filter_var($this->fetchedStore->store_email, FILTER_VALIDATE_EMAIL) && ($this->fetchedStore->is_notification) && (! $this->fetchedStore->notificationSetting || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_takeaway_email))) {
             try {
                 $content = eatcardPrint()

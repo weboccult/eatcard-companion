@@ -1,7 +1,8 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Pos;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis as LRedis;
@@ -9,6 +10,12 @@ use Throwable;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
+use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
+use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
+use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
@@ -16,6 +23,7 @@ use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
 use function Weboccult\EatcardCompanion\Helpers\eatcardPrint;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
+use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
@@ -24,8 +32,20 @@ use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
  *
  * @author Darshit Hedpara
  */
-trait KioskWebhookCommonActions
+trait PosWebhookCommonActions
 {
+    public function applyCouponLogic()
+    {
+        $coupon_purchase = GiftPurchaseOrder::query()->where('id', $this->fetchedOrder->gift_purchase_id)->first();
+        if ($coupon_purchase) {
+            if ($coupon_purchase->is_multi_usage == 1) {
+                $coupon_purchase->update(['remaining_price' => $coupon_purchase->remaining_price - $this->fetchedOrder->coupon_price]);
+            } else {
+                $coupon_purchase->update(['remaining_price' => 0]);
+            }
+        }
+    }
+
     /**
      * @return array|void
      */
@@ -45,8 +65,8 @@ trait KioskWebhookCommonActions
             'is_notification' => $is_notification,
         ];
         $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder, $takeaway_data);
-        $socket_data['type'] = 'kiosk';
-        $socket_data['kiosk_id'] = $this->fetchedOrder->kiosk->id;
+        $socket_data['type'] = 'order';
+        $socket_data['kiosk_id'] = $this->fetchedOrder->kiosk_id;
         if ($socket_data) {
             $redis = LRedis::connection();
             $redis->publish('new_order', json_encode($socket_data));
@@ -97,6 +117,71 @@ trait KioskWebhookCommonActions
                 'queue.connections.sqs.prefix' => $this->fetchedStore->sqs->sqs_url,
             ]);
             Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->fetchedStore->sqs->sqs_queue_name);
+        }
+    }
+
+    public function checkoutReservation()
+    {
+        if (isset($this->fetchedOrder->parent_id) && $this->fetchedOrder->parent_id != '') {
+            $reservation = StoreReservation::query()->where('id', $this->fetchedOrder->parent_id)->first();
+            $reservation->update([
+                'end_time'    => now()->format('H:i'),
+                'is_checkout' => 1,
+                'checkout_from' => 'pos',
+            ]);
+            ReservationOrderItem::query()->where('reservation_id', $reservation->id)->update(['split_payment_status' => 0]);
+            ReservationServeRequest::query()->where('reservation_id', $reservation->id)
+                ->where('is_served', 0)
+                ->update(['is_served' => 1]);
+            sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
+        }
+    }
+
+    public function updateRefOrders()
+    {
+        if (isset($this->fetchedOrder->ref_id) && $this->fetchedOrder->ref_id != '') {
+            $oldOrder = Order::query()->where('id', $this->fetchedOrder->ref_id)->first();
+            if ($oldOrder) {
+                $oldOrder->update(['is_ignored' => 1]);
+            }
+        }
+    }
+
+    public function parentOrderCoupon_ReservationCheckout_OrderIgnore_Socket($parentOrder)
+    {
+        if (isset($this->payload->is_last_payment) && $this->payload->is_last_payment == 1) {
+            $final_discount = SubOrder::query()->where('parent_order_id', $this->fetchedOrder->parent_order_id)->sum('coupon_price');
+            if ($parentOrder) {
+                $parentOrder->update([
+                    'status'       => 'paid',
+                    'paid_on'      => Carbon::now()->format('Y-m-d H:i:s'),
+                    'coupon_price' => $final_discount,
+                    'total_price'  => (float) $parentOrder->total_price - (float) $final_discount,
+                ]);
+                $parentOrder->refresh();
+            }
+            if (isset($parentOrder->parent_id) && $parentOrder->parent_id != '') {
+                StoreReservation::query()->where('id', $parentOrder->parent_id)->update([
+                    'end_time'    => Carbon::now()->format('H:i'),
+                    'is_checkout' => 1,
+                    'checkout_from' => 'pos',
+                ]);
+                sendResWebNotification($parentOrder->parent_id, $parentOrder->store_id, 'remove_booking');
+            }
+            if (isset($parentOrder->ref_id) && $parentOrder->ref_id != '') {
+                $oldOrder = Order::query()->where('id', $parentOrder->ref_id)->first();
+                if ($oldOrder) {
+                    $oldOrder->update(['is_ignored' => 1]);
+                }
+            }
+            if (isset($this->fetchedOrder->reservation_id) && ! is_null($this->fetchedOrder->reservation_id)) {
+                StoreReservation::where('id', $this->fetchedOrder->reservation_id)->update([
+                    'end_time'    => Carbon::now()->format('H:i'),
+                    'is_checkout' => 1,
+                    'checkout_from' => 'pos',
+                ]);
+                sendResWebNotification($this->fetchedOrder->reservation_id, $this->fetchedOrder->store_id, 'remove_booking');
+            }
         }
     }
 }
