@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 
@@ -65,7 +66,7 @@ class StoreReservation extends Model
         return $this->hasMany(ReservationServeRequest::class, 'reservation_id')->where('is_served', '<>', 1);
     }
 
-    public function meal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function meal(): HasOne
     {
         return $this->hasOne(Meal::class, 'id', 'meal_type');
     }
