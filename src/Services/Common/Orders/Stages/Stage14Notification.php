@@ -25,12 +25,11 @@ trait Stage14Notification
 {
     protected function sendEmailLogic()
     {
-        if ($this->system === SystemTypes::TAKEAWAY && ($this->createdOrder->method == 'cash' || $this->createdOrder->is_paylater_order == 1))
-        {
+        if ($this->system === SystemTypes::TAKEAWAY && ($this->createdOrder->method == 'cash' || $this->createdOrder->is_paylater_order == 1)) {
             /* User Email */
-           if ($this->createdOrder->email && filter_var($this->createdOrder->email, FILTER_VALIDATE_EMAIL)) {
-               try {
-                   $content = eatcardPrint()
+            if ($this->createdOrder->email && filter_var($this->createdOrder->email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $content = eatcardPrint()
                        ->generator(PaidOrderGenerator::class)
                        ->method(PrintMethod::HTML)
                        ->type(PrintTypes::MAIN)
@@ -40,8 +39,8 @@ trait Stage14Notification
                            'takeawayEmailType' => 'user',
                        ])
                        ->generate();
-                   $translatedSubject = __companionTrans('takeaway.takeaway_order_user_mail_subject').': '.getDutchDate($this->createdOrder->order_date).' - '.$this->createdOrder->order_time.' - '.__companionTrans('general.'.$this->createdOrder->status);
-                   eatcardEmail()
+                    $translatedSubject = __companionTrans('takeaway.takeaway_order_user_mail_subject').': '.getDutchDate($this->createdOrder->order_date).' - '.$this->createdOrder->order_time.' - '.__companionTrans('general.'.$this->createdOrder->status);
+                    eatcardEmail()
                        ->entityType('takeaway_user_email')
                        ->entityId($this->createdOrder->id)
                        ->email($this->createdOrder->email)
@@ -50,15 +49,15 @@ trait Stage14Notification
                        ->subject($translatedSubject)
                        ->content($content)
                        ->dispatch();
-                   updateEmailCount('success');
-                   companionLogger('Takeaway order create mail success', '#OrderId : '.$this->createdOrder->id, '#Email : '.$this->createdOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
-               } catch (Exception | Throwable $e) {
-                   updateEmailCount('error');
-                   companionLogger('Takeaway order create mail error', '#OrderId : '.$this->createdOrder->id, '#Email : '.$this->createdOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
-               }
-           }
+                    updateEmailCount('success');
+                    companionLogger('Takeaway order create mail success', '#OrderId : '.$this->createdOrder->id, '#Email : '.$this->createdOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                } catch (Exception | Throwable $e) {
+                    updateEmailCount('error');
+                    companionLogger('Takeaway order create mail error', '#OrderId : '.$this->createdOrder->id, '#Email : '.$this->createdOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                }
+            }
 
-           /* Owner Email */
+            /* Owner Email */
             if ($this->store->store_email && filter_var($this->store->store_email, FILTER_VALIDATE_EMAIL) && ($this->store->is_notification) && (! $this->store->notificationSetting || ($this->store->notificationSetting && $this->store->notificationSetting->is_takeaway_email))) {
                 try {
                     $content = eatcardPrint()
