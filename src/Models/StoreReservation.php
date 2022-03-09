@@ -64,4 +64,19 @@ class StoreReservation extends Model
     {
         return $this->hasMany(ReservationServeRequest::class, 'reservation_id')->where('is_served', '<>', 1);
     }
+
+    public function meal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Meal::class, 'id', 'meal_type');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(ReservationOrderItem::class, 'reservation_id')->orderBy('round');
+    }
 }
