@@ -141,7 +141,6 @@ return [
     | Setting, webhook, URLs and more.
     |
     */
-
     'payment' => [
         'settings' => [
             /*
@@ -157,13 +156,13 @@ return [
              */
             'exclude_webhook' => env('COMPANION_EXCLUDE_WEBHOOK', false),
         ],
-        'gateway' => [
+        'gateway'  => [
             'ccv'       => [
                 'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
                 'production' => 'https://redirect.jforce.be/api/v1',
                 'endpoints'  => [
                     'createOrder' => '/payment',
-                    'fetchOrder' => '/transaction?reference=',
+                    'fetchOrder'  => '/transaction?reference=',
                 ],
                 'webhook'    => [
                     'pos'   => [
@@ -201,15 +200,15 @@ return [
                 ],
                 'webhook'     => [
                     'takeaway' => '/multisafe/takeaway/webhook/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/webhook/<%id%>/<%store_id%>',
+                    'dine_in'  => '/webhook/multisafe/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
                     'takeaway' => '/multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/orders-success/<%id%>/<%store_id%>',
+                    'dine_in'  => '/orders-success/multisafe/<%id%>/<%store_id%>',
                 ],
                 'cancelUrl'   => [
                     'takeaway' => '/multisafe/takeaway/cancel/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/cancel/<%id%>/<%store_id%>',
+                    'dine_in'  => '/cancel/multisafe/<%id%>/<%store_id%>',
                 ],
             ],
             'mollie'    => [
