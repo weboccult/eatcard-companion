@@ -400,7 +400,7 @@ trait Stage12PaymentProcess
                             ->method(PrintMethod::SQS)
                             ->type(PrintTypes::DEFAULT)
                             ->system(SystemTypes::DINE_IN)
-                            ->payload(['order_id'=>''.$this->orderData['id']])
+                            ->payload(['order_id'=>''.$this->createdOrder['id']])
                             ->generate();
 
             if (! empty($printRes)) {
