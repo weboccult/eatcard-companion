@@ -46,6 +46,14 @@ class Store extends Model
     /**
      * @return HasOne
      */
+    public function store_manager(): HasOne
+    {
+        return $this->hasOne(StoreManager::class, 'store_id', 'id');
+    }
+
+    /**
+     * @return HasOne
+     */
     public function multiSafe(): HasOne
     {
         return $this->hasOne(MultiSafePay::class, 'store_id', 'id');

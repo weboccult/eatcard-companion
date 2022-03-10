@@ -25,7 +25,7 @@ class MultiSafeDineInOrderSuccessRedirect extends BaseWebhook
         // this will fetch order from db and set into class property
         $this->fetchAndSetOrder();
         $this->fetchAndSetStore();
-        $payment = MultiSafe::getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
         if ($payment['status'] == 'completed') {
             $formattedStatus = 'paid';
             $message_status = 'order_received';

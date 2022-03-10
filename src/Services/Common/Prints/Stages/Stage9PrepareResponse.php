@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use function Weboccult\EatcardCompanion\Helpers\__companionPDF;
 use function Weboccult\EatcardCompanion\Helpers\__companionViews;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @description Stag 9
@@ -19,6 +20,7 @@ trait Stage9PrepareResponse
     protected function jsonResponce()
     {
         if ($this->printMethod == PrintMethod::PROTOCOL || $this->printMethod == PrintMethod::SQS) {
+            companionLogger('--Final print json : ', $this->jsonFormatFullReceipt);
             $this->returnResponseData = $this->jsonFormatFullReceipt;
         }
     }

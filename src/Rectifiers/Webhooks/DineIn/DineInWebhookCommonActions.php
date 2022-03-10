@@ -6,7 +6,12 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis as LRedis;
 use Illuminate\Support\Facades\Session;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
@@ -65,8 +70,12 @@ trait DineInWebhookCommonActions
 
     public function sendPrintJsonToSQS()
     {
-        // Todo : get print JSON data from EatcardPrint Service
-        $printRes = [];
+        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                    ->method(PrintMethod::SQS)
+                    ->type(PrintTypes::DEFAULT)
+                    ->system(SystemTypes::DINE_IN)
+                    ->payload(['order_id'=>''.$this->fetchedOrder->id])
+                    ->generate();
         if (! empty($printRes)) {
             config([
                 'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,

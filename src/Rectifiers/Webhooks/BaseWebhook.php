@@ -181,7 +181,7 @@ abstract class BaseWebhook
                 },
             ])->where('id', $this->orderId)->first();
         }
-        if (empty($order)) {
+        if (empty($this->fetchedOrder)) {
             throw new OrderNotFoundException();
         }
 
@@ -208,7 +208,7 @@ abstract class BaseWebhook
 
     protected function fetchAndSetStore()
     {
-        $this->fetchedStore = Store::with('store_manager', 'store_owner', 'sqs', 'notificationSetting')->findOrFail($this->storeId);
+        $this->fetchedStore = Store::with('store_manager', 'store_owner', 'sqs', 'notificationSetting', 'multiSafe')->findOrFail($this->storeId);
     }
 
     protected function fetchAndSetGiftCardPurchaseOrder()
@@ -218,6 +218,8 @@ abstract class BaseWebhook
 
     protected function fetchAndSetReservation()
     {
-        $this->fetchedReservation = StoreReservation::with('meal')->findOrFail($this->reservationId);
+        if (! empty($this->reservationId)) {
+            $this->fetchedReservation = StoreReservation::with('meal')->findOrFail($this->reservationId);
+        }
     }
 }

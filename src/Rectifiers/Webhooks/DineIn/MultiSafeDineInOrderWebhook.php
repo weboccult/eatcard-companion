@@ -30,10 +30,11 @@ class MultiSafeDineInOrderWebhook extends BaseWebhook
         // this will fetch order from db and set into class property
         $this->fetchAndSetOrder();
         $this->fetchAndSetStore();
+        $this->fetchAndSetReservation();
 
         $oldStatus = $this->fetchedOrder->status;
 
-        $payment = MultiSafe::getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
 
         if ($payment['status'] == 'completed') {
             $formattedStatus = 'paid';
@@ -44,7 +45,7 @@ class MultiSafeDineInOrderWebhook extends BaseWebhook
         companionLogger('MultiSafe webhook Payment status', json_encode(['payment_status' => $formattedStatus.'-'.$oldStatus], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
         $update_data = [];
-        $update_data['multisafe_payment_id'] = $payment->id;
+        $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $update_data['status'] = $formattedStatus;
 //        Session::put('payment_update', ['status'  => $formattedStatus]);
 //        $dine_in_data['payment_update'] = ['status' => $formattedStatus];
