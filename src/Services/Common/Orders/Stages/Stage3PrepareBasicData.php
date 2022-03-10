@@ -37,7 +37,7 @@ trait Stage3PrepareBasicData
     protected function prepareDineInType()
     {
         $this->orderData['dine_in_type'] = '';
-        if ($this->system === SystemTypes::POS || $this->system === SystemTypes::DINE_IN ) {
+        if ($this->system === SystemTypes::POS || $this->system === SystemTypes::DINE_IN) {
             if (isset($this->payload['dine_in_type']) && ! empty($this->payload['dine_in_type'])) {
                 $this->orderData['dine_in_type'] = $this->payload['dine_in_type'];
             } else {
@@ -156,7 +156,7 @@ trait Stage3PrepareBasicData
             //set name and mobile if guest user login and inputs don't have value
 //            $is_guest_login = Session::get('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
 //            if (! empty($is_guest_login) && empty($this->payload['first_name'])) {
-            if (!empty($this->table) && empty($this->payload['first_name'])) {
+            if (! empty($this->table) && empty($this->payload['first_name'])) {
                 $this->orderData['first_name'] = $this->payload['name'] = $this->payload['user_name'] = Session::get('dine-guest-user-name-'.$this->store->id.'-'.$this->table->id);
                 $this->orderData['contact_no'] = $this->payload['telephone'] = Session::get('dine-guest-user-mobile-'.$this->store->id.'-'.$this->table->id);
             }
@@ -174,7 +174,7 @@ trait Stage3PrepareBasicData
 
     protected function createReservationForGuestAndResetSession()
     {
-        if ($this->system == SystemTypes::DINE_IN && !empty($this->table)) {
+        if ($this->system == SystemTypes::DINE_IN && ! empty($this->table)) {
 //            if (isset($this->payload['user_name']) && $this->payload['user_name']) {
 //                Session::put('dine-user-name-'.$this->store->id.'-'.$this->table->id, $this->payload['user_name']);
 //            }
