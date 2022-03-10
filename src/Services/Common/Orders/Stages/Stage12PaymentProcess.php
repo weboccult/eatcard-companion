@@ -396,7 +396,6 @@ trait Stage12PaymentProcess
     public function sendPrintJsonToSQS()
     {
         if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
-
             $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                             ->method(PrintMethod::SQS)
                             ->type(PrintTypes::DEFAULT)
@@ -404,7 +403,7 @@ trait Stage12PaymentProcess
                             ->payload(['order_id'=>''.$this->orderData['id']])
                             ->generate();
 
-            if (!empty($printRes)) {
+            if (! empty($printRes)) {
                 config([
                     'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
                     'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
@@ -413,7 +412,6 @@ trait Stage12PaymentProcess
                 Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
             }
         }
-
     }
 
     protected function updateOrderReferenceIdFromPaymentGateway()
