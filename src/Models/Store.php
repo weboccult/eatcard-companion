@@ -79,4 +79,9 @@ class Store extends Model
     {
         return $this->hasOne(StoreButler::class, 'store_id', 'id');
     }
+
+    public function sqs(): HasOne
+    {
+        return $this->hasOne(StoreSqs::class, 'store_id', 'id');
+    }
 }

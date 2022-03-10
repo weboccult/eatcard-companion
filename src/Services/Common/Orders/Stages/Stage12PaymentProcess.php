@@ -4,13 +4,18 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Queue;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis as LRedis;
 use Mollie\Laravel\Facades\Mollie;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
 use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
@@ -372,20 +377,43 @@ trait Stage12PaymentProcess
     protected function cashPayment()
     {
         if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
-            $current_data = [
-                'orderDate'       => $this->createdOrder->order_date,
-                'is_notification' => 1,
-            ];
-            $order = $this->createdOrder->toArray();
-            $socket_data = sendWebNotification($this->store, $order, $current_data, 0, 0);
-            if ($socket_data) {
-                $redis = LRedis::connection();
-                $redis->publish('new_order', json_encode($socket_data));
-            }
+//            $current_data = [
+//                'orderDate'       => $this->createdOrder->order_date,
+//                'is_notification' => 1,
+//            ];
+//            $order = $this->createdOrder->toArray();
+//            $socket_data = sendWebNotification($this->store, $order, $current_data, 0, 0);
+//            if ($socket_data) {
+//                $redis = LRedis::connection();
+//                $redis->publish('new_order', json_encode($socket_data));
+//            }
             $this->paymentResponse = [
                 'store_slug' => $this->store->store_slug,
             ];
         }
+    }
+
+    public function sendPrintJsonToSQS()
+    {
+        if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
+
+            $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                            ->method(PrintMethod::SQS)
+                            ->type(PrintTypes::DEFAULT)
+                            ->system(SystemTypes::DINE_IN)
+                            ->payload(['order_id'=>''.$this->orderData['id']])
+                            ->generate();
+
+            if (!empty($printRes)) {
+                config([
+                    'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
+                    'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
+                    'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
+                ]);
+                Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+            }
+        }
+
     }
 
     protected function updateOrderReferenceIdFromPaymentGateway()
