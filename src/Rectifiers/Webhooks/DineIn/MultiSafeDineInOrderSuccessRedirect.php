@@ -52,7 +52,7 @@ class MultiSafeDineInOrderSuccessRedirect extends BaseWebhook
         $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $this->updateOrder($update_data);
         if (! empty($this->fetchedOrder) && $formattedStatus == 'paid') {
-            if (isset($this->fetchedOrder->parent_id) && ! empty($this->fetchedOrder->parent_id) && $status == 'paid') {
+            if (isset($this->fetchedOrder->parent_id) && ! empty($this->fetchedOrder->parent_id)) {
                 //no need to add table id condition because guest use not have multiple table
                 DineinCart::query()->where('reservation_id', $this->fetchedOrder->parent_id)->delete();
             }
