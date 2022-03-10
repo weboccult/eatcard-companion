@@ -27,11 +27,12 @@ class MultiSafeDineInOrderCancelRedirect extends BaseWebhook
         $payment = MultiSafe::getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
         $status = 'canceled';
         /*MultiSafe payment is canceled*/
-        Session::put('payment_update', ['status' => $status]);
+//        Session::put('payment_update', ['status' => $status]);
         companionLogger('MultiSafe payment failed order', 'OrderId #'.$this->fetchedOrder->id, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         $update_data['multisafe_payment_id'] = isset($payment['transaction_id']) ? $payment['transaction_id'] : '';
         $update_data['status'] = $status;
         $this->updateOrder($update_data);
+        $dine_in_data['payment_update'] = ['status' => $status];
         $dine_in_data['status'] = $status;
         $dine_in_data['store'] = $this->fetchedStore->store_slug;
 

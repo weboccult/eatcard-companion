@@ -55,9 +55,9 @@ trait DineInWebhookCommonActions
                     'is_checkout'   => 1,
                     'checkout_from' => 'dine_in',
                 ]);
-                Session::forget('dine-reservation-id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
-                Session::forget('dine-user-name-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
-                Session::forget('res_dine_in_id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+//                Session::forget('dine-reservation-id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+//                Session::forget('dine-user-name-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
+//                Session::forget('res_dine_in_id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
             }
         }

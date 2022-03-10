@@ -16,6 +16,8 @@ class StoreReservation extends Model
 
     protected $table = 'store_reservations';
 
+    protected $guarded = [];
+
     /**
      * @return array|mixed
      */

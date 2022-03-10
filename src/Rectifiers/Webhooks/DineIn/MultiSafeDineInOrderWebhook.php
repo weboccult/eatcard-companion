@@ -46,7 +46,8 @@ class MultiSafeDineInOrderWebhook extends BaseWebhook
         $update_data = [];
         $update_data['multisafe_payment_id'] = $payment->id;
         $update_data['status'] = $formattedStatus;
-        Session::put('payment_update', ['status'  => $formattedStatus]);
+//        Session::put('payment_update', ['status'  => $formattedStatus]);
+//        $dine_in_data['payment_update'] = ['status' => $formattedStatus];
         if ($formattedStatus == 'paid' && $oldStatus != 'paid') {
             $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
         }

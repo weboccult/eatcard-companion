@@ -37,7 +37,7 @@ trait Stage3PrepareBasicData
     protected function prepareDineInType()
     {
         $this->orderData['dine_in_type'] = '';
-        if ($this->system === SystemTypes::POS) {
+        if ($this->system === SystemTypes::POS || $this->system === SystemTypes::DINE_IN ) {
             if (isset($this->payload['dine_in_type']) && ! empty($this->payload['dine_in_type'])) {
                 $this->orderData['dine_in_type'] = $this->payload['dine_in_type'];
             } else {
@@ -64,7 +64,7 @@ trait Stage3PrepareBasicData
             }
         }
 
-        if ($this->system === SystemTypes::WAITRESS) {
+        if ($this->system === SystemTypes::WAITRESS || $this->system === SystemTypes::DINE_IN) {
             $this->orderData['order_type'] = $this->payload['order_type'] ?? 'dine_in';
         }
 
@@ -154,8 +154,9 @@ trait Stage3PrepareBasicData
             $this->orderData['method'] = $this->payload['method'] ?? 'ideal';
 
             //set name and mobile if guest user login and inputs don't have value
-            $is_guest_login = Session::get('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
-            if (! empty($is_guest_login) && empty($this->payload['first_name'])) {
+//            $is_guest_login = Session::get('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
+//            if (! empty($is_guest_login) && empty($this->payload['first_name'])) {
+            if (!empty($this->table) && empty($this->payload['first_name'])) {
                 $this->orderData['first_name'] = $this->payload['name'] = $this->payload['user_name'] = Session::get('dine-guest-user-name-'.$this->store->id.'-'.$this->table->id);
                 $this->orderData['contact_no'] = $this->payload['telephone'] = Session::get('dine-guest-user-mobile-'.$this->store->id.'-'.$this->table->id);
             }
@@ -173,11 +174,12 @@ trait Stage3PrepareBasicData
 
     protected function createReservationForGuestAndResetSession()
     {
-        if ($this->system == SystemTypes::DINE_IN) {
-            if (isset($this->payload['user_name']) && $this->payload['user_name']) {
-                Session::put('dine-user-name-'.$this->store->id.'-'.$this->table->id, $this->payload['user_name']);
-            }
-            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
+        if ($this->system == SystemTypes::DINE_IN && !empty($this->table)) {
+//            if (isset($this->payload['user_name']) && $this->payload['user_name']) {
+//                Session::put('dine-user-name-'.$this->store->id.'-'.$this->table->id, $this->payload['user_name']);
+//            }
+//            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
+            $session_id = $this->payload['reservation_id'] ?? 0;
             if (! $session_id || (! $this->storeReservation)) {
                 companionLogger('start crete order for guest login user');
                 companionLogger('start crete order for guest login user : session_id : ', $session_id);
@@ -216,12 +218,12 @@ trait Stage3PrepareBasicData
                 }
                 sendResWebNotification($this->storeReservation->id, $this->store->id, 'new_booking');
                 sendResWebNotification($this->storeReservation->id, $this->store->id, 'checkin');
-                Session::put('dine-reservation-id-'.$this->store->id.'-'.$this->table->id, $this->storeReservation->id);
+//                Session::put('dine-reservation-id-'.$this->store->id.'-'.$this->table->id, $this->storeReservation->id);
 
                 //reset get user session after his reservation created / exist
-                Session::forget('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
-                Session::forget('dine-guest-user-name-'.$this->store->id.'-'.$this->table->id);
-                Session::forget('dine-guest-user-mobile-'.$this->store->id.'-'.$this->table->id);
+//                Session::forget('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
+//                Session::forget('dine-guest-user-name-'.$this->store->id.'-'.$this->table->id);
+//                Session::forget('dine-guest-user-mobile-'.$this->store->id.'-'.$this->table->id);
             }
             $this->orderData['reservation_dine_in'] = isset($this->storeReservation) ? $this->storeReservation->is_dine_in : 1;
         }
@@ -247,11 +249,12 @@ trait Stage3PrepareBasicData
             }
         }
         if ($this->system == SystemTypes::DINE_IN) {
-            if ($this->storeReservation->is_qr_scan != 1 && $this->storeReservation->is_dine_in != 1) {
-                $this->storeReservation->update(['is_qr_scan' => 1]);
-            }
             if ($this->storeReservation) {
-                $user_name = Session::get('dine-user-name-'.$this->store->id.'-'.$this->table->id);
+                if ($this->storeReservation->is_qr_scan != 1 && $this->storeReservation->is_dine_in != 1) {
+                    $this->storeReservation->update(['is_qr_scan' => 1]);
+                }
+//                $user_name = Session::get('dine-user-name-'.$this->store->id.'-'.$this->table->id);
+                $user_name = $this->payload['name'] ?? '';
                 $this->orderData['first_name'] = ! empty($user_name) ? $user_name : $this->storeReservation->voornaam;
                 $this->orderData['contact_no'] = $this->storeReservation->gsm_no;
                 if ($this->storeReservation->is_dine_in != 1) {

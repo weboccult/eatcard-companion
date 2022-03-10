@@ -36,7 +36,7 @@ class MollieDineInOrderSuccessRedirect extends BaseWebhook
             $message_status = 'cancelled';
         }
         if ($payment->isFailed() || $payment->isCanceled() || $payment->isExpired()) {
-            Session::put('payment_update', ['status' => $message_status]);
+//            Session::put('payment_update', ['status' => $message_status]);
             companionLogger('Mollie payment failed order', 'OrderId #'.$this->orderId, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         }
         $update_data['mollie_payment_id'] = $payment->id;
@@ -48,16 +48,19 @@ class MollieDineInOrderSuccessRedirect extends BaseWebhook
                 //no need to add table id condition because guest use not have multiple table
                 DineinCart::query()->where('reservation_id', $this->fetchedOrder->parent_id)->delete();
             }
-            Session::put('payment_update', [
-                'id'       => encrypt($this->fetchedOrder['id']),
-                'order_id' => $this->fetchedOrder->order_id,
-                'status'   => $message_status,
-            ]);
+//            Session::put('payment_update', [
+//                'id'       => encrypt($this->fetchedOrder['id']),
+//                'order_id' => $this->fetchedOrder->order_id,
+//                'status'   => $message_status,
+//            ]);
+            $dine_in_data['id'] = encrypt($this->fetchedOrder['id']);
+            $dine_in_data['order_id'] = $this->fetchedOrder->order_id;
+            $dine_in_data['messageStatus'] = $message_status;
             companionLogger('Mollie payment success order #'.$this->fetchedOrder->id.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
             //reset store-qr login after payment done
             if (isset($this->fetchedOrder['dine_in_type']) && ! empty($this->fetchedOrder['dine_in_type']) && $payment->status == 'paid') {
-                Session::forget('dine-store-qr-user-login-'.$this->fetchedStore->id);
-                Session::forget('dine-store-qr-user-dineintype-'.$this->fetchedStore->id);
+//                Session::forget('dine-store-qr-user-login-'.$this->fetchedStore->id);
+//                Session::forget('dine-store-qr-user-dineintype-'.$this->fetchedStore->id);
             }
         }
         $dine_in_data['status'] = $payment->status;

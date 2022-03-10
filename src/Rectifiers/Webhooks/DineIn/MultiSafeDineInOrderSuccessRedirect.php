@@ -45,7 +45,8 @@ class MultiSafeDineInOrderSuccessRedirect extends BaseWebhook
                 $message_status = 'cancelled';
             }
             /*check that MultiSafe payment is failed, canceled or expired or not*/
-            Session::put('payment_update', ['status' => $message_status]);
+//            Session::put('payment_update', ['status' => $message_status]);
+            $dine_in_data['payment_update'] = ['status' => $message_status];
             companionLogger('MultiSafe payment failed order', 'OrderId #'.$this->fetchedOrder->id, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         }
         $update_data['multisafe_payment_id'] = $payment['transaction_id'];
@@ -55,11 +56,14 @@ class MultiSafeDineInOrderSuccessRedirect extends BaseWebhook
                 //no need to add table id condition because guest use not have multiple table
                 DineinCart::query()->where('reservation_id', $this->fetchedOrder->parent_id)->delete();
             }
-            Session::put('payment_update', [
-                'id'       => encrypt($this->fetchedOrder['id']),
-                'order_id' => $this->fetchedOrder->order_id,
-                'status'   => $message_status,
-            ]);
+//            Session::put('payment_update', [
+//                'id'       => encrypt($this->fetchedOrder['id']),
+//                'order_id' => $this->fetchedOrder->order_id,
+//                'status'   => $message_status,
+//            ]);
+            $dine_in_data['id'] = encrypt($this->fetchedOrder['id']);
+            $dine_in_data['order_id'] = $this->fetchedOrder->order_id;
+            $dine_in_data['messageStatus'] = $message_status;
             companionLogger('MultiSafe payment success order', 'OrderId #'.$this->fetchedOrder->id, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         }
         $dine_in_data['status'] = $formattedStatus;

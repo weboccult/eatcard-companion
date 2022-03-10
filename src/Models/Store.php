@@ -74,4 +74,9 @@ class Store extends Model
     {
         return $this->hasOne(StoreUntillSetting::class, 'store_id', 'id');
     }
+
+    public function storeButler(): HasOne
+    {
+        return $this->hasOne(StoreButler::class, 'store_id', 'id');
+    }
 }
