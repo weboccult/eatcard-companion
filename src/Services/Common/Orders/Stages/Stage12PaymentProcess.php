@@ -255,7 +255,7 @@ trait Stage12PaymentProcess
                     ],
                 ];
 
-                companionLogger("--mollie payload : ",$payload);
+                companionLogger('--mollie payload : ', $payload);
 
                 $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
                 if ($isWebhookExcluded) {
@@ -356,7 +356,7 @@ trait Stage12PaymentProcess
                 ],
             ];
 
-            companionLogger("--multiSafe payload : ",$data);
+            companionLogger('--multiSafe payload : ', $data);
 
             $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
             if ($isWebhookExcluded) {

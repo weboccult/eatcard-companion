@@ -146,9 +146,9 @@ trait Stage0BasicDatabaseInteraction
         if ($this->system == SystemTypes::DINE_IN) {
 //            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
             $session_id = $this->payload['reservation_id'] ?? 0;
-            if(!empty($session_id)) {
+            if (! empty($session_id)) {
                 $reservation = StoreReservation::where('id', $session_id)->first();
-                if (!empty($reservation)) {
+                if (! empty($reservation)) {
                     $this->storeReservation = $reservation;
                 }
             }
