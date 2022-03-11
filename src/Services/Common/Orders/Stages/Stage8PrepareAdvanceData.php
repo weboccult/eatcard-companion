@@ -632,7 +632,6 @@ trait Stage8PrepareAdvanceData
         }
 
         if ($this->system == SystemTypes::DINE_IN) {
-
             if ($this->settings['additional_fee']['status'] == true) {
                 $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
