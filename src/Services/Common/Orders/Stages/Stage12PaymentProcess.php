@@ -390,6 +390,7 @@ trait Stage12PaymentProcess
             $this->paymentResponse = [
                 'store_slug' => $this->store->store_slug,
                 'orderId' => $this->createdOrder->id,
+                'reservationId' => $this->createdOrder->parent_id,
             ];
         }
     }
