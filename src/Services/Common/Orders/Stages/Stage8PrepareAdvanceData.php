@@ -553,9 +553,15 @@ trait Stage8PrepareAdvanceData
             if ($normalOrder && $notVoided && $notOnTheHouse) {
                 $deposit = $product->statiege_id_deposite ?? 0;
                 $this->orderItemsData[$key]['statiege_deposite_value'] = $deposit;
-                $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
                 $this->orderItemsData[$key]['total_price'] += $deposit * $item['quantity'];
-                $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
+
+                if (! empty($this->storeReservation) || $this->system == SystemTypes::DINE_IN) {
+                    $this->orderItemsData[$key]['statiege_deposite_total'] = 0;
+                    $this->orderData['statiege_deposite_total'] += 0;
+                } else {
+                    $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
+                    $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
+                }
             }
             if (isset($item['status'])) {
                 $this->orderItemsData[$key]['status'] = $item['status'];
