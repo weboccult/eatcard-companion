@@ -301,7 +301,7 @@ trait Stage8PrepareAdvanceData
                     $isExist = collect($finalSupplements)->search(function ($item) use ($i) {
                         return $item['id'] == $i['id'] && $item['val'] == $i['val'];
                     });
-                    if ($isExist && $i['val'] == $finalSupplements[$isExist]['val']) {
+                    if ($isExist > -1 && $i['val'] == $finalSupplements[$isExist]['val']) {
                         $finalSupplements[$isExist]['qty'] += 1;
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
