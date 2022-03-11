@@ -71,8 +71,7 @@ return [
         'pos'              => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
         'takeaway'         => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
         'kiosk'            => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
-        'dine_in'          => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in.local'),
-        'dine_in_api'      => env('COMPANION_DINE_IN_FRONTEND_ENDPOINT', 'http://eatcard-dine_in.local'),
+        'dine_in'          => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in-api.local'),
         'dine_in_frontend' => env('COMPANION_DINE_FRONTEND_API_ENDPOINT', 'http://eatcard-dine_in.local'),
     ],
 
