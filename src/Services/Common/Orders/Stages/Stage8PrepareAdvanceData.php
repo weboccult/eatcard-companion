@@ -630,6 +630,20 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
             }
         }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+
+            if ($this->settings['additional_fee']['status'] == true) {
+                $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
+            }
+
+            if ($this->settings['plastic_bag_fee']['status'] == true) {
+                $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
+            }
+        }
+
         if ($this->system == SystemTypes::KIOSK) {
             if ($this->settings['delivery_fee']['status'] == true) {
                 $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
