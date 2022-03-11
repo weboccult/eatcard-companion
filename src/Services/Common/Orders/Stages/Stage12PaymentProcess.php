@@ -376,7 +376,7 @@ trait Stage12PaymentProcess
 
     protected function cashPayment()
     {
-        if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
+        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'],['cash','pin'])) {
 //            $current_data = [
 //                'orderDate'       => $this->createdOrder->order_date,
 //                'is_notification' => 1,
@@ -395,7 +395,7 @@ trait Stage12PaymentProcess
 
     public function sendPrintJsonToSQS()
     {
-        if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
+        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'],['cash','pin'])) {
             $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                             ->method(PrintMethod::SQS)
                             ->type(PrintTypes::DEFAULT)
