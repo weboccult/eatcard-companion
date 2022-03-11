@@ -157,7 +157,7 @@ trait Stage3PrepareBasicData
 //            $is_guest_login = Session::get('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
 //            if (! empty($is_guest_login) && empty($this->payload['first_name'])) {
             if (! empty($this->table) && empty($this->payload['first_name'])) {
-                $this->orderData['first_name'] = $this->payload['user_name'] =$this->payload['name'];
+                $this->orderData['first_name'] = $this->payload['user_name'] = $this->payload['name'];
                 $this->orderData['contact_no'] = $this->payload['telephone'];
             }
         }
