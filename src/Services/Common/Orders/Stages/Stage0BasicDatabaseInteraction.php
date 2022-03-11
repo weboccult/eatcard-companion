@@ -56,7 +56,7 @@ trait Stage0BasicDatabaseInteraction
                 FLUSH_STORE_BY_ID.$storeId,
                 TABLES,
                 TABLE_BY_ID.$tableId,
-            ])->remember('{eat-card}-table-by-id-'.$tableId, caching_time, function () use ($tableId) {
+            ])->remember('{eat-card}-table-by-id-'.$tableId, CACHING_TIME, function () use ($tableId) {
                 return Table::findOrFail($tableId);
             });
             if (! empty($table)) {

@@ -194,7 +194,7 @@ trait Stage3PrepareBasicData
                 $store_reservation_inputs = [
                     'store_id'             => $this->store->id,
                     'reservation_id'       => generateReservationId(),
-                    'res_date'             => Carbon::now()->format('Y-m-d H:i:s'),
+                    'res_date'             => Carbon::now()->format('Y-m-d'),
                     'res_time'             => $from_time,
                     'from_time'            => $from_time,
                     'end_time'             => carbonParseAddHoursFormat($from_time, ($this->store->butler_hour && $this->store->butler_hour != 0 ? $this->store->butler_hour : 2), 'H:i'),
