@@ -29,9 +29,12 @@ trait Stage13Broadcasting
         }
         $order = $this->createdOrder->toArray();
         $socket_data = sendWebNotification($this->store, $order, $current_data, 0, $force_refresh);
-        if ($socket_data) {
-            $redis = LRedis::connection();
-            $redis->publish('new_order', json_encode($socket_data));
+
+        if ($this->system != SystemTypes::DINE_IN || ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin']))) {
+            if ($socket_data) {
+                $redis = LRedis::connection();
+                $redis->publish('new_order', json_encode($socket_data));
+            }
         }
     }
 
