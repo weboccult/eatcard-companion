@@ -51,6 +51,11 @@ trait Stage9PerformOperations
 
     protected function undoOperation()
     {
+        //skip for dine-in
+        if ($this->system == SystemTypes::DINE_IN) {
+            return;
+        }
+
         if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id']) && ! empty($this->storeReservation)) {
             $last_order = Order::query()
                 ->where('parent_id', $this->payload['reservation_id'])
