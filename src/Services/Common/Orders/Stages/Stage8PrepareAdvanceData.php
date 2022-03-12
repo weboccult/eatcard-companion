@@ -258,8 +258,8 @@ trait Stage8PrepareAdvanceData
                 -> we need to set pieces price for all without reservation orders
             */
             if ($this->system == SystemTypes::DINE_IN && empty($this->storeReservation)) {
-                if ( isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
-                    $product->price = (float)$product->pieces_price;
+                if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
+                    $product->price = (float) $product->pieces_price;
                 }
             }
 
