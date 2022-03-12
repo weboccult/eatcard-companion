@@ -252,6 +252,17 @@ trait Stage8PrepareAdvanceData
                     $product->price = $allYouCanEatPrice;
                 }
             }
+
+            /*
+             *  -> need to set product piece price for dine-in store and guest 1st order because the not have reservation
+                -> we need to set pieces price for all without reservation orders
+            */
+            if ($this->system == SystemTypes::DINE_IN && empty($this->storeReservation)) {
+                if ( isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
+                    $product->price = (float)$product->pieces_price;
+                }
+            }
+
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
                 if (! $item['base_price']) {
                     $product->price = 0;
