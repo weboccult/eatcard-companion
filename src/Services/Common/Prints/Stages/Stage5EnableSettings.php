@@ -131,7 +131,7 @@ trait Stage5EnableSettings
         $this->additionalSettings['is_until'] = isset($this->reservation->is_until) && $this->reservation->is_until == 1;
 
         //set product pieces true for dinein store-qr orders
-        if (isset($this->order->created_from) && $this->order->created_from == SystemTypes::DINE_IN && empty($this->order->parent_id)){
+        if (isset($this->order->created_from) && $this->order->created_from == SystemTypes::DINE_IN && empty($this->order->parent_id)) {
             $this->additionalSettings['show_no_of_pieces'] = true;
         }
 
