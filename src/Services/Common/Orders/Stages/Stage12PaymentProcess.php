@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Queue;
@@ -392,6 +393,19 @@ trait Stage12PaymentProcess
                 'orderId' => $this->createdOrder->id,
                 'reservationId' => $this->createdOrder->parent_id,
             ];
+
+            //need to uto checkout guest user after his order place if setting is on.
+            if (! empty($this->storeReservation) && $this->storeReservation->is_dine_in == 1) {
+                $autocheckout_after_payment = isset($this->store->storeButler->autocheckout_after_payment) && $this->store->storeButler->autocheckout_after_payment ?? 0;
+                if ($autocheckout_after_payment == 1) {
+                    //auto checkout after payment if setting is on
+                    $this->storeReservation->update([
+                        'end_time'      => Carbon::now()->format('H:i'),
+                        'is_checkout'   => 1,
+                        'checkout_from' => 'dine_in',
+                    ]);
+                }
+            }
         }
     }
 
