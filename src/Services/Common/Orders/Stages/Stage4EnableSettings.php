@@ -75,7 +75,7 @@ trait Stage4EnableSettings
 
         if ($this->system == SystemTypes::DINE_IN) {
             if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_dinein == 1 &&
-                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in') {
+                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in' && (float)$this->payload['plastic_bag_fee'] > 0) {
                 $this->settings['plastic_bag_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
