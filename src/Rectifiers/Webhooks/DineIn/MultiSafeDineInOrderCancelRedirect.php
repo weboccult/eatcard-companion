@@ -35,6 +35,7 @@ class MultiSafeDineInOrderCancelRedirect extends BaseWebhook
         $dine_in_data['payment_update'] = ['status' => $status];
         $dine_in_data['status'] = $status;
         $dine_in_data['store'] = $this->fetchedStore->store_slug;
+        $dine_in_data['orderId'] = $this->fetchedOrder->id;
 
         return $dine_in_data;
     }
