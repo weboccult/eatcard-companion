@@ -185,7 +185,7 @@ abstract class BaseWebhook
             throw new OrderNotFoundException();
         }
 
-        if (isset($this->fetchedOrder->parent_id) && !empty($this->fetchedOrder->parent_id)) {
+        if (isset($this->fetchedOrder->parent_id) && ! empty($this->fetchedOrder->parent_id)) {
             $this->reservationId = $this->fetchedOrder->parent_id ?? null;
         }
 

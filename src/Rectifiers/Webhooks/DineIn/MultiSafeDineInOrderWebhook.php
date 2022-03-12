@@ -32,7 +32,7 @@ class MultiSafeDineInOrderWebhook extends BaseWebhook
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
 
-        companionLogger('--Reservation details : ',$this->fetchedReservation);
+        companionLogger('--Reservation details : ', $this->fetchedReservation);
 
         $oldStatus = $this->fetchedOrder->status;
 
