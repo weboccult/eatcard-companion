@@ -32,6 +32,8 @@ class MultiSafeDineInOrderWebhook extends BaseWebhook
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
 
+        companionLogger('--Reservation details : ',$this->fetchedReservation);
+
         $oldStatus = $this->fetchedOrder->status;
 
         $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
