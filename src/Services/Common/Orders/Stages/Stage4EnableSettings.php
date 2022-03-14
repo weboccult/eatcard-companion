@@ -26,7 +26,7 @@ trait Stage4EnableSettings
             }
         }
         if (in_array($this->system, [SystemTypes::TAKEAWAY, SystemTypes::DINE_IN])) {
-            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
+            if ($this->payload['method'] != 'cash' && isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
                 $this->settings['additional_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->additional_fee ?? 0,
