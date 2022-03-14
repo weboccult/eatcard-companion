@@ -425,7 +425,11 @@ trait Stage12PaymentProcess
                     'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
                     'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
                 ]);
-                Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+                try {
+                    Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+                } catch (\Exception $e) {
+                    companionLogger('Eatcard companion SQS queue send related Exception dine-in', $e);
+                }
             }
         }
     }
