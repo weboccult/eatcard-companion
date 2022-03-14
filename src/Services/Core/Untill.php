@@ -138,8 +138,7 @@ class Untill
     private function fireAPI()
     {
         try {
-
-            companionLogger('Untill API payload', ['xmlData' => $this->xmlData], 'IP address : '.request()->ip(), 'Browser : ' .request()->header('User-Agent'));
+            companionLogger('Untill API payload', ['xmlData' => $this->xmlData], 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
 
             $headers = [
                 'Content-type: text/xml;charset=utf-8',
