@@ -90,6 +90,7 @@ Untill::store($storeEloquentInstance)
        // createOrder method ==> Under the hood it will just build template and set required things like prepare 
        // order nd order item xml data
        ->setPersons(2)
+       ->setFirstName('sdads')
        ->dispatch()       
        
 #------------------------------

@@ -21,6 +21,7 @@ use Weboccult\EatcardCompanion\Services\Core\Untill as UntillCore;
  * @method static self setTableNumber()
  * @method static self setPaymentId($paymentId)
  * @method static self setPersons($persons)
+ * @method static self setFirstName($firstName)
  * @method static self getReturnCode($requestName, $response)
  * @method static self getReturnMessage($requestName, $response)
  * @method static self getOutput($requestName, $responsePath, $response)

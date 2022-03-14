@@ -27,6 +27,20 @@ trait CreateOrder
     }
 
     /**
+     * @param $firstName
+     *
+     * @return Untill
+     */
+    public function setFirstName($firstName): Untill
+    {
+        $this->xmlData = $this->replacer($this->xmlData, [
+            'FIRST_NAME' => $firstName,
+        ]);
+
+        return $this;
+    }
+
+    /**
      * @param array $items
      *
      * @return Untill
