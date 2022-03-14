@@ -15,6 +15,7 @@ trait PropertyAccessor
     /**
      * @param string $requestName
      * @param array $response
+     *
      * @return array|mixed
      */
     public static function getReturnCode(string $requestName, array $response)
@@ -25,6 +26,7 @@ trait PropertyAccessor
     /**
      * @param string $requestName
      * @param array $response
+     *
      * @return array|mixed
      */
     public static function getReturnMessage(string $requestName, array $response)
@@ -34,17 +36,19 @@ trait PropertyAccessor
 
     /**
      * @param array $response
+     *
      * @return array|mixed
      */
     public static function getFaultCode(array $response)
     {
-        return data_get($response, "SOAP-ENV_Body.SOAP-ENV_Fault.faultcode");
+        return data_get($response, 'SOAP-ENV_Body.SOAP-ENV_Fault.faultcode');
     }
 
     /**
      * @param string $requestName
      * @param $responsePath
      * @param $response
+     *
      * @return array|mixed
      */
     public static function getOutput(string $requestName, $responsePath, $response)
