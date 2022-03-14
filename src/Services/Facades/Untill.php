@@ -24,6 +24,7 @@ use Weboccult\EatcardCompanion\Services\Core\Untill as UntillCore;
  * @method static self setFirstName($firstName)
  * @method static self getReturnCode($requestName, $response)
  * @method static self getReturnMessage($requestName, $response)
+ * @method static self getFaultCode($response)
  * @method static self getOutput($requestName, $responsePath, $response)
  * @method static mixed dispatch()
  *
