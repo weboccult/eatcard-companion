@@ -98,6 +98,7 @@ Untill::store($storeEloquentInstance)
 #------------------------------
 Untill::getReturnCode($requestName, $response)
 Untill::getReturnMessage($requestName, $response)
+Untill::getFaultCode($response)
  
 // Example
 Untill::getReturnCode('GetPaymentsInfo', $response);
