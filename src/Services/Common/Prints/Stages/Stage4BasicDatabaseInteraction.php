@@ -70,6 +70,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         $this->subOrder = $subOrder->toArray();
+        companionLogger('Eatcard companion : sub order details', $this->subOrder);
     }
 
     /**
@@ -94,10 +95,12 @@ trait Stage4BasicDatabaseInteraction
         $reservationOrderItems = ReservationOrderItem::with(['table'])->where('id', $this->reservationOrderItemId)->first();
 
         if (empty($reservationOrderItems)) {
+            companionLogger('Eatcard companion : No ReservationOrderItem found');
             throw new ReservationOrderItemEmptyException();
         }
 
         $this->reservationOrderItems = $reservationOrderItems;
+        companionLogger('Eatcard companion : setReservationOrderItemData details', $this->reservationOrderItems);
     }
 
     /**
@@ -142,10 +145,8 @@ trait Stage4BasicDatabaseInteraction
                 ]);
             },
         ])->where('id', $this->orderId)->first();
-        companionLogger('Eatcard companion : Order details : ', $order);
         //if no details found in order then check on history table
         if (empty($order)) {
-            companionLogger('Eatcard companion : Order details -1 : ', $order);
             $order = OrderHistory::with([
                 'orderItems' => function ($q1) use ($orderItemId) {
                     $q1->when($orderItemId > 0, function ($q) use ($orderItemId) {
@@ -236,6 +237,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         $this->saveOrder = $saveOrder;
+        companionLogger('--Eatcard companion SaveOrder details : ', $saveOrder);
     }
 
     /**
@@ -261,8 +263,8 @@ trait Stage4BasicDatabaseInteraction
         if (empty($store)) {
             throw new StoreEmptyException();
         }
-        companionLogger('--Eatcard companion store details : ', $store);
 
+//        companionLogger('--Eatcard companion store details : ', $store);
         $this->store = $store;
     }
 
@@ -298,13 +300,13 @@ trait Stage4BasicDatabaseInteraction
                                 ->remember('{eat-card}-kiosk-device-with-settings'.$deviceId, CACHING_TIME, function () use ($deviceId) {
                                     return*/ KioskDevice::with('settings')->where('id', $deviceId)->first();
         /* });*/
-        companionLogger('--Eatcard companion Kiosk Device details : ', $kiosk);
 
         //skip print if SubOrder print settings is disable
         if ($this->orderType == OrderTypes::SUB && ! empty($kiosk) && isset($kiosk->settings->is_print_split) && $kiosk->settings->is_print_split == 0) {
             throw new SubOrderPrintSettingsDisableException();
         }
 
+        companionLogger('--Eatcard companion kiosk details : ', $kiosk);
         $this->kiosk = $kiosk;
     }
 
@@ -325,6 +327,7 @@ trait Stage4BasicDatabaseInteraction
             throw new KDSUserNotFoundException();
         }
 
+        companionLogger('--Eatcard companion kiosk user : ', $kdsUser);
         $this->kdsUser = $kdsUser;
     }
 }

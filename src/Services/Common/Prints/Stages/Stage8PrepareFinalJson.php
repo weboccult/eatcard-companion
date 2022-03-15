@@ -58,7 +58,7 @@ trait Stage8PrepareFinalJson
         }
 
         $this->jsonFormatFullReceipt['printername'] = $printer_name;
-        companionLogger('--1. printername', $printer_name);
+//        companionLogger('--1. printername', $printer_name);
     }
 
     /**

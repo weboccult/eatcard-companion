@@ -20,7 +20,6 @@ return [
     'plastic_bag' => 'Plastic bag',
     'tip' => 'Tip',
 
-
     /* 5. -> sub total */
     'sub_total' => 'Sub Total',
 

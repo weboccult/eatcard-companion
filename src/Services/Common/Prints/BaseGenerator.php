@@ -261,6 +261,15 @@ abstract class BaseGenerator implements BaseGeneratorContract
      */
     private function stage9_PrepareResponse()
     {
+        companionLogger('Print call Definition', [
+            'Order' => $this->getOrderType(),
+            'Method' => $this->getPrintMethod(),
+            'Type' => $this->getPrintType(),
+            'System' => $this->getSystemType(),
+            'Payload' => $this->getPayload(),
+        ]);
+        companionLogger('Eatcard Print additionalSettings : ', $this->additionalSettings);
+        companionLogger('Eatcard Print advanceData : ', $this->advanceData);
         $this->jsonResponce();
         $this->htmlResponse();
         $this->pdfResponse();
