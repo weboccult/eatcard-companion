@@ -79,7 +79,7 @@ if (! function_exists('__companionPrintTrans')) {
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
             // If not enabled then reset locale to nl
-            App::setLocale('nl');
+            App::setLocale('en');
         }
 
         return __('eatcard-companion::'.$path, $replace);

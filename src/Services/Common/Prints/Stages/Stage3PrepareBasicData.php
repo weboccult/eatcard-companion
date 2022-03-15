@@ -6,6 +6,7 @@ use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
+use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 
 /**
  * @description Stag 3
@@ -102,7 +103,7 @@ trait Stage3PrepareBasicData
                 'summary'                => [],
                 'Total'                  => [
                     [
-                        'key1'   => 'Totaal',
+                        'key1'   => __companionPrintTrans('print.total'),
                         'value1' => '',
                     ],
                 ],

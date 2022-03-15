@@ -154,7 +154,7 @@ class SaveOrderGenerator extends BaseGenerator
             if ($item['size']) {
                 $size_price = isset($item['size']['price']) ? (float) $item['size']['price'] : 0;
                 $item_total += $size_price;
-                $current = __companionPrintTrans('general.'.$item['size']['name']);
+                $current = __companionPrintTrans('print.'.$item['size']['name']);
                 $newItem['itemaddons'][] = $current;
                 $newItem['kitchenitemaddons'][] = $current;
             }
@@ -383,7 +383,7 @@ class SaveOrderGenerator extends BaseGenerator
 
         if ($statiege_deposite_total > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.deposit'),
+                'key'   => __companionPrintTrans('print.deposit'),
                 'value' => ''.changePriceFormat($statiege_deposite_total),
             ];
         }
@@ -405,7 +405,7 @@ class SaveOrderGenerator extends BaseGenerator
 
         if ($sub_total > 0) {
             $subTotal[] = [
-                'key'   => __companionPrintTrans('general.sub_total'),
+                'key'   => __companionPrintTrans('print.sub_total'),
                 'value' => ''.changePriceFormat($sub_total),
             ];
         }
@@ -425,7 +425,7 @@ class SaveOrderGenerator extends BaseGenerator
 
         if ($this->total_dis_inc_tax > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.discount_amount').$this->order_discount_amount_with_prefix,
+                'key'   => __companionPrintTrans('print.discount_amount').$this->order_discount_amount_with_prefix,
                 'value' => '-'.changePriceFormat($this->total_dis_inc_tax),
             ];
         }
