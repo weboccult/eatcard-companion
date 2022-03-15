@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Redis as LRedis;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
+use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 
 /**
@@ -29,9 +30,22 @@ trait Stage13Broadcasting
         }
         $order = $this->createdOrder->toArray();
         $socket_data = sendWebNotification($this->store, $order, $current_data, 0, $force_refresh);
-        if ($socket_data) {
-            $redis = LRedis::connection();
-            $redis->publish('new_order', json_encode($socket_data));
+
+        if ($this->system != SystemTypes::DINE_IN || ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin']))) {
+            if ($socket_data) {
+                $redis = LRedis::connection();
+                $redis->publish('new_order', json_encode($socket_data));
+            }
+        }
+
+        //need to uto checkout guest user after his order place if setting is on.
+        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
+            if (! empty($this->storeReservation) && $this->storeReservation->is_dine_in == 1) {
+                $autocheckout_after_payment = isset($this->store->storeButler->autocheckout_after_payment) && $this->store->storeButler->autocheckout_after_payment ?? 0;
+                if ($autocheckout_after_payment == 1) {
+                    sendResWebNotification($this->storeReservation->id, $this->store->id, 'remove_booking');
+                }
+            }
         }
     }
 

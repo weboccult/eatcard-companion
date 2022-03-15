@@ -90,6 +90,7 @@ Untill::store($storeEloquentInstance)
        // createOrder method ==> Under the hood it will just build template and set required things like prepare 
        // order nd order item xml data
        ->setPersons(2)
+       ->setFirstName('sdads')
        ->dispatch()       
        
 #------------------------------
@@ -97,6 +98,8 @@ Untill::store($storeEloquentInstance)
 #------------------------------
 Untill::getReturnCode($requestName, $response)
 Untill::getReturnMessage($requestName, $response)
+Untill::getFaultCode($response)
+Untill::getFaultCode($response)
  
 // Example
 Untill::getReturnCode('GetPaymentsInfo', $response);
@@ -107,4 +110,5 @@ Untill::getOutput('GetTableItemsInfo', 'Items.item', $response);
 // GetActiveTableInfo ==> Transaction.Orders
 // GetPaymentsInfo ==> Payments Or Payments.item.*.PaymentId
 // GetTableItemsInfo ==> Items.ite
+// GetTableItemsInfo ==> Covers
 ```

@@ -91,6 +91,7 @@ class Order extends Model
         'reservation_paid',
         'saved_order_id',
         'is_base_order',
+        'is_paylater_order',
     ];
 
     protected $appends = ['full_name', 'generated_date'];

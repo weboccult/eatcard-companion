@@ -85,10 +85,24 @@ trait Stage8PrepareAdvanceData
             }
         }
         if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['is_paylater_order'] = 0;
+            if (isset($this->payload['is_pay_later_order']) && $this->payload['is_pay_later_order'] != 1) {
+                if ($this->payload['type'] == 'mollie') {
+                    $this->orderData['payment_method_type'] = 'mollie';
+                } elseif ($this->payload['type'] == 'multisafepay') {
+                    $this->orderData['payment_method_type'] = 'multisafepay';
+                } else {
+                    $this->setDumpDieValue(['payment_type_not_valid' => 'error']);
+                }
+            } else {
+                $this->orderData['method'] = '';
+                $this->orderData['is_paylater_order'] = 1;
+                $this->orderData['status'] = 'pending';
+            }
             if ($this->orderData['method'] == 'cash') {
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             }
-            $this->orderData['payment_method_type'] = $this->payload['type'];
+            // $this->orderData['payment_method_type'] = $this->payload['type'];
         }
         if ($this->system == SystemTypes::KIOSK) {
             if (isset($this->payload['bop']) && ($this->payload['bop'] != '' || $this->payload['bop'] != null) && $this->payload['bop'] == 'wot@kiosk') {
@@ -238,6 +252,17 @@ trait Stage8PrepareAdvanceData
                     $product->price = $allYouCanEatPrice;
                 }
             }
+
+            /*
+             *  -> need to set product piece price for dine-in store and guest 1st order because the not have reservation
+                -> we need to set pieces price for all without reservation orders
+            */
+            if ($this->system == SystemTypes::DINE_IN && empty($this->storeReservation)) {
+                if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
+                    $product->price = (float) $product->pieces_price;
+                }
+            }
+
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
                 if (! $item['base_price']) {
                     $product->price = 0;
@@ -287,7 +312,7 @@ trait Stage8PrepareAdvanceData
                     $isExist = collect($finalSupplements)->search(function ($item) use ($i) {
                         return $item['id'] == $i['id'] && $item['val'] == $i['val'];
                     });
-                    if ($isExist && $i['val'] == $finalSupplements[$isExist]['val']) {
+                    if ($isExist > -1 && $i['val'] == $finalSupplements[$isExist]['val']) {
                         $finalSupplements[$isExist]['qty'] += 1;
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
@@ -539,9 +564,15 @@ trait Stage8PrepareAdvanceData
             if ($normalOrder && $notVoided && $notOnTheHouse) {
                 $deposit = $product->statiege_id_deposite ?? 0;
                 $this->orderItemsData[$key]['statiege_deposite_value'] = $deposit;
-                $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
                 $this->orderItemsData[$key]['total_price'] += $deposit * $item['quantity'];
-                $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
+
+                if (! empty($this->storeReservation) || $this->system == SystemTypes::DINE_IN) {
+                    $this->orderItemsData[$key]['statiege_deposite_total'] = 0;
+                    $this->orderData['statiege_deposite_total'] += 0;
+                } else {
+                    $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
+                    $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
+                }
             }
             if (isset($item['status'])) {
                 $this->orderItemsData[$key]['status'] = $item['status'];
@@ -602,11 +633,27 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
             }
+            if (isset($this->payload['is_pay_later_order']) && $this->payload['is_pay_later_order'] == 1) {
+                $this->orderData['additional_fee'] = 0;
+            }
             if ($this->settings['plastic_bag_fee']['status'] == true) {
                 $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
             }
         }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+            if ($this->settings['additional_fee']['status'] == true) {
+                $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
+            }
+
+            if ($this->settings['plastic_bag_fee']['status'] == true) {
+                $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];
+                $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
+            }
+        }
+
         if ($this->system == SystemTypes::KIOSK) {
             if ($this->settings['delivery_fee']['status'] == true) {
                 $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];

@@ -46,6 +46,14 @@ class Store extends Model
     /**
      * @return HasOne
      */
+    public function store_manager(): HasOne
+    {
+        return $this->hasOne(StoreManager::class, 'store_id', 'id');
+    }
+
+    /**
+     * @return HasOne
+     */
     public function multiSafe(): HasOne
     {
         return $this->hasOne(MultiSafePay::class, 'store_id', 'id');
@@ -73,5 +81,15 @@ class Store extends Model
     public function untillSetting(): HasOne
     {
         return $this->hasOne(StoreUntillSetting::class, 'store_id', 'id');
+    }
+
+    public function storeButler(): HasOne
+    {
+        return $this->hasOne(StoreButler::class, 'store_id', 'id');
+    }
+
+    public function sqs(): HasOne
+    {
+        return $this->hasOne(StoreSqs::class, 'store_id', 'id');
     }
 }

@@ -119,4 +119,7 @@ return [
     'products'                                  => 'Products',
     'discount_price' => 'Actie prijs',
     'day_wise_data' => 'Dagelijkse gegevens',
+
+    'product_pcs'                              => 'Pcs',
+    'product_pc'                               => 'Pc',
 ];
