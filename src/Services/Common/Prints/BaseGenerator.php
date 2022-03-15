@@ -137,7 +137,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
             return $this->returnResponseData;
         } catch (\Exception $e) {
 //            dd($e->getMessage(), $e->getFile(), $e->getLine());
-            companionLogger('Eatcard companion Exception', $e->getMessage(), $e->getFile(), $e->getLine());
+            companionLogger('----Companion Print Exception', $e->getMessage(), $e->getFile(), $e->getLine());
 
             return [];
         }
@@ -261,15 +261,15 @@ abstract class BaseGenerator implements BaseGeneratorContract
      */
     private function stage9_PrepareResponse()
     {
-        companionLogger('Print call Definition', [
+        companionLogger('----Companion Print call Definition', [
             'Order' => $this->getOrderType(),
             'Method' => $this->getPrintMethod(),
             'Type' => $this->getPrintType(),
             'System' => $this->getSystemType(),
             'Payload' => $this->getPayload(),
         ]);
-        companionLogger('Eatcard Print additionalSettings : ', $this->additionalSettings);
-        companionLogger('Eatcard Print advanceData : ', $this->advanceData);
+        companionLogger('----Companion Print additionalSettings : ', $this->additionalSettings);
+        companionLogger('----Companion Print advanceData : ', $this->advanceData);
         $this->jsonResponce();
         $this->htmlResponse();
         $this->pdfResponse();

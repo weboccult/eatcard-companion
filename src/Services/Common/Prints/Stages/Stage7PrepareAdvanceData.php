@@ -455,7 +455,7 @@ trait Stage7PrepareAdvanceData
             }
         }
 
-//        companionLogger('ayce item json prepared', $this->jsonItems);
+//        companionLogger('----Companion Print : ayce item json prepared', $this->jsonItems);
     }
 
     /**

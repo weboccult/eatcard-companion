@@ -46,7 +46,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         if (empty($this->subOrderId)) {
-            companionLogger('Eatcard companion : No order id found for get order details');
+            companionLogger('----Companion Print : No order id found for get order details');
 
             throw new SubOrderEmptyException();
         }
@@ -70,7 +70,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         $this->subOrder = $subOrder->toArray();
-        companionLogger('Eatcard companion : sub order details', $this->subOrder);
+        companionLogger('----Companion Print : sub order details', $this->subOrder);
     }
 
     /**
@@ -95,12 +95,12 @@ trait Stage4BasicDatabaseInteraction
         $reservationOrderItems = ReservationOrderItem::with(['table'])->where('id', $this->reservationOrderItemId)->first();
 
         if (empty($reservationOrderItems)) {
-            companionLogger('Eatcard companion : No ReservationOrderItem found');
+            companionLogger('----Companion Print : No ReservationOrderItem found');
             throw new ReservationOrderItemEmptyException();
         }
 
         $this->reservationOrderItems = $reservationOrderItems;
-        companionLogger('Eatcard companion : setReservationOrderItemData details', $this->reservationOrderItems);
+        companionLogger('----Companion Print : setReservationOrderItemData details', $this->reservationOrderItems);
     }
 
     /**
@@ -120,7 +120,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         if (empty($this->orderId)) {
-            companionLogger('Eatcard companion : No order id found for get order details');
+            companionLogger('----Companion Print : No order id found for get order details');
 
             return;
         }
@@ -168,11 +168,11 @@ trait Stage4BasicDatabaseInteraction
 
         //validate as per order type
         if (empty($order) && in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
-            companionLogger('Eatcard companion : No order Data found for get order details');
+            companionLogger('----Companion Print : No order Data found for get order details');
             throw new OrderNotFoundException();
         }
         $this->order = $order->toArray();
-        companionLogger('Eatcard companion : Order with details', $this->order);
+        companionLogger('----Companion Print : Order with details', $this->order);
     }
 
     /**
@@ -195,7 +195,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         if (empty($this->reservationId)) {
-            companionLogger('Eatcard companion : No reservation found for get reservation');
+            companionLogger('----Companion Print : No reservation found for get reservation');
 
             return;
         }
@@ -211,7 +211,7 @@ trait Stage4BasicDatabaseInteraction
         if ($this->orderType == OrderTypes::RUNNING && $this->printType != PrintTypes::PROFORMA && isset($reservation->is_until) && $reservation->is_until == 1) {
             throw new NoKitchenPrintForUntilException();
         }
-        companionLogger('--Eatcard companion reservation details : ', $reservation);
+        companionLogger('----Companion Print reservation details : ', $reservation);
         $this->reservation = $reservation;
     }
 
@@ -237,7 +237,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         $this->saveOrder = $saveOrder;
-        companionLogger('--Eatcard companion SaveOrder details : ', $saveOrder);
+        companionLogger('----Companion Print SaveOrder details : ', $saveOrder);
     }
 
     /**
@@ -264,7 +264,7 @@ trait Stage4BasicDatabaseInteraction
             throw new StoreEmptyException();
         }
 
-//        companionLogger('--Eatcard companion store details : ', $store);
+//        companionLogger('------Companion Print store details : ', $store);
         $this->store = $store;
     }
 
@@ -306,7 +306,7 @@ trait Stage4BasicDatabaseInteraction
             throw new SubOrderPrintSettingsDisableException();
         }
 
-        companionLogger('--Eatcard companion kiosk details : ', $kiosk);
+        companionLogger('------Companion Print kiosk details : ', $kiosk);
         $this->kiosk = $kiosk;
     }
 
@@ -327,7 +327,7 @@ trait Stage4BasicDatabaseInteraction
             throw new KDSUserNotFoundException();
         }
 
-        companionLogger('--Eatcard companion kiosk user : ', $kdsUser);
+        companionLogger('------Companion Print kiosk user : ', $kdsUser);
         $this->kdsUser = $kdsUser;
     }
 }

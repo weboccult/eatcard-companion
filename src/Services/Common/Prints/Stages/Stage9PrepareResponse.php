@@ -20,7 +20,7 @@ trait Stage9PrepareResponse
     protected function jsonResponce()
     {
         if ($this->printMethod == PrintMethod::PROTOCOL || $this->printMethod == PrintMethod::SQS) {
-            companionLogger('--Final print json : ', $this->jsonFormatFullReceipt);
+            companionLogger('----Companion Print Final print json : ', $this->jsonFormatFullReceipt);
             $this->returnResponseData = $this->jsonFormatFullReceipt;
         }
     }
