@@ -88,6 +88,10 @@ trait Stage3PrepareBasicData
         } else {
             $this->orderData['created_from'] = strtolower($this->getSystem());
         }
+
+        if ($this->system === SystemTypes::DINE_IN) {
+            $this->orderData['created_from'] = 'dine_in_2';
+        }
     }
 
     protected function prepareOrderStatus()
