@@ -206,8 +206,8 @@ trait Stage3PrepareBasicData
                     'gsm_no'               => $this->payload['telephone'] ?? '',
                     'payment_status'       => '',
                     'local_payment_status' => '',
-                    'created_from'         => 'dine_in',
-                    'checkin_from'         => 'dine_in',
+                    'created_from'         => 'dine_in_2',
+                    'checkin_from'         => 'dine_in_2',
                 ];
                 $this->storeReservation = StoreReservation::create($store_reservation_inputs);
                 if ($this->storeReservation) {

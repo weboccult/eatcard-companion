@@ -402,7 +402,7 @@ trait Stage12PaymentProcess
                     $this->storeReservation->update([
                         'end_time'      => Carbon::now()->format('H:i'),
                         'is_checkout'   => 1,
-                        'checkout_from' => 'dine_in',
+                        'checkout_from' => 'dine_in_2',
                     ]);
                 }
             }

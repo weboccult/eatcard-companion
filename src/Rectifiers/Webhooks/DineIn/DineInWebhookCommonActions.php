@@ -58,7 +58,7 @@ trait DineInWebhookCommonActions
                 $this->updateReservation([
                     'end_time'      => Carbon::now()->format('H:i'),
                     'is_checkout'   => 1,
-                    'checkout_from' => 'dine_in',
+                    'checkout_from' => 'dine_in_2',
                 ]);
 //                Session::forget('dine-reservation-id-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
 //                Session::forget('dine-user-name-'.$this->fetchedStore->id.'-'.$this->fetchedReservation['tables'][0]['table_id']);
