@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin;
 
 use Carbon\Carbon;
 use Exception;
