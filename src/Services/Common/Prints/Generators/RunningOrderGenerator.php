@@ -216,7 +216,7 @@ class RunningOrderGenerator extends BaseGenerator
             if ($item['size']) {
                 $size_price = isset($item['size']['price']) ? (float) $item['size']['price'] : 0;
                 $item_total += $size_price;
-                $current = __companionPrintTrans('general.'.$item['size']['name']);
+                $current = __companionPrintTrans('print.'.$item['size']['name']);
                 $newItem['itemaddons'][] = $current;
                 $newItem['kitchenitemaddons'][] = $current;
             }
@@ -471,7 +471,7 @@ class RunningOrderGenerator extends BaseGenerator
 
         if ($sub_total > 0) {
             $subTotal[] = [
-                'key'   => __companionPrintTrans('general.sub_total'),
+                'key'   => __companionPrintTrans('print.sub_total'),
                 'value' => ''.changePriceFormat($sub_total),
             ];
         }
@@ -492,14 +492,14 @@ class RunningOrderGenerator extends BaseGenerator
 
         if (($this->reservation['total_price'] ?? 0) > 0) {
             $summary[] = [
-                'key'   =>  __companionPrintTrans('general.reservation_deposit'),
+                'key'   =>  __companionPrintTrans('print.reservation_deposit'),
                 'value' => '-'.changePriceFormat(($this->reservation['total_price'] ?? 0)),
             ];
         }
 
         if ($this->total_dis_inc_tax > 0) {
             $summary[] = [
-                   'key'   => __companionPrintTrans('general.discount_amount').$this->order_discount_amount_with_prefix,
+                   'key'   => __companionPrintTrans('print.discount_amount').$this->order_discount_amount_with_prefix,
                    'value' => '-'.changePriceFormat($this->total_dis_inc_tax),
                ];
         }
@@ -507,7 +507,7 @@ class RunningOrderGenerator extends BaseGenerator
         if (isset($this->reservation['coupon_price']) && $this->reservation['coupon_price'] > 0) {
             $remaining_Coupon_price = GiftPurchaseOrder::where('id', $this->reservation['gift_purchase_id'])->first();
             $summary[] = [
-                'key'   => __companionPrintTrans('general.gift_voucher_cost').' ('.changePriceFormat($remaining_Coupon_price->remaining_price).')',
+                'key'   => __companionPrintTrans('print.gift_voucher_cost').' ('.changePriceFormat($remaining_Coupon_price->remaining_price).')',
                 'value' => '-'.changePriceFormat($this->reservation['coupon_price']),
             ];
         }

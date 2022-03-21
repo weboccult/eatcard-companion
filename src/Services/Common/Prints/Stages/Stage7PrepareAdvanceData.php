@@ -455,7 +455,7 @@ trait Stage7PrepareAdvanceData
             }
         }
 
-        companionLogger('ayce item json prepared', $this->jsonItems);
+//        companionLogger('----Companion Print : ayce item json prepared', $this->jsonItems);
     }
 
     /**
@@ -617,7 +617,7 @@ trait Stage7PrepareAdvanceData
                 if ($extra->size) {
                     $size_price = isset($extra->size->price) ? (float) $extra->size->price : 0;
                     $item_total += $size_price;
-                    $current = __companionPrintTrans('general.'.$extra->size->name);
+                    $current = __companionPrintTrans('print.'.$extra->size->name);
                     $newItem['itemaddons'][] = $current;
                     $newItem['kitchenitemaddons'][] = $current;
                 }
@@ -974,31 +974,31 @@ trait Stage7PrepareAdvanceData
 
         if ($statiege_deposite_total > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.deposit'),
+                'key'   => __companionPrintTrans('print.deposit'),
                 'value' => ''.changePriceFormat($statiege_deposite_total),
             ];
         }
         if ($delivery_fee > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.delivery_fee'),
+                'key'   => __companionPrintTrans('print.delivery_fee'),
                 'value' => ''.changePriceFormat($delivery_fee),
             ];
         }
         if ($additional_fee > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.additional_fees_title'),
+                'key'   => __companionPrintTrans('print.additional_fees_title'),
                 'value' => ''.changePriceFormat($additional_fee),
             ];
         }
         if ($plastic_bag_fee > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.bag'),
+                'key'   => __companionPrintTrans('print.bag'),
                 'value' => ''.changePriceFormat($plastic_bag_fee),
             ];
         }
         if ($tip_amount > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.tip'),
+                'key'   => __companionPrintTrans('print.tip'),
                 'value' => ''.changePriceFormat($tip_amount),
             ];
         }
@@ -1027,7 +1027,7 @@ trait Stage7PrepareAdvanceData
 
         if ($sub_total > 0) {
             $subTotal[] = [
-                'key'   => __companionPrintTrans('general.sub_total'),
+                'key'   => __companionPrintTrans('print.sub_total'),
                 'value' => ''.changePriceFormat($sub_total),
             ];
         }
@@ -1198,21 +1198,21 @@ trait Stage7PrepareAdvanceData
 
         if ($discount_amount > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.discount_amount').$discount_type_sign_with_amount,
+                'key'   => __companionPrintTrans('print.discount_amount').$discount_type_sign_with_amount,
                 'value' => '-'.changePriceFormat($discount_amount),
             ];
         }
 
         if ($reservation_paid > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.reservation_deposit'),
+                'key'   => __companionPrintTrans('print.reservation_deposit'),
                 'value' => '-'.changePriceFormat($reservation_paid),
             ];
         }
 
         if ($coupon_price > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('general.gift_voucher_cost').'('.changePriceFormat($remaining_Coupon_price->remaining_price ?? 0).')',
+                'key'   => __companionPrintTrans('print.gift_voucher_cost').'('.changePriceFormat($remaining_Coupon_price->remaining_price ?? 0).')',
                 'value' => '-'.changePriceFormat($coupon_price),
             ];
         }
@@ -1250,7 +1250,7 @@ trait Stage7PrepareAdvanceData
             if ($this->order['payment_split_type'] == PaymentSplitTypes::EQUAL_SPLIT && $this->order['payment_split_persons']) {
                 $split_no = ($this->subOrder['split_no']) ? ''.$this->subOrder['split_no'] : '';
                 $summary[] = [
-                    'key'   => __companionPrintTrans('general.split'),
+                    'key'   => __companionPrintTrans('print.split'),
                     'value' => $split_no.'/'.$this->order['payment_split_persons'],
                 ];
             }
@@ -1260,18 +1260,18 @@ trait Stage7PrepareAdvanceData
             $cash_changes = $cash_paid > 0 ? ($cash_paid - $total_price) : 0;
             $cash_received = $total_price + $cash_changes;
             $summary[] = [
-               'key'   => __companionPrintTrans('general.payment_by'),
-               'value' => __companionPrintTrans('general.cash'),
+               'key'   => __companionPrintTrans('print.payment_by'),
+               'value' => __companionPrintTrans('print.cash'),
            ];
 
             $summary[] = [
-                'key'   => __companionPrintTrans('general.cash_paid_cost'),
+                'key'   => __companionPrintTrans('print.cash_paid_cost'),
                 'value' => ''.changePriceFormat($cash_received),
             ];
 
             if ($cash_paid > 0 && $cash_changes > 0) {
                 $summary[] = [
-                    'key'   => __companionPrintTrans('general.cash_changes'),
+                    'key'   => __companionPrintTrans('print.cash_changes'),
                     'value' => ''.changePriceFormat($cash_changes),
                 ];
             }

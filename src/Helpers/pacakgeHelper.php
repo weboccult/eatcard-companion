@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Helpers;
 
 use Barryvdh\DomPDF\PDF;
+use Composer\InstalledVersions;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,20 @@ use Weboccult\EatcardCompanion\Services\Core\EatcardEmail;
 use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
 use Weboccult\EatcardCompanion\Services\Core\OneSignal;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardRevenue;
+
+if (! function_exists('packageVersion')) {
+    /**
+     * @return string
+     */
+    function packageVersion(): string
+    {
+        try {
+            return (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
+        } catch (Exception $e) {
+            return 'Unknown';
+        }
+    }
+}
 
 if (! function_exists('companionLogger')) {
     /**
@@ -42,7 +57,7 @@ if (! function_exists('companionLogger')) {
         $logContent = collect($values)->pipeInto(Stringable::class)->jsonSerialize();
         switch ($driver) {
             case LoggerTypes::FILE:
-                Log::info($logContent);
+                Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
                 break;
             case LoggerTypes::CLOUDWATCH:
                 break;
@@ -79,7 +94,7 @@ if (! function_exists('__companionPrintTrans')) {
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
             // If not enabled then reset locale to nl
-            App::setLocale('nl');
+            App::setLocale('en');
         }
 
         return __('eatcard-companion::'.$path, $replace);

@@ -17,7 +17,7 @@ trait Stage2ValidateValidations
      */
     protected function validateCommonRules()
     {
-        companionLogger('--common rules', $this->getCommonRules());
+        companionLogger('----Companion Print : ', 'common rules', $this->getCommonRules());
         foreach ($this->getCommonRules() as $ex => $condition) {
             throw_if($condition, new $ex());
         }
@@ -30,7 +30,7 @@ trait Stage2ValidateValidations
      */
     protected function validateGeneratorSpecificRules()
     {
-        companionLogger('--generator rules', $this->getGeneratorSpecificRules());
+        companionLogger('----Companion Print : ', 'generator rules', $this->getGeneratorSpecificRules());
         foreach ($this->getGeneratorSpecificRules() as $ex => $condition) {
             throw_if($condition, new $ex());
         }

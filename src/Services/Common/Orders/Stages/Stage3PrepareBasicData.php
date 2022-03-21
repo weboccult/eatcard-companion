@@ -88,6 +88,10 @@ trait Stage3PrepareBasicData
         } else {
             $this->orderData['created_from'] = strtolower($this->getSystem());
         }
+
+        if ($this->system === SystemTypes::DINE_IN) {
+            $this->orderData['created_from'] = 'dine_in_2';
+        }
     }
 
     protected function prepareOrderStatus()
@@ -206,8 +210,8 @@ trait Stage3PrepareBasicData
                     'gsm_no'               => $this->payload['telephone'] ?? '',
                     'payment_status'       => '',
                     'local_payment_status' => '',
-                    'created_from'         => 'dine_in',
-                    'checkin_from'         => 'dine_in',
+                    'created_from'         => 'dine_in_2',
+                    'checkin_from'         => 'dine_in_2',
                 ];
                 $this->storeReservation = StoreReservation::create($store_reservation_inputs);
                 if ($this->storeReservation) {
