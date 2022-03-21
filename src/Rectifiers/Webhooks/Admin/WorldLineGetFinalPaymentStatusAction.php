@@ -9,7 +9,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Weboccult\EatcardCompanion\Models\SubOrder;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineWebhookCommonActions;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
