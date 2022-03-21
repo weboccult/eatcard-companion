@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Actions;
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Reservation;
 
 use Exception;
 use Throwable;
