@@ -243,7 +243,7 @@ trait Stage8PrepareAdvanceData
                     if (isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '' && $this->storeReservation->reservation_type != 'all_you_eat') {
                         $allYouCanEatPrice = (float) $product->pieces_price;
                         // set_product_pieces_in_name($product, $is_need_update);
-                        $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 100 ? substr($product->name, 0, 100) . '...' : $product->name;
+                        $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 100 ? substr($product->name, 0, 100).'...' : $product->name;
                     }
                 }
                 companionLogger('Product ayce price', $allYouCanEatPrice);
@@ -494,7 +494,7 @@ trait Stage8PrepareAdvanceData
                 $transferItems['forRoundNumber'] = $item['forRoundNumber'] ?? null;
             }
             $this->orderItemsData[$key]['product_id'] = $product->id;
-            $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 100 ? substr($product->name, 0, 100) . '...' : $product->name;;
+            $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 100 ? substr($product->name, 0, 100).'...' : $product->name;
             $this->orderItemsData[$key]['quantity'] = $item['quantity'];
 
             if ($this->system === SystemTypes::KIOSK) {
