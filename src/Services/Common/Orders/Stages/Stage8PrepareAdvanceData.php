@@ -494,7 +494,7 @@ trait Stage8PrepareAdvanceData
                 $transferItems['forRoundNumber'] = $item['forRoundNumber'] ?? null;
             }
             $this->orderItemsData[$key]['product_id'] = $product->id;
-            $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 80 ? substr($product->name, 0, 80) .'...' : $product->name;
+            $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 80 ? substr($product->name, 0, 80).'...' : $product->name;
             $this->orderItemsData[$key]['quantity'] = $item['quantity'];
 
             if ($this->system === SystemTypes::KIOSK) {
