@@ -54,7 +54,7 @@ trait Stage6DatabaseInteraction
                             ->orderBy('order', 'asc')
                             ->get();
 
-        companionLogger('--Eatcard companion categories details : ', $categories);
+//        companionLogger('----Companion Print categories details : ', $categories);
         $this->categories = $categories;
     }
 }

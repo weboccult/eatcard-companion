@@ -2,14 +2,21 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Queue;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Redis as LRedis;
 use Mollie\Laravel\Facades\Mollie;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
 use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
@@ -249,6 +256,8 @@ trait Stage12PaymentProcess
                     ],
                 ];
 
+                companionLogger('--mollie payload : ', $payload);
+
                 $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
                 if ($isWebhookExcluded) {
                     unset($payload['webhookUrl']);
@@ -348,6 +357,8 @@ trait Stage12PaymentProcess
                 ],
             ];
 
+            companionLogger('--multiSafe payload : ', $data);
+
             $isWebhookExcluded = config('eatcardCompanion.payment.settings.exclude_webhook');
             if ($isWebhookExcluded) {
                 unset($data['payment_options']['notification_url']);
@@ -366,16 +377,60 @@ trait Stage12PaymentProcess
 
     protected function cashPayment()
     {
-        if ($this->system === SystemTypes::DINE_IN && $this->orderData['method'] == 'cash') {
-            $current_data = [
-                'orderDate'       => $this->createdOrder->order_date,
-                'is_notification' => 1,
-            ];
-            $order = $this->createdOrder->toArray();
-            sendWebNotification($this->store, $order, $current_data, 0, 0);
+        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
+//            $current_data = [
+//                'orderDate'       => $this->createdOrder->order_date,
+//                'is_notification' => 1,
+//            ];
+//            $order = $this->createdOrder->toArray();
+//            $socket_data = sendWebNotification($this->store, $order, $current_data, 0, 0);
+//            if ($socket_data) {
+//                $redis = LRedis::connection();
+//                $redis->publish('new_order', json_encode($socket_data));
+//            }
             $this->paymentResponse = [
                 'store_slug' => $this->store->store_slug,
+                'orderId' => $this->createdOrder->id,
+                'reservationId' => $this->createdOrder->parent_id,
             ];
+
+            //need to uto checkout guest user after his order place if setting is on.
+            if (! empty($this->storeReservation) && $this->storeReservation->is_dine_in == 1) {
+                $autocheckout_after_payment = isset($this->store->storeButler->autocheckout_after_payment) && $this->store->storeButler->autocheckout_after_payment ?? 0;
+                if ($autocheckout_after_payment == 1) {
+                    //auto checkout after payment if setting is on
+                    $this->storeReservation->update([
+                        'end_time'      => Carbon::now()->format('H:i'),
+                        'is_checkout'   => 1,
+                        'checkout_from' => 'dine_in_2',
+                    ]);
+                }
+            }
+        }
+    }
+
+    public function sendPrintJsonToSQS()
+    {
+        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
+            $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                            ->method(PrintMethod::SQS)
+                            ->type(PrintTypes::DEFAULT)
+                            ->system(SystemTypes::DINE_IN)
+                            ->payload(['order_id'=>''.$this->createdOrder['id']])
+                            ->generate();
+
+            if (! empty($printRes)) {
+                config([
+                    'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
+                    'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
+                    'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
+                ]);
+                try {
+                    Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+                } catch (\Exception $e) {
+                    companionLogger('Eatcard companion SQS queue send related Exception dine-in', $e);
+                }
+            }
         }
     }
 

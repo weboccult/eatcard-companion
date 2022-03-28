@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReservationTable extends Model
 {
+    protected $fillable = [
+            'reservation_id',
+            'table_id',
+        ];
+
     /**
      * @return BelongsTo
      */

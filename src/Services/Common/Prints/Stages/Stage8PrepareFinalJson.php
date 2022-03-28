@@ -58,7 +58,7 @@ trait Stage8PrepareFinalJson
         }
 
         $this->jsonFormatFullReceipt['printername'] = $printer_name;
-        companionLogger('--1. printername', $printer_name);
+//        companionLogger('----Companion Print printername', $printer_name);
     }
 
     /**
@@ -333,7 +333,7 @@ trait Stage8PrepareFinalJson
         } else {
             $logo = isset($this->additionalSettings['kiosk_data']['kiosk_logo']) && ! empty($this->additionalSettings['kiosk_data']['kiosk_logo'])
                     ? $this->additionalSettings['kiosk_data']['kiosk_logo'] : ($this->store->page_logo ?? '');
-            $eatcardLogo = config('eatcardCompanion.aws_url').'assets/eatcard-logo-print.png';
+            $eatcardLogo = config('eatcardCompanion.aws_url').'/assets/eatcard-logo-print.png';
         }
 
         $this->jsonFormatFullReceipt['logo'] = ! empty($logo) ? ImageFilters::applyFilter('StorePrintLogoImage', $logo) : '';

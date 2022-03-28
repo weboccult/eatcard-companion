@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 
 class Meal extends Model
 {
@@ -35,9 +36,9 @@ class Meal extends Model
     {
         $paymentType = '';
         if ($this->payment_type == 1) {
-            $paymentType = __('eatcard-companion::general.full_payment');
+            $paymentType = __companionTrans('general.full_payment');
         } elseif ($this->payment_type == 3) {
-            $paymentType = __('eatcard-companion::general.partial_payment');
+            $paymentType = __companionTrans('general.partial_payment');
         }
 
         return $paymentType;

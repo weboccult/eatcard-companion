@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 
@@ -14,6 +15,8 @@ class StoreReservation extends Model
     use SoftDeletes;
 
     protected $table = 'store_reservations';
+
+    protected $guarded = [];
 
     /**
      * @return array|mixed
@@ -63,5 +66,20 @@ class StoreReservation extends Model
     public function activeServeRequests(): HasMany
     {
         return $this->hasMany(ReservationServeRequest::class, 'reservation_id')->where('is_served', '<>', 1);
+    }
+
+    public function meal(): HasOne
+    {
+        return $this->hasOne(Meal::class, 'id', 'meal_type');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(ReservationOrderItem::class, 'reservation_id')->orderBy('round');
     }
 }

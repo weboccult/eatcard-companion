@@ -1,0 +1,19 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:TPAPIPosIntfU-ITPAPIPOS"
+                  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <urn:GetActiveTableInfo soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+            <Request xsi:type="urn:TGetActiveTableInfoRequest" xmlns:urn="urn:TPAPIPosIntfU">
+                <Password xsi:type="xsd:string">@PASSWORD@</Password>
+                <UserName xsi:type="xsd:string">@USER_NAME@</UserName>
+                <AppToken xsi:type="xsd:string">@APP_TOKEN@</AppToken>
+                <AppName xsi:type="xsd:string">@APP_NAME@</AppName>
+                <TableNumber xsi:type="xsd:int">@TABLE_NUMBER@</TableNumber>
+                <TablePart xsi:type="xsd:string">a</TablePart>
+                <Extra xsi:type="urn1:TExtraInfoArray" soapenc:arrayType="urn1:TExtraInfo[]"
+                       xmlns:urn1="urn:TPAPIPosTypesU"/>
+            </Request>
+        </urn:GetActiveTableInfo>
+    </soapenv:Body>
+</soapenv:Envelope>

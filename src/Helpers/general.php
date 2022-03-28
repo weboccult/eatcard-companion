@@ -6,7 +6,9 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Weboccult\EatcardCompanion\Models\AllYouEatCategories;
 use Weboccult\EatcardCompanion\Models\Device;
+use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\EmailCount;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
 use Weboccult\EatcardCompanion\Models\Message;
@@ -17,9 +19,11 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderDeliveryDetails;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
+use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\SubCategory;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Models\TakeawaySetting;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
@@ -30,6 +34,8 @@ use Illuminate\Support\Facades\Redis as LRedis;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\DailyRevenueGenerator;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\Generators\MonthlyRevenueGenerator;
+use Weboccult\EatcardCompanion\Services\Common\Sms\Channel;
+use Weboccult\EatcardCompanion\Services\Common\Sms\Type;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardSms;
 use Weboccult\EatcardCompanion\Services\Facades\OneSignal;
 
@@ -548,9 +554,14 @@ if (! function_exists('sendResWebNotification')) {
      *
      * @return bool|void
      */
-    function sendResWebNotification($id, $store_id, string $channel = '', array $oldTables = [], int $reload = 1)
+    function sendResWebNotification($id, $store_id, string $channel = '', array $oldTables = [], int $reload = 1, array $extraParameters = [])
     {
         try {
+
+            /*Please don't add any new parameter in function, use $extraParameters and set default value below */
+            //set $extraParameters default values
+            $extraParameters['currentTableId'] = $extraParameters['currentTableId'] ?? 0;
+
             /*web notification*/
             $reservation = ReservationTable::whereHas('reservation', function ($q) use ($store_id) {
                 $q/*->whereHas('meal')*/ ->where('status', 'approved');
@@ -586,7 +597,7 @@ if (! function_exists('sendResWebNotification')) {
                         ->get()
                         ->toArray();
                     foreach ($orders as $key => $order) {
-                        $orders[$key]['dutch_order_status'] = __('eatcard-companion::general.'.$order['order_status']);
+                        $orders[$key]['dutch_order_status'] = __companionTrans('general.'.$order['order_status']);
                     }
                     $reservation->reservation->orders = $orders;
                 }
@@ -656,6 +667,11 @@ if (! function_exists('sendResWebNotification')) {
                         return $item;
                     })->toArray();
                 }
+
+                foreach ($temp_orders as $key => $order) {
+                    $temp_orders[$key]['dutch_order_status'] = __companionTrans('general'.$order['order_status']);
+                }
+
                 $reservation->reservation->orders = $temp_orders;
                 $last_message = Message::query()->where('thread_id', $reservation->reservation->thread_id)
                     ->orderBy('created_at', 'desc')
@@ -664,26 +680,6 @@ if (! function_exists('sendResWebNotification')) {
                     $reservation->reservation->last_message = $last_message->body;
                 } else {
                     $reservation->reservation->last_message = null;
-                }
-                if ($reservation->is_dine_in == 1) {
-                    $temp_orders = Order::with('orderItems.product:id,image,sku')
-                        ->where('status', 'paid')
-                        ->where('parent_id', $id)
-                        ->orderBy('id', 'desc')
-                        ->get()
-                        ->toArray();
-                }
-                if ($reservation->is_dine_in == 0) {
-                    $orders = ReservationOrderItem::query()
-                        ->where('reservation_id', $id)
-                        ->orderBy('round', 'desc')
-                        ->get()
-                        ->toArray();
-                    $temp_orders = collect($orders)->map(function ($item) {
-                        $item['cart'] = json_decode($item['cart']);
-
-                        return $item;
-                    })->toArray();
                 }
                 $reservation->reservation->orders = $temp_orders;
                 $tempReservation = $reservation->toArray();
@@ -700,16 +696,19 @@ if (! function_exists('sendResWebNotification')) {
                 }
                 $additionalData = json_encode([
                     'reservation'    => $tempReservation,
+                    'orders'         => $temp_orders,
                     'is_reload'      => $reload,
                     'reservation_id' => $reservation->reservation->id,
                     'old_tables'     => $oldTables,
                     'dinein_area_id' => $dinein_area_id,
                     'table_ids'      => $current_reservation_table,
+                    'is_dine_in'     => $reservation->is_dine_in,
                 ]);
                 $redis = LRedis::connection();
                 $redis->publish('reservation_booking', json_encode([
                     'store_id'        => $store_id,
-                    'channel'         => $channel ? $channel : 'new_booking',
+                    'table_id'        => $extraParameters['currentTableId'],
+                    'channel'         => ! empty($channel) ? $channel : 'new_booking',
                     'notification_id' => 0,
                     'additional_data' => $additionalData,
                 ]));
@@ -765,7 +764,7 @@ if (! function_exists('sendWebNotification')) {
         try {
             $notification = Notification::query()->create([
                 'store_id'        => $order['store_id'],
-                'notification'    => __('eatcard-companion::general.new_order_notification', [
+                'notification'    => __companionTrans('general.new_order_notification', [
                     'order_id' => $order['order_id'],
                     'username' => $order['full_name'],
                 ]),
@@ -781,7 +780,7 @@ if (! function_exists('sendWebNotification')) {
                     'contact_no'            => $order['contact_no'],
                     'order_status'          => $order['order_status'],
                     'table_name'            => $order['table_name'],
-                    'dutch_order_status'    => __('eatcard-companion::general.'.$order['order_status']),
+                    'dutch_order_status'    => __companionTrans('general.'.$order['order_status']),
                     'date'                  => $data['orderDate'],
                     'delivery_address'      => $order['delivery_address'],
                     'method'                => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? '' : $order['method'],
@@ -1478,6 +1477,275 @@ if (! function_exists('updateEmailCount')) {
             $email_count->update(['success_count' => (int) $email_count->success_count + 1]);
         } elseif ($type == 'error') {
             $email_count->update(['error_count' => (int) $email_count->error_count + 1]);
+        }
+    }
+}
+
+if (! function_exists('aycePlanChange')) {
+
+    /**
+     * @param $reservationId
+     * @param $newDineInPriceId
+     *
+     * @return array|void
+     */
+    function aycePlanChange($reservationId, $newDineInPriceId = '')
+    {
+        try {
+            $reservation = StoreReservation::with([
+                'dineInPrice',
+                'rounds',
+            ])->findOrFail($reservationId);
+            if ($reservation->is_checkout == 1) {
+                return [
+                    'status'  => false,
+                    'message' => 'Reservation is already checked out. You can not change plan now.!',
+                ];
+            }
+            $allRounds = $reservation->rounds;
+            if (empty($allRounds) || $allRounds && $allRounds->count() == 0) {
+                return [
+                    'status'  => false,
+                    'message' => 'No rounds found in your reservation.!',
+                ];
+            }
+            $dineInCateGoryId = '';
+            if ($reservation->reservation_type == 'all_you_eat') {
+                $dineInPrice = DineinPrices::withTrashed()->with(['meal'])->findOrFail($newDineInPriceId);
+                $dineInCateGoryId = $dineInPrice->dinein_category_id;
+                if ($dineInPrice) {
+                    $time_limit = isset($dineInPrice['meal']) && $dineInPrice['meal'] ? $dineInPrice['meal']['time_limit'] : 120;
+                    $end_time = Carbon::parse($reservation->from_time)->addMinutes($time_limit)->format('H:i');
+                    $reservation->update([
+                        'meal_type' => $dineInPrice['meal_type'],
+                        'end_time'  => $end_time,
+                    ]);
+                }
+            }
+            $finalRounds = [];
+            foreach ($allRounds as $rkey => $round) {
+                $finalRounds[$rkey] = json_decode($round['cart'], true);
+                $product_ids = collect($finalRounds[$rkey])->pluck('id')->toArray();
+                //            $products = Product::withTrashed()->with([
+                //                'category:id,tax',
+                //                'ayce_class'
+                //            ])->whereIn('id', $product_ids)->get();
+                $products = Product::withTrashed()->with([
+                    'category' => function ($q1) {
+                        $q1->select('id', 'tax');
+                        $q1->withTrashed();
+                    },
+                    'ayce_class',
+                ])->whereIn('id', $product_ids)->get();
+                $totalPriceOfCurrentRound = 0;
+                foreach ($finalRounds[$rkey] as $ikey => $item) {
+                    /*This variable used for checked product and it/s supplement price count or not in total price*/
+                    $is_product_chargable = true;
+                    $notVoided = isset($item['void_id']) && $item['void_id'] > 0 ? 0 : 1;
+                    $notOnTheHouse = isset($item['on_the_house']) && $item['on_the_house'] > 0 ? 0 : 1;
+                    $product = $products->where('id', $item['id'])->first();
+                    $current_product_price = $product->price;
+                    // AYCE price has 1st priorty
+                    $aycePrice = 0;
+                    $product_pieces_price = 0;
+                    //                if ($notVoided) {  // Comment on 04-01-2022
+                    if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $dineInCateGoryId != '' && $reservation->reservation_type == 'all_you_eat') {
+                        $ayeClasses = $product->ayce_class->pluck('dinein_category_id')->toArray();
+                        if ($ayeClasses && ! empty($ayeClasses) && in_array($dineInCateGoryId, $ayeClasses) /* && $product->all_you_can_eat_price > 0 */) {
+                            $final_ayce_price = 0;
+                            //find add on price if any exist in individual ayce price class
+                            $ayce_cat_addon_price_data = collect($product->ayce_class)
+                                ->where('dinein_category_id', $dineInCateGoryId)
+                                ->first();
+                            if (isset($ayce_cat_addon_price_data->price) && ! empty($ayce_cat_addon_price_data->price)) {
+                                $final_ayce_price = (float) $ayce_cat_addon_price_data->price;
+                            }
+                            if ($final_ayce_price == 0) {
+                                //find all_you_can_eat_price if any exist in ayce price class
+                                $all_you_can_eat_price = 0;
+                                if (isset($product->all_you_can_eat_price) && ! empty($product->all_you_can_eat_price)) {
+                                    $final_ayce_price = (float) $product->all_you_can_eat_price;
+                                }
+                            }
+                            if ($final_ayce_price > 0) {
+                                $aycePrice = $final_ayce_price;
+                            }
+                        }
+                    }
+                    if ($aycePrice == 0) {
+                        // Now check current item is free or paid
+                        $free_cats = AllYouEatCategories::where('selected_prices', 'like', '%"'.$newDineInPriceId.'"%')
+                            ->pluck('category_id')
+                            ->toArray();
+                        //               dd($free_cats);
+                        if ($reservation->reservation_type == 'all_you_eat' && ! empty($free_cats) && collect($free_cats)->count() > 0 && in_array($product->category->id, $free_cats)) {
+                            // current item is included in new ayce plan so it FREE..
+                            $current_product_price = 0;
+                            $is_product_chargable = false;
+                        } else {
+                            // current item is not included in new ayce plan so it PAID..
+                            // check item has discounted price or not
+                            $current_product_price = (! is_null($product->discount_price) && $product->discount_show) ? $product->discount_price : $current_product_price;
+                        }
+                    } else {
+                        $current_product_price = $aycePrice;
+                    }
+                    //                } else {
+                    //                    $current_product_price = 0;
+                    //                }
+                    //for al-a-carte user we need to use this price if any exits
+                    if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1) {
+                        $is_need_update_name = false;
+                        // for al-e-carte need to update name with picese
+                        if (empty($dineInCateGoryId)) {
+                            $current_product_price = (isset($product->pieces_price) && $product->pieces_price != '') ? (float) $product->pieces_price : $current_product_price;
+                            $product->show_pieces = 1;
+                            $is_need_update_name = (isset($product->is_name_updated) && $product->is_name_updated ? false : true);
+                        }
+                        setProductPcsName($product, $is_need_update_name);
+                        if (isset($finalRounds[$rkey][$ikey]['name'])) {
+                            $finalRounds[$rkey][$ikey]['name'] = $product->name;
+                        }
+                    }
+                    $supplement_total = 0;
+                    $finalRounds[$rkey][$ikey]['supplement_total'] = 0;
+                    $supplement_ids = collect($finalRounds[$rkey][$ikey]['supplements'])->pluck('id')->toArray();
+                    $supplement_cat_ids = collect($finalRounds[$rkey][$ikey]['supplements'])
+                        ->pluck('categoryId')
+                        ->toArray();
+                    $supplements = Supplement::withTrashed()->whereIn('id', $supplement_ids)->get();
+                    $supplements_cat = SubCategory::whereIn('id', $supplement_cat_ids)->get();
+                    foreach ($finalRounds[$rkey][$ikey]['supplements'] as $supkey => $supp) {
+                        $currentSup = collect($supplements)->where('id', $supp['id'])->first();
+                        $currentSup_cat = collect($supplements_cat)->where('id', $supp['categoryId'])->first();
+                        // check is supplement is free or not for that categories.
+                        if (isset($currentSup_cat->is_free) && $currentSup_cat->is_free == '1') {
+                            $supp['val'] = 0;
+                            $finalRounds[$rkey][$ikey]['supplements'][$supkey]['val'] = $supp['val'];
+                        } else {
+                            $supp['val'] = (isset($currentSup->price) && ! empty($currentSup->price)) ? (float) $currentSup->price : $supp['val'];
+                            $finalRounds[$rkey][$ikey]['supplements'][$supkey]['val'] = $supp['val'];
+                        }
+                        if ($is_product_chargable) {
+                            $supp['total_val'] = $supp['val'] * $supp['qty'];
+                            $finalRounds[$rkey][$ikey]['supplements'][$supkey]['total_val'] = $supp['total_val'];
+                            $finalRounds[$rkey][$ikey]['supplement_total'] += $supp['total_val'];
+                            $supplement_total += $supp['total_val'];
+                        } else {
+                            $supp['val'] = 0;
+                            $supp['total_val'] = 0;
+                            $finalRounds[$rkey][$ikey]['supplements'][$supkey]['val'] = $supp['val'];
+                            $finalRounds[$rkey][$ikey]['supplements'][$supkey]['total_val'] = $supp['total_val'];
+                        }
+                    }
+                    $size_total = 0;
+                    if (isset($finalRounds[$rkey][$ikey]['size']) && $finalRounds[$rkey][$ikey]['size']) {
+                        if ($finalRounds[$rkey][$ikey]['size']['name'] == 'large') {
+                            $size_total = $product->large_price;
+                        } elseif ($finalRounds[$rkey][$ikey]['size']['name'] == 'regular') {
+                            $size_total = $product->regular_price;
+                        }
+                    } else {
+                        $finalRounds[$rkey][$ikey]['size'] = [];
+                    }
+                    $weight_total = $current_product_price;
+                    if (isset($finalRounds[$rkey][$ikey]['weight']) && $finalRounds[$rkey][$ikey]['weight']) {
+                        $weight_total = ((int) $finalRounds[$rkey][$ikey]['weight'] * $current_product_price) / $product->weight;
+                    //                    $finalRounds[$rkey][$ikey]['weight'] = [
+                        //                        'item_weight'    => $finalRounds[$rkey][$ikey]['weight'],
+                        //                        'product_weight' => $product->weight
+                        //                    ];
+                    } else {
+                        //                    $finalRounds[$rkey][$ikey]['weight'] = [];
+                        $finalRounds[$rkey][$ikey]['weight'] = '';
+                    }
+                    if ($is_product_chargable) {
+                        $product_total = ($supplement_total + $size_total + $weight_total);
+                    } else {
+                        $product_total = 0;
+                    }
+                    $product_tax = (isset($product->tax) && $product->tax != null) ? $product->tax : $product->category->tax;
+                    if ($product_tax == 21) {
+                        $tax = round($product_total * $product_tax / 121, 5);
+                        $finalRounds[$rkey][$ikey]['alcohol_tax_amount'] = $tax;
+                    } else {
+                        $tax = round($product_total * $product_tax / 109, 5);
+                        $finalRounds[$rkey][$ikey]['tax_amount'] = $tax;
+                    }
+                    $product_total_weight = (isset($finalRounds[$rkey][$ikey]['weight']) && (float) $finalRounds[$rkey][$ikey]['weight'] > 0) ? (float) $finalRounds[$rkey][$ikey]['weight'] : 0;
+                    if (isset($product->is_per_weight) && $product->is_per_weight && $product_total_weight > 0) {
+                        if ($product_tax == 21 && isset($finalRounds[$rkey][$ikey]['alcohol_tax_amount'])) {
+                            $finalRounds[$rkey][$ikey]['alcohol_tax_amount'] = round($finalRounds[$rkey][$ikey]['alcohol_tax_amount'] / $product_total_weight, 5);
+                        } elseif ($product_tax == 9 && isset($finalRounds[$rkey][$ikey]['tax_amount'])) {
+                            $finalRounds[$rkey][$ikey]['tax_amount'] = round($finalRounds[$rkey][$ikey]['tax_amount'] / $product_total_weight, 5);
+                        }
+                        $product_total_per_weight = $product_total / $product_total_weight;
+                        if ($product_tax == 21) {
+                            $finalRounds[$rkey][$ikey]['base_price'] = round($product_total_per_weight - ($product_total_per_weight * $product_tax / 121), 5);
+                        } else {
+                            $finalRounds[$rkey][$ikey]['base_price'] = round($product_total_per_weight - ($product_total_per_weight * $product_tax / 109), 5);
+                        }
+                    } else {
+                        $finalRounds[$rkey][$ikey]['base_price'] = round($product_total - $tax, 5);
+                    }
+                    //                $finalRounds[$rkey][$ikey]['base_price'] = $product_total - $tax;
+                    $finalRounds[$rkey][$ikey]['total_price'] = $product_total;
+                    if ((isset($finalRounds[$rkey][$ikey]['void_id']) && $finalRounds[$rkey][$ikey]['void_id'] > 0) || (isset($finalRounds[$rkey][$ikey]['on_the_house']) && $finalRounds[$rkey][$ikey]['on_the_house'] > 0)) {
+                        $totalPriceOfCurrentRound += 0;
+                    } else {
+                        $totalPriceOfCurrentRound += $product_total * $finalRounds[$rkey][$ikey]['quantity'];
+                    }
+                }
+                $encodedCartOfCurrentRound = json_encode($finalRounds[$rkey]);
+                ReservationOrderItem::where('id', $round->id)->update([
+                    'cart'        => $encodedCartOfCurrentRound,
+                    'total_price' => $totalPriceOfCurrentRound,
+                ]);
+            }
+            sendResWebNotification($reservation->id, $reservation->store_id, 'booking_orders_update');
+            companionLogger('Rounds updated successfully.!', $finalRounds);
+        } catch (\Exception $e) {
+            companionLogger('change round price error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+        }
+    }
+}
+
+if (! function_exists('setProductPcsName')) {
+    function setProductPcsName($product, $is_need_update = true)
+    {
+        $product_postfix = '';
+        if (isset($product->show_pieces) && $product->show_pieces == 1 && $is_need_update) {
+            $product->is_name_updated = true;
+            $product_postfix = ' | '.$product->total_pieces.' '.(($product->total_pieces > 1) ? __companionTrans('general.product_pcs') : __companionTrans('general.product_pc'));
+        }
+        $product->name = $product->name.$product_postfix;
+    }
+}
+
+if (! function_exists('calculateAllYouCanEatPerson')) {
+    function calculateAllYouCanEatPerson($ayceData)
+    {
+        try {
+            $person = 0;
+            if (! empty($ayceData)) {
+                $person += isset($ayceData['no_of_adults']) && ! empty($ayceData['no_of_adults']) ? $ayceData['no_of_adults'] : 0;
+                $person += isset($ayceData['no_of_kids']) && ! empty($ayceData['no_of_kids']) ? $ayceData['no_of_kids'] : 0;
+                $person += isset($ayceData['no_of_kids2']) && ! empty($ayceData['no_of_kids2']) ? $ayceData['no_of_kids2'] : 0;
+            }
+            if (isset($ayceData['dinein_price']['dynamic_prices'])) {
+                $ayce_dynamic_childe_list = collect($ayceData['dinein_price']['dynamic_prices'])
+                    ->pluck('person')
+                    ->map(function ($item) {
+                        return (int) $item;
+                    });
+                $person += (int) $ayce_dynamic_childe_list->sum();
+            }
+
+            return $person;
+        } catch (\Exception $e) {
+            companionLogger('calculateAllYouCanEatPerson error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+
+            return $person;
         }
     }
 }

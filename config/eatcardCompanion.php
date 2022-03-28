@@ -67,11 +67,12 @@ return [
     |
     */
     'system_endpoints' => [
-        'admin'    => env('COMPANION_ADMIN_ENDPOINT', 'http://eatcard-admin.local'),
-        'pos'      => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
-        'takeaway' => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
-        'kiosk'    => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
-        'dine_in'  => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in.local'),
+        'admin'            => env('COMPANION_ADMIN_ENDPOINT', 'http://eatcard-admin.local'),
+        'pos'              => env('COMPANION_POS_ENDPOINT', 'http://eatcard-pos.local'),
+        'takeaway'         => env('COMPANION_TAKEAWAY_ENDPOINT', 'http://eatcard-takeaway.local'),
+        'kiosk'            => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
+        'dine_in'          => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in-api.local'),
+        'dine_in_frontend' => env('COMPANION_DINE_FRONTEND_ENDPOINT', 'http://eatcard-dine_in.local'),
     ],
 
     /*
@@ -139,7 +140,6 @@ return [
     | Setting, webhook, URLs and more.
     |
     */
-
     'payment' => [
         'settings' => [
             /*
@@ -155,12 +155,13 @@ return [
              */
             'exclude_webhook' => env('COMPANION_EXCLUDE_WEBHOOK', false),
         ],
-        'gateway' => [
+        'gateway'  => [
             'ccv'       => [
                 'staging'    => 'http://vpos-test.jforce.be/vpos/api/v1',
                 'production' => 'https://redirect.jforce.be/api/v1',
                 'endpoints'  => [
                     'createOrder' => '/payment',
+                    'fetchOrder'  => '/transaction?reference=',
                 ],
                 'webhook'    => [
                     'pos'   => [
@@ -198,25 +199,25 @@ return [
                 ],
                 'webhook'     => [
                     'takeaway' => '/multisafe/takeaway/webhook/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/webhook/<%id%>/<%store_id%>',
+                    'dine_in'  => '/webhook/multisafe/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
                     'takeaway' => '/multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/orders-success/<%id%>/<%store_id%>',
+                    'dine_in'  => '/orders-success/multisafe/<%id%>/<%store_id%>',
                 ],
                 'cancelUrl'   => [
                     'takeaway' => '/multisafe/takeaway/cancel/<%id%>/<%store_id%>',
-                    'dine_in'  => '/multisafe/dine-in/cancel/<%id%>/<%store_id%>',
+                    'dine_in'  => '/cancel/multisafe/<%id%>/<%store_id%>',
                 ],
             ],
             'mollie'    => [
                 'webhook'     => [
                     'takeaway' => '/webhook/<%id%>/<%store_id%>',
-                    'dine_in'  => '/dine-in/webhook/<%id%>/<%store_id%>',
+                    'dine_in'  => '/webhook/mollie/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
                     'takeaway' => '/orders-success/<%id%>/<%store_id%>',
-                    'dine_in'  => '/dine-in/orders-success/<%id%>/<%store_id%>',
+                    'dine_in'  => '/orders-success/mollie/<%id%>/<%store_id%>',
                 ],
             ],
         ],
@@ -241,6 +242,11 @@ return [
             'url' => env('DELIVEROO_URL', null),
             'credential' => env('DELIVEROO_CREDENTIALS', null),
         ],
+    ],
+
+    'untill' => [
+        'app_token' => env('COMPANION_UNTILL_APP_TOKEN', null),
+        'app_name' => env('COMPANION_UNTILL_APP_NAME', null),
     ],
 
     /*

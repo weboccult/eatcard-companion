@@ -16,20 +16,22 @@ project where this package is installed.
 
 You can use __() or trans() helper function which is built in laravel itself.
 
+Note : second argument is completely optional.
+
 ```php
 
 Syntax :
 
-__('PACKAGE_NAME::FILE.LINE')
-trans('PACKAGE_NAME::FILE.LINE')
+__('PACKAGE_NAME::FILE.LINE', ['attributes' => 'value'])
+trans('PACKAGE_NAME::FILE.LINE', ['attributes' => 'value'])
 
 ---------------------
 
-__('eatcard-companion::general.test')
+__('eatcard-companion::general.test', ['attributes' => 'value'])
 
 or
 
-trans('eatcard-companion::general.test')
+trans('eatcard-companion::general.test', ['attributes' => 'value'])
 
 ---------------------
 ```
@@ -40,7 +42,7 @@ New helpers added :
 - So you can enable or disable translation
 
 ```php
-__companionTrans('general.test')
-__companionPrintTrans('general.test')
+__companionTrans('general.test', ['attributes' => 'value'])
+__companionPrintTrans('general.test', ['attributes' => 'value'])
 
 ```

@@ -344,6 +344,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->wiPayment(),
             fn () => $this->molliePayment(),
             fn () => $this->cashPayment(),
+            fn () => $this->sendPrintJsonToSQS(),
             fn () => $this->multiSafePayment(),
             fn () => $this->updateOrderReferenceIdFromPaymentGateway(),
             fn () => $this->setBypassPaymentLogicAndOverridePaymentResponse(),

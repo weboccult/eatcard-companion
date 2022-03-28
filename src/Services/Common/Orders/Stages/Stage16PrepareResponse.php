@@ -78,7 +78,7 @@ trait Stage16PrepareResponse
 
     protected function dineInResponse()
     {
-        if ($this->orderData['method'] == 'cash') {
+        if (in_array($this->orderData['method'], ['cash', 'pin'])) {
             $this->setDumpDieValue($this->paymentResponse);
         } else {
             $this->mollieAndMultiSafeResponse();

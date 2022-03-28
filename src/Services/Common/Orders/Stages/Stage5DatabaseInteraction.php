@@ -42,6 +42,8 @@ trait Stage5DatabaseInteraction
         } else {
             // other systems : POS | Waitress | Takeaway
             $supplement_ids = collect($this->cart)->pluck('supplements.id')->filter()->toArray();
+            $supplement_ids = collect($this->cart)->pluck('supplements')->flatten(1)->pluck('id')->filter()->toArray();
+            companionLogger('Supplement  cart', $this->cart);
         }
         companionLogger('Supplement ids extracted from cart', $supplement_ids);
         $this->supplementData = Supplement::withTrashed()->whereIn('id', $supplement_ids)->get();

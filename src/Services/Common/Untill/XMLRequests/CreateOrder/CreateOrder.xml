@@ -1,0 +1,27 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:TPAPIPosIntfU-ITPAPIPOS"
+                  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <urn:CreateOrder soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+            <Request xsi:type="urn:TCreateOrderRequest" xmlns:urn="urn:TPAPIPosIntfU">
+                <Password xsi:type="xsd:string">@PASSWORD@</Password>
+                <UserName xsi:type="xsd:string">@USER_NAME@</UserName>
+                <AppToken xsi:type="xsd:string">@APP_TOKEN@</AppToken>
+                <AppName xsi:type="xsd:string">@APP_NAME@</AppName>
+                <TableNumber xsi:type="xsd:int">@TABLE_NUMBER@</TableNumber>
+                <TablePart xsi:type="xsd:string">a</TablePart>
+                <ClientName xsi:type="xsd:string">@FIRST_NAME@</ClientName>
+                <OrderName xsi:type="xsd:string"></OrderName>
+                <OrderDescr xsi:type="xsd:string"></OrderDescr>
+                <Items soapenc:arrayType="urn1:TOrderItem[@ITEMS_COUNT@]"
+                       xsi:type="urn1:TOrderItemArray" xmlns:urn1="urn:TPAPIPosTypesU">
+@ITEMS@                 </Items>
+                <Covers xsi:type="xsd:int">@PERSON@</Covers>
+                <Extra xsi:type="urn1:TExtraInfoArray" soapenc:arrayType="urn1:TExtraInfo[]"
+                       xmlns:urn1="urn:TPAPIPosTypesU"/>
+                <ClientId xsi:type="xsd:long">0</ClientId>
+            </Request>
+        </urn:CreateOrder>
+    </soapenv:Body>
+</soapenv:Envelope>

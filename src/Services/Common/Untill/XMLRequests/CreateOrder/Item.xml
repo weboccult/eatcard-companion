@@ -1,0 +1,9 @@
+                    <item xsi:type="urn:TOrderItem">
+                        <ItemNumber xsi:type="xsd:int">@KEY@</ItemNumber>
+                        <ArticleId xsi:type="xsd:long">@UNTILL_ID@</ArticleId>
+                        <OrderItemType xsi:type="xsd:int">0</OrderItemType>
+                        <Text xsi:type="xsd:string"></Text>
+                        <ManualPrice xsi:type="xsd:double">0</ManualPrice>
+                            <Quantity xsi:type="xsd:int">@QUANTITY@</Quantity>
+                        <Extra xsi:type="urn1:TExtraInfoArray" soapenc:arrayType="urn1:TExtraInfo[]" xmlns:urn1="urn:TPAPIPosTypesU"/>
+                    </item>
