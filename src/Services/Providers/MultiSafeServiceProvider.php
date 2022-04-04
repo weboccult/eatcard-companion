@@ -16,7 +16,7 @@ class MultiSafeServiceProvider extends ServiceProvider
 
     public function register()
     {
-        $this->app->singleton('multi-safe', function () {
+        $this->app->bind('multi-safe', function () {
             return new MultiSafe();
         });
     }
