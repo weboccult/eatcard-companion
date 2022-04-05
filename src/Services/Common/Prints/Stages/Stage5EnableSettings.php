@@ -47,6 +47,12 @@ trait Stage5EnableSettings
         $this->additionalSettings['kiosk_data'] = $this->store->kiosk_data ? json_decode($this->store->kiosk_data, true) : [];
 
         $this->additionalSettings['double_height'] = ''.($store->storeSetting->double_height ?? '0');
+
+        //set product pieces true for dine-in store-qr orders
+        if (isset($this->order['created_from']) && $this->order['created_from'] == 'dine_in_2' && empty($this->order['parent_id'])) {
+            $this->additionalSettings['show_no_of_pieces'] = true;
+        }
+
 //        if ($this->orderType != OrderTypes::SAVE) {
 //        } else {
 //            $this->additionalSettings['double_height'] = '0';
@@ -129,11 +135,6 @@ trait Stage5EnableSettings
         $this->additionalSettings['ayce_data'] = isset($reservation->all_you_eat_data) && ! empty($reservation->all_you_eat_data) ? json_decode($reservation->all_you_eat_data, true) : [];
         $this->additionalSettings['dinein_guest_order'] = isset($this->reservation->is_dine_in) && $this->reservation->is_dine_in == 1;
         $this->additionalSettings['is_until'] = isset($this->reservation->is_until) && $this->reservation->is_until == 1;
-
-        //set product pieces true for dinein store-qr orders
-        if (isset($this->order->created_from) && $this->order->created_from == SystemTypes::DINE_IN && empty($this->order->parent_id)) {
-            $this->additionalSettings['show_no_of_pieces'] = true;
-        }
 
         //set product pieces true for dinein store-qr orders
         if (isset($reservation->is_dine_in) && $reservation->is_dine_in == 1) {
