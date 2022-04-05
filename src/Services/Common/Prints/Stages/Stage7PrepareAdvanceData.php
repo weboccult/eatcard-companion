@@ -986,7 +986,7 @@ trait Stage7PrepareAdvanceData
         }
         if ($additional_fee > 0) {
             $summary[] = [
-                'key'   => __companionPrintTrans('print.additional_fees_title'),
+                'key'   => __companionPrintTrans('print.additional_fees'),
                 'value' => ''.changePriceFormat($additional_fee),
             ];
         }
