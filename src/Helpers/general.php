@@ -1602,7 +1602,7 @@ if (! function_exists('aycePlanChange')) {
                             $product->show_pieces = 1;
                             $is_need_update_name = (isset($product->is_name_updated) && $product->is_name_updated ? false : true);
                         }
-                        setProductPcsName($product, $is_need_update_name);
+                        $product->name = getUpdatedProductName($product, $is_need_update_name);
                         if (isset($finalRounds[$rkey][$ikey]['name'])) {
                             $finalRounds[$rkey][$ikey]['name'] = $product->name;
                         }
@@ -1710,15 +1710,17 @@ if (! function_exists('aycePlanChange')) {
     }
 }
 
-if (! function_exists('setProductPcsName')) {
-    function setProductPcsName($product, $is_need_update = true)
+if (! function_exists('getUpdatedProductName')) {
+    function getUpdatedProductName($product, $is_need_update = true)
     {
         $product_postfix = '';
+        //add pieces if show pieces flag is set
         if (isset($product->show_pieces) && $product->show_pieces == 1 && $is_need_update) {
             $product->is_name_updated = true;
             $product_postfix = ' | '.$product->total_pieces.' '.(($product->total_pieces > 1) ? __companionTrans('general.product_pcs') : __companionTrans('general.product_pc'));
         }
-        $product->name = $product->name.$product_postfix;
+        //trim product name is more than 80 words
+        return (strlen($product->name) > 80 ? substr($product->name, 0, 80).'...' : $product->name).$product_postfix;
     }
 }
 
