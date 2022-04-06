@@ -317,13 +317,22 @@ trait Stage8PrepareAdvanceData
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
                         $currentSup = collect($this->supplementData)->where('id', $i['id'])->first();
+
+                        $supQty = $i['qty'] ?? 1;
+                        $supVal = $i['val'] ?? 0;
+                        $supTotalVal = $i['total_val'] ?? 0;
+                        if ($supTotalVal == 0) {
+                            $supTotalVal = $supVal * $supQty;
+                        }
+                        $supCategoryId = (int)($i['categoryId'] ?? $i['supplement_cat_id'] ?? 0);
+
                         $currentPreparedSupplement = [
                             'id'         => $i['id'],
                             'name'       => $i['name'],
-                            'val'        => $i['val'] ?? 0,
-                            'total_val'  => $i['total_val'] ?? $i['val'] ?? 0,
-                            'qty'        => $i['qty'] ?? 1,
-                            'categoryId' => isset($i['categoryId']) ? (int) $i['categoryId'] : null,
+                            'val'        => $supVal,
+                            'total_val'  => $supTotalVal,
+                            'qty'        => $supQty,
+                            'categoryId' => !empty($supCategoryId) ? $supCategoryId : null,
                             'alt_name'   => isset($currentSup->alt_name) && ! empty($currentSup->alt_name) ? $currentSup->alt_name : null,
                         ];
 
