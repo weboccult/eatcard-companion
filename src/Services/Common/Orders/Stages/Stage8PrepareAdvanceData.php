@@ -324,7 +324,7 @@ trait Stage8PrepareAdvanceData
                         if ($supTotalVal == 0) {
                             $supTotalVal = $supVal * $supQty;
                         }
-                        $supCategoryId = (int)($i['categoryId'] ?? $i['supplement_cat_id'] ?? 0);
+                        $supCategoryId = (int) ($i['categoryId'] ?? $i['supplement_cat_id'] ?? 0);
 
                         $currentPreparedSupplement = [
                             'id'         => $i['id'],
@@ -332,7 +332,7 @@ trait Stage8PrepareAdvanceData
                             'val'        => $supVal,
                             'total_val'  => $supTotalVal,
                             'qty'        => $supQty,
-                            'categoryId' => !empty($supCategoryId) ? $supCategoryId : null,
+                            'categoryId' => ! empty($supCategoryId) ? $supCategoryId : null,
                             'alt_name'   => isset($currentSup->alt_name) && ! empty($currentSup->alt_name) ? $currentSup->alt_name : null,
                         ];
 
