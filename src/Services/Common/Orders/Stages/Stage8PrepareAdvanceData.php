@@ -15,6 +15,7 @@ use function Weboccult\EatcardCompanion\Helpers\generateDineInOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generateKioskOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generatePOSOrderId;
 use function Weboccult\EatcardCompanion\Helpers\generateTakeawayOrderId;
+use function Weboccult\EatcardCompanion\Helpers\getUpdatedProductName;
 
 /**
  * @description Stag 8
@@ -242,8 +243,8 @@ trait Stage8PrepareAdvanceData
                     /*If res type is cart then get product price from pieces*/
                     if (isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '' && $this->storeReservation->reservation_type != 'all_you_eat') {
                         $allYouCanEatPrice = (float) $product->pieces_price;
+                        $product->show_pieces = 1;
                         // set_product_pieces_in_name($product, $is_need_update);
-                        $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 80 ? substr($product->name, 0, 80).'...' : $product->name;
                     }
                 }
                 companionLogger('Product ayce price', $allYouCanEatPrice);
@@ -260,6 +261,7 @@ trait Stage8PrepareAdvanceData
             if ($this->system == SystemTypes::DINE_IN && empty($this->storeReservation)) {
                 if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
                     $product->price = (float) $product->pieces_price;
+                    $product->show_pieces = 1;
                 }
             }
 
@@ -317,13 +319,22 @@ trait Stage8PrepareAdvanceData
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
                         $currentSup = collect($this->supplementData)->where('id', $i['id'])->first();
+
+                        $supQty = $i['qty'] ?? 1;
+                        $supVal = $i['val'] ?? 0;
+                        $supTotalVal = $i['total_val'] ?? 0;
+                        if ($supTotalVal == 0) {
+                            $supTotalVal = $supVal * $supQty;
+                        }
+                        $supCategoryId = (int) ($i['categoryId'] ?? $i['supplement_cat_id'] ?? 0);
+
                         $currentPreparedSupplement = [
                             'id'         => $i['id'],
                             'name'       => $i['name'],
-                            'val'        => $i['val'] ?? 0,
-                            'total_val'  => $i['total_val'] ?? $i['val'] ?? 0,
-                            'qty'        => $i['qty'] ?? 1,
-                            'categoryId' => isset($i['categoryId']) ? (int) $i['categoryId'] : null,
+                            'val'        => (float) $supVal,
+                            'total_val'  => (float) $supTotalVal,
+                            'qty'        => (int) $supQty,
+                            'categoryId' => ! empty($supCategoryId) ? $supCategoryId : null,
                             'alt_name'   => isset($currentSup->alt_name) && ! empty($currentSup->alt_name) ? $currentSup->alt_name : null,
                         ];
 
@@ -494,7 +505,7 @@ trait Stage8PrepareAdvanceData
                 $transferItems['forRoundNumber'] = $item['forRoundNumber'] ?? null;
             }
             $this->orderItemsData[$key]['product_id'] = $product->id;
-            $this->orderItemsData[$key]['product_name'] = strlen($product->name) > 80 ? substr($product->name, 0, 80).'...' : $product->name;
+            $this->orderItemsData[$key]['product_name'] = getUpdatedProductName($product);
             $this->orderItemsData[$key]['quantity'] = $item['quantity'];
 
             if ($this->system === SystemTypes::KIOSK) {
