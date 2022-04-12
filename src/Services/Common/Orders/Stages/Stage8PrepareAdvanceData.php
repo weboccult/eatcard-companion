@@ -586,7 +586,6 @@ trait Stage8PrepareAdvanceData
                 $this->orderItemsData[$key]['total_price'] += $deposit * $item['quantity'];
                 $this->orderItemsData[$key]['statiege_deposite_total'] = $deposit * $item['quantity'];
                 $this->orderData['statiege_deposite_total'] += $deposit * $item['quantity'];
-
             } else {
                 $this->orderItemsData[$key]['statiege_deposite_value'] = 0;
                 $this->orderItemsData[$key]['statiege_deposite_total'] = 0;
