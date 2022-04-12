@@ -33,7 +33,7 @@ trait Stage0BasicDatabaseInteraction
                 STORE_CHANGE_BY_ID.$storeId,
                 STORE_SETTING,
                 TAKEAWAY_SETTING.$storeId,
-            ])->remember('{eat-card}-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
+            ])->remember('{eat-card}-companion-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
                 return Store::query()
                     ->with('storeSetting', 'multiSafe')->where('id', $storeId)->first();
             });
@@ -56,7 +56,7 @@ trait Stage0BasicDatabaseInteraction
                 FLUSH_STORE_BY_ID.$storeId,
                 TABLES,
                 TABLE_BY_ID.$tableId,
-            ])->remember('{eat-card}-table-by-id-'.$tableId, CACHING_TIME, function () use ($tableId) {
+            ])->remember('{eat-card}-companion-table-by-id-'.$tableId, CACHING_TIME, function () use ($tableId) {
                 return Table::findOrFail($tableId);
             });
             if (! empty($table)) {
@@ -76,7 +76,7 @@ trait Stage0BasicDatabaseInteraction
                 EP_POST_ORDER,
                 FLUSH_STORE_BY_ID.$storeId,
                 TAKEAWAY_SETTING.$storeId,
-            ])->remember('{eat-card}-takeaway-setting-'.$storeId, CACHING_TIME, function () use ($storeId) {
+            ])->remember('{eat-card}-companion-takeaway-setting-'.$storeId, CACHING_TIME, function () use ($storeId) {
                 return TakeawaySetting::query()->where('store_id', $storeId)->first();
             });
             if (! empty($takeawaySetting)) {
@@ -115,7 +115,7 @@ trait Stage0BasicDatabaseInteraction
                 FLUSH_STORE_BY_ID.$storeId,
                 KIOSK_DEVICES,
             ])
-                ->remember('{eat-card}-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
+                ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
                     return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
                 });
             if (! empty($device)) {

@@ -223,52 +223,56 @@ trait Stage8PrepareAdvanceData
             $this->orderItemsData[$key]['unit_price'] = 0;
             $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
             $product = $this->productData->where('id', $item['id'])->first();
+            $productCalcPrice = 0;
 
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::DINE_IN]) && ! empty($this->storeReservation)) {
-                $allYouCanEatPrice = 0;
                 if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $product->ayce_class->count() > 0 && $this->storeReservation->dineInPrice && isset($this->storeReservation->dineInPrice->dinein_category_id) && $this->storeReservation->dineInPrice->dinein_category_id != '') {
                     $ayeClasses = $product->ayce_class->pluck('dinein_category_id')->toArray();
                     if (! empty($ayeClasses) && in_array($this->storeReservation->dineInPrice->dinein_category_id, $ayeClasses)) {
                         $allYouCanEatIndividualPrice = $product->ayce_class->where('dinein_category_id', $this->storeReservation->dineInPrice->dinein_category_id)
                             ->pluck('price');
                         if (isset($allYouCanEatIndividualPrice[0]) && $allYouCanEatIndividualPrice[0] > 0 && ! empty($allYouCanEatIndividualPrice[0]) && $product->all_you_can_eat_price >= 0) {
-                            $allYouCanEatPrice = $allYouCanEatIndividualPrice[0];
+                            $productCalcPrice = $allYouCanEatIndividualPrice[0];
                         } else {
                             if (! empty($product->all_you_can_eat_price)) {
-                                $allYouCanEatPrice = $product->all_you_can_eat_price;
+                                $productCalcPrice = $product->all_you_can_eat_price;
                             }
                         }
                     }
                 } else {
                     /*If res type is cart then get product price from pieces*/
                     if (isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '' && $this->storeReservation->reservation_type != 'all_you_eat') {
-                        $allYouCanEatPrice = (float) $product->pieces_price;
+                        $productCalcPrice = (float) $product->pieces_price;
                         $product->show_pieces = 1;
                         // set_product_pieces_in_name($product, $is_need_update);
                     }
                 }
-                companionLogger('Product ayce price', $allYouCanEatPrice);
-                if ($allYouCanEatPrice) {
-                    //if there is ayce price
-                    $product->price = $allYouCanEatPrice;
-                }
+                companionLogger('Product ayce price', $productCalcPrice);
             }
 
-            /*
-             *  -> need to set product piece price for dine-in store and guest 1st order because the not have reservation
-                -> we need to set pieces price for all without reservation orders
-            */
-            if ($this->system == SystemTypes::DINE_IN && empty($this->storeReservation)) {
-                if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
-                    $product->price = (float) $product->pieces_price;
-                    $product->show_pieces = 1;
-                }
-            }
+            //set product default price first
+            $product->price = ((! empty($product->discount_price) && $product->discount_price > 0) && $product->discount_show) ? $product->discount_price : $product->price;
 
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-                if (! $item['base_price']) {
+                if ($productCalcPrice > 0) {
+                    $product->price = $productCalcPrice;
+                } elseif (! $item['base_price']) {
                     $product->price = 0;
                     $is_product_chargeable = false;
+                }
+            } elseif ($this->system === SystemTypes::DINE_IN) {
+
+                /*
+                 *  -> need to set product piece price for dine-in store and guest 1st order because the not have reservation
+                    -> we need to set pieces price for all without reservation orders
+                */
+                if ($productCalcPrice > 0) {
+                    $product->price = $productCalcPrice;
+                } elseif (empty($this->storeReservation)) {
+                    if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
+                        $product->price = (float) $product->pieces_price;
+                        $product->show_pieces = 1;
+                    }
                 }
             } elseif ($this->system === SystemTypes::TAKEAWAY) {
                 $product_price = $product->price;
@@ -288,10 +292,8 @@ trait Stage8PrepareAdvanceData
                         $product->price = $product->discount_price;
                     }
                 }
-            } else {
-                // default case
-                $product->price = ((! empty($product->discount_price) && $product->discount_price > 0) && $product->discount_show) ? $product->discount_price : $product->price;
             }
+
             companionLogger('Product price', $product->price);
             $supplement_total = 0;
             $this->orderItemsData[$key]['void_id'] = $item['void_id'] ?? 0;
