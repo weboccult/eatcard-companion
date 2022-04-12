@@ -231,7 +231,7 @@ class SaveOrderGenerator extends BaseGenerator
                     FLUSH_STORE_BY_ID.$this->store->id,
                     DEVICE_PRINTERS.$this->store->id,
                 ])
-                    ->remember('{eat-card}-companion-device-printers-'.$item['product']['category']['printer_id'], CACHING_TIME, function () use ($item) {
+                    ->remember('{eat-card}-device-printers-'.$item['product']['category']['printer_id'], CACHING_TIME, function () use ($item) {
                         return DevicePrinter::query()->where('id', $item['product']['category']['printer_id'])->first();
                     });
                 $device_id = $item['product']['category']['device_id'];
@@ -252,7 +252,7 @@ class SaveOrderGenerator extends BaseGenerator
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-companion-device-printer-kitchen-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
+                        ->remember('{eat-card}-device-printer-kitchen-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
                             return DevicePrinter::query()
                                 ->where('store_device_id', $device_id)
                                 ->where('printer_type', 'kitchen')
@@ -264,7 +264,7 @@ class SaveOrderGenerator extends BaseGenerator
                         FLUSH_STORE_BY_ID.$this->store->id,
                         DEVICE_PRINTERS.$this->store->id,
                     ])
-                        ->remember('{eat-card}-companion-device-printer-label-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
+                        ->remember('{eat-card}-device-printer-label-'.$device_id, CACHING_TIME, function () use ($item, $device_id) {
                             return DevicePrinter::query()
                                 ->where('store_device_id', $device_id)
                                 ->where('printer_type', 'label')
