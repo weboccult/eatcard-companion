@@ -12,6 +12,7 @@ use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\DineinCart;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
@@ -396,6 +397,10 @@ trait Stage12PaymentProcess
 
             //need to uto checkout guest user after his order place if setting is on.
             if (! empty($this->storeReservation) && $this->storeReservation->is_dine_in == 1) {
+
+                //no need to add table id condition because guest use not have multiple table
+                DineinCart::where('reservation_id', $this->storeReservation->id)->delete();
+
                 $autocheckout_after_payment = isset($this->store->storeButler->autocheckout_after_payment) && $this->store->storeButler->autocheckout_after_payment ?? 0;
                 if ($autocheckout_after_payment == 1) {
                     //auto checkout after payment if setting is on
