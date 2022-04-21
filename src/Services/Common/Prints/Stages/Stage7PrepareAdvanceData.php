@@ -34,7 +34,7 @@ trait Stage7PrepareAdvanceData
         $dynamicOrderNo = '';
         if (in_array($this->orderType, [OrderTypes::PAID, OrderTypes::SUB])) {
             if (! empty($this->additionalSettings['print_dynamic_order_no'])) {
-                $dynamicOrderNo = ''.substr(($this->order['order_id'] ?? ''), -3);
+                $dynamicOrderNo = ''.substr(($this->order['order_id'] ?? ''), (-1 * ($this->additionalSettings['print_dynamic_order_no'])));
             } else {
                 $dynamicOrderNo = ''.substr(($this->order['order_id'] ?? ''), -2);
             }
