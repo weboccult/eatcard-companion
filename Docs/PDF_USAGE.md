@@ -2,10 +2,12 @@
 
 ```php
 
-Syntax :
+#Syntax :
+
+use function \Weboccult\EatcardCompanion\Helpers\__companionPDF;
 
 __companionPDF("FILE_PATH", ["daa"=>$data]);
-__companionPDF('plain')->#CTRL+SPACE# ==> You will get auto-completion here for available methods
+__companionPDF('plain')-> #CTRL+SPACE# ==> You will get auto-completion here for available methods
 
 ---------------------
 

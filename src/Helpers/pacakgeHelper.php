@@ -73,13 +73,18 @@ if (! function_exists('__companionTrans')) {
      */
     function __companionTrans(string $path, $replace = []): string
     {
+        $currentLocale = App::getLocale() ?? 'en';
+
         $isTranslationEnabled = config('eatcardCompanion.enable_translation');
         if (! $isTranslationEnabled) {
             // If not enabled then reset locale to EN
             App::setLocale('en');
         }
 
-        return __('eatcard-companion::'.$path, $replace);
+        $translatedMessage = __('eatcard-companion::'.$path, $replace);
+        App::setLocale($currentLocale);
+
+        return $translatedMessage;
     }
 }
 
@@ -91,13 +96,18 @@ if (! function_exists('__companionPrintTrans')) {
      */
     function __companionPrintTrans(string $path, $replace = []): string
     {
+        $currentLocale = App::getLocale() ?? 'en';
+
         $isPrintTranslationEnabled = config('eatcardCompanion.enable_print_translation');
         if (! $isPrintTranslationEnabled) {
             // If not enabled then reset locale to nl
             App::setLocale('en');
         }
 
-        return __('eatcard-companion::'.$path, $replace);
+        $translatedMessage = __('eatcard-companion::'.$path, $replace);
+        App::setLocale($currentLocale);
+
+        return $translatedMessage;
     }
 }
 
