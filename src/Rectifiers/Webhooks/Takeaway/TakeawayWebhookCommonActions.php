@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Redis as LRedis;
 use Throwable;
@@ -134,12 +135,28 @@ trait TakeawayWebhookCommonActions
 
     public function sendPrintJsonToSQS()
     {
-        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
-            ->method(PrintMethod::SQS)
-            ->type(PrintTypes::DEFAULT)
-            ->system(SystemTypes::TAKEAWAY)
-            ->payload(['order_id' => ''.$this->fetchedOrder->id])
-            ->generate();
+        $printRes = [];
+        /*Find order item difference with current time*/
+       $current_time = Carbon::now();
+       $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->fetchedOrder->order_time));
+
+       if (($this->fetchedStore->future_order_print_status == 0 || ($this->fetchedOrder->order_date == Carbon::now()->format('Y-m-d') && $order_time_difference <= $this->fetchedStore->future_order_print_time))) {
+           $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+               ->method(PrintMethod::SQS)
+               ->type(PrintTypes::DEFAULT)
+               ->system(SystemTypes::TAKEAWAY)
+               ->payload(['order_id' => ''.$this->fetchedOrder->id])
+               ->generate();
+       } else {
+           Order::query()->where('id', $this->fetchedOrder->id)->update(['is_future_order_print_pending' => 1]);
+       }
+
+//        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+//            ->method(PrintMethod::SQS)
+//            ->type(PrintTypes::DEFAULT)
+//            ->system(SystemTypes::TAKEAWAY)
+//            ->payload(['order_id' => ''.$this->fetchedOrder->id])
+//            ->generate();
         if (! empty($printRes)) {
             config([
                 'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,
