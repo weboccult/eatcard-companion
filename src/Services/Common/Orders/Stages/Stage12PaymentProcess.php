@@ -429,11 +429,11 @@ trait Stage12PaymentProcess
 
         if ($this->system === SystemTypes::TAKEAWAY && ($this->orderData['method'] == 'cash' || $this->createdOrder->is_paylater_order == 1)) {
 
-            /*Find order item difference with current time*/
-            $current_time = Carbon::now();
-            $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->createdOrder['order_time']));
+//            /*Find order item difference with current time*/
+//            $current_time = Carbon::now();
+//            $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->createdOrder['order_time']));
 
-            if (($this->store->future_order_print_status == 0 || ($this->createdOrder['order_date'] == Carbon::now()->format('Y-m-d') && $order_time_difference <= $this->store->future_order_print_time))) {
+            if (($this->store->future_order_print_status == 0 || ($this->createdOrder['order_date'] == Carbon::now()->format('Y-m-d') /*&& $order_time_difference <= $this->store->future_order_print_time*/))) {
                 $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                     ->method(PrintMethod::SQS)
                     ->type(PrintTypes::DEFAULT)

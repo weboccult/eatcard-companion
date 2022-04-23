@@ -136,11 +136,11 @@ trait TakeawayWebhookCommonActions
     public function sendPrintJsonToSQS()
     {
         $printRes = [];
-        /*Find order item difference with current time*/
-        $current_time = Carbon::now();
-        $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->fetchedOrder->order_time));
+//        /*Find order item dfference with current time*/
+//        $current_time = Carbon::now();
+//        $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->fetchedOrder->order_time));
 
-        if (($this->fetchedStore->future_order_print_status == 0 || ($this->fetchedOrder->order_date == Carbon::now()->format('Y-m-d') && $order_time_difference <= $this->fetchedStore->future_order_print_time))) {
+        if (($this->fetchedStore->future_order_print_status == 0 || ($this->fetchedOrder->order_date == Carbon::now()->format('Y-m-d') /*&& $order_time_difference <= $this->fetchedStore->future_order_print_time*/))) {
             $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                ->method(PrintMethod::SQS)
                ->type(PrintTypes::DEFAULT)

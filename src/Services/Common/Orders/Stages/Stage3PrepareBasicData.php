@@ -108,8 +108,8 @@ trait Stage3PrepareBasicData
         }
 
         if ($this->system === SystemTypes::TAKEAWAY) {
-            $this->orderData['order_date'] =  $this->payload['order_date'] ?? Carbon::now()->format('Y-m-d');
-            $this->orderData['order_time'] =  $this->payload['order_time'] ?? date('H:i');
+            $this->orderData['order_date'] = $this->payload['order_date'] ?? Carbon::now()->format('Y-m-d');
+            $this->orderData['order_time'] = $this->payload['order_time'] ?? date('H:i');
             $this->orderData['order_status'] = 'received';
             if (isset($this->payload['order_time']) && $this->payload['order_time'] == 'asap') {
                 $this->orderData['order_time'] = date('H:i');
