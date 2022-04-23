@@ -31,7 +31,7 @@ trait Stage13Broadcasting
         $order = $this->createdOrder->toArray();
         $socket_data = sendWebNotification($this->store, $order, $current_data, 0, $force_refresh);
 
-        if ($this->system != SystemTypes::DINE_IN || ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin']))) {
+        if (in_array($this->orderData['method'], ['cash', 'pin']) || $this->createdOrder->is_paylater_order == 1) {
             if ($socket_data) {
                 $redis = LRedis::connection();
                 $redis->publish('new_order', json_encode($socket_data));
@@ -51,7 +51,8 @@ trait Stage13Broadcasting
 
     protected function sendAppNotification()
     {
-        if ($this->system === SystemTypes::TAKEAWAY) {
+        //no need to send OneSignal notification for pay-later order because current we're not showing palate order in partner app
+        if ($this->system === SystemTypes::TAKEAWAY && ($this->orderData['method'] == 'cash' /*|| $this->createdOrder->is_paylater_order == 1*/)) {
             if (($this->store->is_notification) && (! $this->store->notificationSetting || ($this->store->notificationSetting && $this->store->notificationSetting->is_takeaway_notification))) {
                 /*send app notification after order status updated to paid or canceled*/
                 $order = Order::query()->with('orderItems.product:id,image,sku')->findOrFail($this->createdOrder->id);
