@@ -46,7 +46,7 @@ class MultiSafeTakeawayOrderSuccessRedirect extends BaseWebhook
         }
         $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $this->updateOrder($update_data);
-        if (! empty($new_order) && $formattedStatus == 'paid') {
+        if (isset($this->fetchedOrder) && ! empty($this->fetchedOrder) && $formattedStatus == 'paid') {
             Session::put('payment_update', [
                 'status'   => $formattedStatus,
                 'order_id' => $this->fetchedOrder->id,

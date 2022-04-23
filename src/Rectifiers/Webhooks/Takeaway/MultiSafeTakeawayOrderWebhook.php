@@ -57,7 +57,7 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
         companionLogger('MultiSafe webhook Payment status', json_encode(['payment_status' => $formattedStatus.'-'.$oldStatus], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
         $update_data = [];
-        $update_data['multisafe_payment_id'] = $payment['transaction_id'];;
+        $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $update_data['status'] = $formattedStatus;
         if ($formattedStatus == 'paid' && $this->fetchedOrder->status != 'paid') {
             $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
