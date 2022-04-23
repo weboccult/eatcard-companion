@@ -137,19 +137,19 @@ trait TakeawayWebhookCommonActions
     {
         $printRes = [];
         /*Find order item difference with current time*/
-       $current_time = Carbon::now();
-       $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->fetchedOrder->order_time));
+        $current_time = Carbon::now();
+        $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->fetchedOrder->order_time));
 
-       if (($this->fetchedStore->future_order_print_status == 0 || ($this->fetchedOrder->order_date == Carbon::now()->format('Y-m-d') && $order_time_difference <= $this->fetchedStore->future_order_print_time))) {
-           $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+        if (($this->fetchedStore->future_order_print_status == 0 || ($this->fetchedOrder->order_date == Carbon::now()->format('Y-m-d') && $order_time_difference <= $this->fetchedStore->future_order_print_time))) {
+            $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                ->method(PrintMethod::SQS)
                ->type(PrintTypes::DEFAULT)
                ->system(SystemTypes::TAKEAWAY)
                ->payload(['order_id' => ''.$this->fetchedOrder->id])
                ->generate();
-       } else {
-           Order::query()->where('id', $this->fetchedOrder->id)->update(['is_future_order_print_pending' => 1]);
-       }
+        } else {
+            Order::query()->where('id', $this->fetchedOrder->id)->update(['is_future_order_print_pending' => 1]);
+        }
 
 //        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
 //            ->method(PrintMethod::SQS)
