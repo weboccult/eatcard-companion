@@ -99,7 +99,7 @@ trait Stage14Notification
                 // 'payment_status' => $order['status'],
                 'message'  => __companionTrans('takeaway.order_success_msg', [
                     'time'       => $this->createdOrder->order_time,
-                    'order_type' => __companionTrans('general.' . $this->createdOrder->order_type),
+                    'order_type' => __companionTrans('general.'.$this->createdOrder->order_type),
                 ]),
             ]);
             Session::save();

@@ -97,7 +97,7 @@ trait GiftCardWebhookCommonActions
                 }
             }
         } catch (\Exception $e) {
-            companionLogger('reservation status change push notification error: => '.$e->getFile().' '.$e->getMessage().' | ' .$e->getLine().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+            companionLogger('reservation status change push notification error: => '.$e->getFile().' '.$e->getMessage().' | '.$e->getLine().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
     }
 

@@ -84,7 +84,7 @@ trait Stage1PrepareValidationRules
                 $this->setDumpDieValue(['error' => 'error']);
             }
 
-            if ($this->payload['order_type'] == 'pickup' && (int)($this->payload['is_pay_later_order'] ?? 0) == 1 && $this->takeawaySetting->is_pickup_paylater == 0) {
+            if ($this->payload['order_type'] == 'pickup' && (int) ($this->payload['is_pay_later_order'] ?? 0) == 1 && $this->takeawaySetting->is_pickup_paylater == 0) {
                 $this->addRuleToSystemSpecificRules(TakeawayPickupDeliveryNotAvailableException::class, true);
             }
         }
@@ -95,8 +95,7 @@ trait Stage1PrepareValidationRules
         if ($this->system == SystemTypes::TAKEAWAY) {
             $gift_card_amount = $this->payload['gift_card_amount'] ?? 0;
             if ($this->payload['order_type'] == 'delivery') {
-
-                if ((int)($this->payload['is_pay_later_order'] ?? 0) == 1  && $this->takeawaySetting->is_delivery_paylater == 0) {
+                if ((int) ($this->payload['is_pay_later_order'] ?? 0) == 1 && $this->takeawaySetting->is_delivery_paylater == 0) {
                     $this->addRuleToSystemSpecificRules(TakeawayPickupDeliveryNotAvailableException::class, true);
                 }
 

@@ -69,7 +69,7 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereYear('order_date', $this->year);
             })
 //            ->where('status', 'paid')
-            ->where(function($q6) {
+            ->where(function ($q6) {
                 $q6->orWhere('status', 'paid');
                 $q6->orWhere('is_paylater_order', 1);
             })
@@ -126,7 +126,7 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereYear('order_date', $this->year);
             })
 //            ->where('status', 'paid')
-            ->where(function($q6) {
+            ->where(function ($q6) {
                 $q6->orWhere('status', 'paid');
                 $q6->orWhere('is_paylater_order', 1);
             })
@@ -170,7 +170,7 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereYear('paid_on', $this->year);
             })
 //            ->where('status', 'paid')
-            ->where(function($q6) {
+            ->where(function ($q6) {
                 $q6->orWhere('status', 'paid');
                 $q6->orWhere('is_paylater_order', 1);
             })
@@ -209,7 +209,7 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereYear('paid_on', $this->year);
             })
 //            ->where('status', 'paid')
-            ->where(function($q6) {
+            ->where(function ($q6) {
                 $q6->orWhere('status', 'paid');
                 $q6->orWhere('is_paylater_order', 1);
             })

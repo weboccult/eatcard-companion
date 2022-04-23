@@ -138,9 +138,9 @@ trait TakeawayWebhookCommonActions
             ->method(PrintMethod::SQS)
             ->type(PrintTypes::DEFAULT)
             ->system(SystemTypes::TAKEAWAY)
-            ->payload(['order_id' => '' . $this->fetchedOrder->id])
+            ->payload(['order_id' => ''.$this->fetchedOrder->id])
             ->generate();
-        if (!empty($printRes)) {
+        if (! empty($printRes)) {
             config([
                 'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,
                 'queue.connections.sqs.queue'  => $this->fetchedStore->sqs->sqs_queue_name,
