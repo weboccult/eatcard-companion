@@ -27,7 +27,7 @@ class MultiSafeReservationCancelRedirect extends BaseWebhook
         $this->fetchAndSetReservation();
         $this->fetchAndSetStore();
 
-        $payment = MultiSafe::getOrder($this->fetchedReservation->id.'-'.$this->fetchedReservation->reservation_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedReservation->id.'-'.$this->fetchedReservation->reservation_id);
 
         $status = 'canceled';
         $updateData['payment_status'] = $status;
