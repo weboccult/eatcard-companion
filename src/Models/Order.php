@@ -92,6 +92,8 @@ class Order extends Model
         'saved_order_id',
         'is_base_order',
         'is_paylater_order',
+        'tip_amount',
+        'direct_order_discount_type'
     ];
 
     protected $appends = ['full_name', 'generated_date'];

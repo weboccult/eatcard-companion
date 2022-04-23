@@ -11,6 +11,7 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
 use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
@@ -128,6 +129,24 @@ trait TakeawayWebhookCommonActions
                 updateEmailCount('error');
                 companionLogger('Takeaway order create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
+        }
+    }
+
+    public function sendPrintJsonToSQS()
+    {
+        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+            ->method(PrintMethod::SQS)
+            ->type(PrintTypes::DEFAULT)
+            ->system(SystemTypes::TAKEAWAY)
+            ->payload(['order_id' => '' . $this->fetchedOrder->id])
+            ->generate();
+        if (!empty($printRes)) {
+            config([
+                'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,
+                'queue.connections.sqs.queue'  => $this->fetchedStore->sqs->sqs_queue_name,
+                'queue.connections.sqs.prefix' => $this->fetchedStore->sqs->sqs_url,
+            ]);
+            \Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->fetchedStore->sqs->sqs_queue_name);
         }
     }
 }

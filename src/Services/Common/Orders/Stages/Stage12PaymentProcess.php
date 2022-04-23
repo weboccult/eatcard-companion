@@ -416,25 +416,49 @@ trait Stage12PaymentProcess
 
     public function sendPrintJsonToSQS()
     {
+        $printRes = [];
+
         if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
             $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
-                            ->method(PrintMethod::SQS)
-                            ->type(PrintTypes::DEFAULT)
-                            ->system(SystemTypes::DINE_IN)
-                            ->payload(['order_id'=>''.$this->createdOrder['id']])
-                            ->generate();
+                ->method(PrintMethod::SQS)
+                ->type(PrintTypes::DEFAULT)
+                ->system(SystemTypes::DINE_IN)
+                ->payload(['order_id' => '' . $this->createdOrder['id']])
+                ->generate();
+        }
 
-            if (! empty($printRes)) {
-                config([
-                    'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
-                    'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
-                    'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
-                ]);
-                try {
-                    Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
-                } catch (\Exception $e) {
-                    companionLogger('Eatcard companion SQS queue send related Exception dine-in', $e);
-                }
+        if ($this->system === SystemTypes::TAKEAWAY && ($this->orderData['method'] == 'cash' || $this->createdOrder->is_paylater_order == 1)) {
+
+            /*Find order item difference with current time*/
+            $current_time = Carbon::now();
+            $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->createdOrder['order_time']));
+
+            if(($this->store->future_order_print_status == 0 || ($this->createdOrder['order_date'] == Carbon::now() ->format('Y-m-d') && $order_time_difference <= $this->store->future_order_print_time))) {
+                $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                    ->method(PrintMethod::SQS)
+                    ->type(PrintTypes::DEFAULT)
+                    ->system(SystemTypes::TAKEAWAY)
+                    ->payload(['order_id' => '' . $this->createdOrder['id']])
+                    ->generate();
+            } else {
+                Order::query()->where('id', $this->createdOrder['id'])->update(['is_future_order_print_pending' => 1]);
+            }
+
+        }
+
+
+        //for print json send in sqs
+        if ($this->store->sqs && ! empty($printRes)) {
+            config([
+                'queue.connections.sqs.region' => $this->store->sqs->sqs_region,
+                'queue.connections.sqs.queue'  => $this->store->sqs->sqs_queue_name,
+                'queue.connections.sqs.prefix' => $this->store->sqs->sqs_url,
+            ]);
+            try {
+                Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
+            }
+            catch (\Exception $e) {
+                companionLogger('Eatcard companion SQS queue send related Exception dine-in', $e);
             }
         }
     }

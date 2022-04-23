@@ -786,6 +786,7 @@ if (! function_exists('sendWebNotification')) {
                     'method'                => isset($order['payment_split_type']) && $order['payment_split_type'] != '' ? '' : $order['method'],
                     'dutch_date'            => appDutchDate($data['orderDate']),
                     'is_auto_print'         => (/*$store->app_pos_print &&*/ $store->is_auto_print_takeaway),
+                    'is_paylater_order'     => $order['is_paylater_order'],
                     'is_notification'       => ($data['is_notification']),
                     'thusibezorgd_order_id' => $order['thusibezorgd_order_id'] ?? '',
                     'uber_eats_order_id'    => $order['uber_eats_order_id'] ?? '',
@@ -1206,7 +1207,7 @@ if (! function_exists('sendAppNotificationHelper')) {
             }
             $one_signal_user_devices_ods = [];
             if ($new_notification && $user_ids) {
-                $new_notification->generalNotificationUsers()->attach($user_ids);
+                $new_notification->users()->attach($user_ids);
                 $devices = Device::query()->whereIn('user_id', $user_ids)->get();
                 if (count($devices) > 0) {
                     $one_signal_user_devices_ods = $devices->pluck('onesignal_id')->toArray();
@@ -1223,7 +1224,7 @@ if (! function_exists('sendAppNotificationHelper')) {
                 try {
                     $is_send_push = OneSignal::sendPushNotification($push_notification_data);
                     if ($is_send_push) {
-                        $new_notification->generalNotificationUsers()->detach($user_ids);
+                        $new_notification->users()->detach($user_ids);
                         $new_notification->delete();
                     }
                 } catch (\Exception $exception) {

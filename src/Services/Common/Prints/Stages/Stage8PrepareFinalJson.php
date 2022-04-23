@@ -147,7 +147,7 @@ trait Stage8PrepareFinalJson
                 $title6 = __companionPrintTrans('general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-                $titleTime = $this->order['paid_on'] ?? '';
+                $titleTime = carbonFormatParse('d-m-Y H:i', ($this->order['paid_on'] ?? ''));
                 $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
             }
 
@@ -363,6 +363,11 @@ trait Stage8PrepareFinalJson
             $checkoutNo = $this->order['checkout_no'] ?? '';
 
             $typeOrder = $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.($this->order['order_type'] ?? ''));
+
+            if ($this->advanceData['is_paylater_order'] == 1) {
+                $typeOrder .= ' (Paylater)';
+            }
+
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
 
             $customerComments = $this->order['comment'] ?? '';

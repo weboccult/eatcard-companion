@@ -54,12 +54,13 @@ class MollieTakeawayOrderWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         if ($payment->status == 'paid' && $oldStatus != 'paid') {
             $this->applyCouponLogic();
+            $this->sendPrintJsonToSQS();
             $notificationResponse = $this->sendNotifications();
             if (isset($notificationResponse['exception'])) {
                 return $notificationResponse;
             }
         }
-        if ($payment->status != $oldStatus) {
+        if ($payment->status != $oldStatus && in_array($payment->status,['paid','canceled'])) {
             sendOrderSms($this->fetchedStore, $this->fetchedOrder);
             $this->sendTakeawayUserEmail();
             $this->sendTakeawayOwnerEmail();

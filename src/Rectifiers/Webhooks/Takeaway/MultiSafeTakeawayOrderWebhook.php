@@ -68,12 +68,13 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         if ($formattedStatus == 'paid' && $oldStatus != 'paid') {
             $this->applyCouponLogic();
+            $this->sendPrintJsonToSQS();
             $notificationResponse = $this->sendNotifications();
             if (isset($notificationResponse['exception'])) {
                 return $notificationResponse;
             }
         }
-        if ($formattedStatus != $oldStatus) {
+        if ($formattedStatus != $oldStatus && in_array($formattedStatus,['paid','canceled'])) {
             sendOrderSms($this->fetchedStore, $this->fetchedOrder);
             $this->sendTakeawayUserEmail();
             $this->sendTakeawayOwnerEmail();

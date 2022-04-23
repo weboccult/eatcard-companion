@@ -72,7 +72,7 @@ trait GiftCardWebhookCommonActions
             }
             $one_signal_user_devices_oids = [];
             if ($newNotification && $userIds) {
-                $newNotification->generalNotificationUsers()->attach($userIds);
+                $newNotification->users()->attach($userIds);
                 $devices = Device::query()->whereIn('user_id', $userIds)->get();
                 if (count($devices) > 0) {
                     $one_signal_user_devices_oids = $devices->pluck('onesignal_id')->toArray();
@@ -89,7 +89,7 @@ trait GiftCardWebhookCommonActions
                 try {
                     $is_send_push = OneSignal::sendPushNotification($push_notification_data);
                     if ($is_send_push) {
-                        $newNotification->generalNotificationUsers()->detach($userIds);
+                        $newNotification->users()->detach($userIds);
                         $newNotification->delete();
                     }
                 } catch (\Exception $exception) {
@@ -97,7 +97,7 @@ trait GiftCardWebhookCommonActions
                 }
             }
         } catch (\Exception $e) {
-            companionLogger('reservation status change push notification error: => '.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+            companionLogger('reservation status change push notification error: => '.$e->getFile().' '.$e->getMessage().' | ' .$e->getLine().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
     }
 

@@ -34,4 +34,15 @@ class GeneralNotification extends Model
     {
         return Carbon::createFromFormat('Y-m-d H:i:s', $this->created_at)->diffForHumans();
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'general_notification_users', 'notification_id', 'user_id')
+            ->withPivot(['read_at']);
+    }
+
+    public function ScopeUnread($query)
+    {
+        return $query;
+    }
 }
