@@ -10,6 +10,7 @@ use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
+use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
