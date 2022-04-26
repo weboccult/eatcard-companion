@@ -772,7 +772,7 @@ if (! function_exists('sendWebNotification')) {
                 'additional_data' => json_encode([
                     'id'                    => $order['id'],
                     'order_id'              => $order['order_id'],
-                    'order_date'            => $order['order_date'],
+                    'order_date'            => Carbon::parse($order['order_date'])->format('d-m-Y'),
                     'order_time'            => $order['order_time'],
                     'total_price'           => $order['total_price'],
                     'order_type'            => $order['order_type'] ?? 'pos',
