@@ -415,7 +415,7 @@ trait Stage8PrepareAdvanceData
                         }
                     }
                     if ($this->system === SystemTypes::TAKEAWAY) {
-                        if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float)$this->discountData['order_discount'] > 0) {
+                        if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float) $this->discountData['order_discount'] > 0) {
                             $this->orderData['total_alcohol_tax'] += ($current_sub - (($current_sub * (float) $this->discountData['order_discount']) / 100));
                         } else {
                             $this->orderData['total_alcohol_tax'] += $current_sub;
@@ -443,8 +443,8 @@ trait Stage8PrepareAdvanceData
                     }
                 }
                 if ($this->system === SystemTypes::TAKEAWAY) {
-                    if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float)$this->discountData['order_discount'] > 0) {
-                        $this->orderData['total_tax'] += ($current_sub - (($current_sub * (float)$this->discountData['order_discount']) / 100));
+                    if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float) $this->discountData['order_discount'] > 0) {
+                        $this->orderData['total_tax'] += ($current_sub - (($current_sub * (float) $this->discountData['order_discount']) / 100));
                     } else {
                         $this->orderData['total_tax'] += $current_sub;
                     }
