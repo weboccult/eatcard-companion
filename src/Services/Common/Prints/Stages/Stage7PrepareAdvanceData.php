@@ -102,6 +102,7 @@ trait Stage7PrepareAdvanceData
                     $delivery_address[1] = $delivery_postcode.','.$delivery_address[1];
                 }
                 $this->order['delivery_address'] = implode(', ', $delivery_address);
+                $this->order['delivery_postcode'] = implode(', ', $delivery_postcode);
             }
 
             //update order type for Dine-in store-qr orders

@@ -99,6 +99,10 @@ trait Stage9PerformOperations
                     $this->couponRemainingPrice = 0;
                     $this->orderData['coupon_price'] = $this->coupon->remaining_price;
                     $this->orderData['total_price'] = $this->orderData['total_price'] - $this->coupon->remaining_price;
+
+                    $this->orderData['status'] = $this->orderData['is_paylater_order'] == 1 ? 'pending' : 'paid';
+                    $this->orderData['method'] = $this->orderData['is_paylater_order'] == 1 ? null : 'cash';
+                    $this->orderData['paid_on'] = $this->orderData['is_paylater_order'] == 1 ? null : Carbon::now()->format('Y-m-d H:i:s');
                 } else {
                     $this->couponRemainingPrice = 0;
                     $this->orderData['coupon_price'] = 0;
