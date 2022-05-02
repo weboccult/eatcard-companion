@@ -110,7 +110,7 @@
                 <tr>
                     <td align="center">
                         <table class="em_wrapper @if($order['is_paylater_order'] == 1) paid @else {{$order['status']}}@endif" align="center" width="600" border="0"
-                               cellspacing="0" cellpadding="0" style="width:600px;">
+                               cellspacing="0" cellpadding="0" style="width:600px; @if($order['is_paylater_order'] == 1) background-color: orange @endif ">
                             <tr>
                                 <td align="center" style="font-family:Verdana, Arial, Tahoma; font-size:12px; line-height:15px; font-weight:bold; font-style:normal; color:#FFFFFF; padding:5px 10px 5px 10px">
                                     @if($order['is_paylater_order'] == 1)
@@ -176,7 +176,7 @@
                                                                         {{$order['delivery_postcode']}}<br />
                                                                         {{$order['delivery_place']}}<br /><br />
 
-                                                                        {{$data['titteTime'][0]['key2'] ?? ''}}<br />
+                                                                        {{$data['titteTime'][0]['value2'] ?? ''}}<br />
                                                                         {{$data['title5']}}
                                                                     </td>
                                                                 </tr>
