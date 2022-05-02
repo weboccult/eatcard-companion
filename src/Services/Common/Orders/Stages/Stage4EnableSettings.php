@@ -103,7 +103,7 @@ trait Stage4EnableSettings
     protected function enableNotification()
     {
         $isNotification = $this->store->is_notification ?? 0;
-        $notificationSettings = $store->notificationSetting ?? [];
+        $notificationSettings = $this->store->notificationSetting ?? [];
         $isTakeawayNotification = $this->store->notificationSetting->is_takeaway_notification ?? 0;
         $isDineInNotification = $this->store->notificationSetting->is_dine_in_notification ?? 0;
 
