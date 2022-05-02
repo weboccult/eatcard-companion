@@ -35,7 +35,7 @@ trait Stage0BasicDatabaseInteraction
                 TAKEAWAY_SETTING.$storeId,
             ])->remember('{eat-card}-companion-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
                 return*/ Store::query()
-                    ->with('storeSetting', 'store_manager', 'store_owner', 'sqs', 'notificationSetting','takeawaySetting','multiSafe')->where('id', $storeId)->first();
+                    ->with('storeSetting', 'store_manager', 'store_owner', 'sqs', 'notificationSetting', 'takeawaySetting', 'multiSafe')->where('id', $storeId)->first();
             /*});*/
             if (! empty($store)) {
                 $this->store = $store;
