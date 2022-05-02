@@ -99,4 +99,31 @@ trait Stage4EnableSettings
             ];
         }
     }
+
+    protected function enableNotification()
+    {
+        $isNotification = $this->store->is_notification ?? 0;
+        $isTakeawayNotification = $this->store->notificationSetting->is_takeaway_notification ?? 0;
+        $isDineInNotification = $this->store->notificationSetting->is_dine_in_notification ?? 0;
+
+        $this->settings['notification'] = [
+            'status' => false,
+        ];
+
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            if (! empty($isNotification) && ! empty($isTakeawayNotification)) {
+                $this->settings['notification'] = [
+                    'status' => true,
+                ];
+            }
+        }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+            if (! empty($isNotification) && ! empty($isDineInNotification)) {
+                $this->settings['notification'] = [
+                    'status' => true,
+                ];
+            }
+        }
+    }
 }

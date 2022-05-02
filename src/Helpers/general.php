@@ -796,7 +796,7 @@ if (! function_exists('sendWebNotification')) {
                     'parent_order_id'       => $order['parent_order_id'] ?? '',
                     'force_refresh'         => $force_refresh,
                 ]),
-                'read_at'         => Carbon::now()->format('Y-m-d H:i:s'),
+                'read_at'         => (! $data['is_notification']) ? Carbon::now()->format('Y-m-d H:i:s') : null,
             ]);
 
             return [

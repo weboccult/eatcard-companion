@@ -19,10 +19,16 @@ trait Stage13Broadcasting
 {
     protected function sendWebNotification()
     {
+        //send only for cash,pin,pay-later orders
+        if (! (in_array($this->orderData['method'], ['cash', 'pin']) || $this->createdOrder->is_paylater_order == 1)) {
+            return;
+        }
+
         /*send socket data for new order event on pos side*/
+        $is_notification = $this->settings['notification']['status'] ? 1 : 0;
         $current_data = [
             'orderDate'       => $this->createdOrder->order_date,
-            'is_notification' => 1,
+            'is_notification' => $is_notification,
         ];
         $force_refresh = 0;
         if (! empty($this->storeReservation) && $this->storeReservation->undo_checkout_count > 0) {
@@ -31,15 +37,13 @@ trait Stage13Broadcasting
         $order = $this->createdOrder->toArray();
         $socket_data = sendWebNotification($this->store, $order, $current_data, 0, $force_refresh);
 
-        if (in_array($this->orderData['method'], ['cash', 'pin']) || $this->createdOrder->is_paylater_order == 1) {
-            if ($socket_data) {
-                $redis = LRedis::connection();
-                $redis->publish('new_order', json_encode($socket_data));
-            }
+        if ($socket_data) {
+            $redis = LRedis::connection();
+            $redis->publish('new_order', json_encode($socket_data));
         }
 
         //need to uto checkout guest user after his order place if setting is on.
-        if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
+        if ($this->system === SystemTypes::DINE_IN) {
             if (! empty($this->storeReservation) && $this->storeReservation->is_dine_in == 1) {
                 $autocheckout_after_payment = isset($this->store->storeButler->autocheckout_after_payment) && $this->store->storeButler->autocheckout_after_payment ?? 0;
                 if ($autocheckout_after_payment == 1) {
