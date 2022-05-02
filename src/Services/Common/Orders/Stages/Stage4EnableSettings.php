@@ -103,12 +103,22 @@ trait Stage4EnableSettings
     protected function enableNotification()
     {
         $isNotification = $this->store->is_notification ?? 0;
+        $notificationSettings = $store->notificationSetting ?? [];
         $isTakeawayNotification = $this->store->notificationSetting->is_takeaway_notification ?? 0;
         $isDineInNotification = $this->store->notificationSetting->is_dine_in_notification ?? 0;
 
         $this->settings['notification'] = [
             'status' => false,
         ];
+
+        //if setting is not exists then need to send all notification
+        if (empty($notificationSettings)) {
+            $this->settings['notification'] = [
+                'status' => true,
+            ];
+
+            return;
+        }
 
         if ($this->system == SystemTypes::TAKEAWAY) {
             if (! empty($isNotification) && ! empty($isTakeawayNotification)) {
