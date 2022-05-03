@@ -29,7 +29,7 @@ class MultiSafeGiftCardWebhook extends BaseWebhook
         $this->fetchAndSetStore();
         $this->fetchAndSetGiftCardPurchaseOrder();
 
-        $payment = MultiSafe::getOrder('GC - '.$this->fetchedGiftPurchaseOrder->id.'-'.$this->fetchedGiftPurchaseOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder('GC - '.$this->fetchedGiftPurchaseOrder->id.'-'.$this->fetchedGiftPurchaseOrder->order_id);
 
         $oldStatus = $this->fetchedGiftPurchaseOrder->status;
 

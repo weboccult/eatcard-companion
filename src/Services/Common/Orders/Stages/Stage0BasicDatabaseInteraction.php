@@ -26,7 +26,7 @@ trait Stage0BasicDatabaseInteraction
     {
         if (isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
             $storeId = $this->payload['store_id'];
-            $store = Cache::tags([
+            $store = /*Cache::tags([
                 FLUSH_ALL,
                 FLUSH_POS,
                 FLUSH_STORE_BY_ID.$storeId,
@@ -34,9 +34,9 @@ trait Stage0BasicDatabaseInteraction
                 STORE_SETTING,
                 TAKEAWAY_SETTING.$storeId,
             ])->remember('{eat-card}-companion-store-with-settings-'.$storeId, CACHING_TIME, function () use ($storeId) {
-                return Store::query()
-                    ->with('storeSetting', 'multiSafe')->where('id', $storeId)->first();
-            });
+                return*/ Store::query()
+                    ->with('storeSetting', 'store_manager', 'store_owner', 'sqs', 'notificationSetting', 'takeawaySetting', 'multiSafe')->where('id', $storeId)->first();
+            /*});*/
             if (! empty($store)) {
                 $this->store = $store;
                 $this->orderData['store_id'] = $this->store->id;

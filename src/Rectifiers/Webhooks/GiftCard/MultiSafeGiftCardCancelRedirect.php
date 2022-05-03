@@ -26,7 +26,7 @@ class MultiSafeGiftCardCancelRedirect extends BaseWebhook
         $this->fetchAndSetGiftCardPurchaseOrder();
         $this->fetchAndSetStore();
 
-        $payment = MultiSafe::getOrder('GC - '.$this->fetchedGiftPurchaseOrder->id.'-'.$this->fetchedGiftPurchaseOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder('GC - '.$this->fetchedGiftPurchaseOrder->id.'-'.$this->fetchedGiftPurchaseOrder->order_id);
 
         $status = 'canceled';
         $updateData['multisafe_payment_id'] = $payment['transaction_id'];

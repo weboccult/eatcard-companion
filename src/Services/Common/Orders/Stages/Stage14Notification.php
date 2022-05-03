@@ -92,15 +92,17 @@ trait Stage14Notification
 
     protected function setSessionPaymentUpdate()
     {
-        Session::put('payment_update', [
-            'status'   => 'paid',
-            'order_id' => $this->createdOrder->id,
-            // 'payment_status' => $order['status'],
-            'message'  => __companionTrans('takeaway.order_success_msg', [
-                'time'       =>  $this->createdOrder->order_time,
-                'order_type' => __companionTrans('general.'.$this->createdOrder->order_type),
-            ]),
-        ]);
-        Session::save();
+        if ($this->system === SystemTypes::TAKEAWAY && ($this->createdOrder->method == 'cash' || $this->createdOrder->is_paylater_order == 1)) {
+            Session::put('payment_update', [
+                'status'   => 'paid',
+                'order_id' => $this->createdOrder->id,
+                // 'payment_status' => $order['status'],
+                'message'  => __companionTrans('takeaway.order_success_msg', [
+                    'time'       => $this->createdOrder->order_time,
+                    'order_type' => __companionTrans('general.'.$this->createdOrder->order_type),
+                ]),
+            ]);
+            Session::save();
+        }
     }
 }

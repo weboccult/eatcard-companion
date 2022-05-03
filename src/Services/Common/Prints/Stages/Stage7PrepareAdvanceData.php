@@ -91,6 +91,8 @@ trait Stage7PrepareAdvanceData
                 $this->order['order_date'] = Carbon::parse($this->order['order_date'])->format('d-m-Y');
             }
 
+            $this->advanceData['is_paylater_order'] = (int) ($this->order['is_paylater_order'] ?? 0);
+
             //update address postcode
             $delivery_address = $this->order['delivery_address'] ?? '';
             $delivery_postcode = $this->order['delivery_postcode'] ?? '';
@@ -100,6 +102,7 @@ trait Stage7PrepareAdvanceData
                     $delivery_address[1] = $delivery_postcode.','.$delivery_address[1];
                 }
                 $this->order['delivery_address'] = implode(', ', $delivery_address);
+//                $this->order['delivery_postcode'] = $delivery_postcode;
             }
 
             //update order type for Dine-in store-qr orders

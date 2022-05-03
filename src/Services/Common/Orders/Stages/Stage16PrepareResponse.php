@@ -42,7 +42,7 @@ trait Stage16PrepareResponse
 
     protected function takeawayResponse()
     {
-        if ($this->orderData['method'] == 'cash') {
+        if ($this->orderData['method'] == 'cash' || $this->createdOrder->is_paylater_order == 1) {
             $this->setDumpDieValue(['redirect_url' => $this->payload['url'].'?status=paid&type=takeaway&store='.$this->store->store_slug]);
         } else {
             $this->mollieAndMultiSafeResponse();

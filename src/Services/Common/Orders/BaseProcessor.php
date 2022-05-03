@@ -252,6 +252,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->enablePlasticBagFees(),
             fn () => $this->enableStatiegeDeposite(),
             fn () => $this->enableNewLetterSubscription(),
+            fn () => $this->enableNotification(),
         ]);
     }
 

@@ -108,6 +108,8 @@ trait Stage3PrepareBasicData
         }
 
         if ($this->system === SystemTypes::TAKEAWAY) {
+            $this->orderData['order_date'] = $this->payload['order_date'] ?? Carbon::now()->format('Y-m-d');
+            $this->orderData['order_time'] = $this->payload['order_time'] ?? date('H:i');
             $this->orderData['order_status'] = 'received';
             if (isset($this->payload['order_time']) && $this->payload['order_time'] == 'asap') {
                 $this->orderData['order_time'] = date('H:i');
@@ -137,6 +139,7 @@ trait Stage3PrepareBasicData
                 $this->orderData['delivery_place'] = '';
             } else {
                 $this->orderData['delivery_address'] = $this->payload['delivery_street'].' '.($this->payload['house_number'] ?? '').', '.$this->payload['delivery_place'].', Netherlands';
+                $this->orderData['delivery_postcode'] = $this->payload['delivery_postcode'] ?? '';
             }
             $this->orderData['first_name'] = trim($this->payload['first_name']);
             $this->orderData['last_name'] = trim($this->payload['last_name']);

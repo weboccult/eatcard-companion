@@ -20,7 +20,7 @@ class GeneralNotificationUser extends Model
     /**
      * @return BelongsTo
      */
-    public function generalNotification(): BelongsTo
+    public function generalNotification()
     {
         return $this->belongsTo(GeneralNotification::class, 'notification_id', 'id');
     }

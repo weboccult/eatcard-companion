@@ -76,9 +76,7 @@ abstract class ThirdPartyOrders
     {
         try {
             $order = $this->createdOrder->toArray();
-            if ($this->store->future_order_print_status == 0 || (Carbon::parse($order['order_date'])
-                        ->format('Y-m-d') == Carbon::now()
-                        ->format('Y-m-d')/* && $order_time_difference <= ($this->store->future_order_print_time ? $this->store->future_order_print_time : 0)*/)) {
+            if ($this->store->future_order_print_status == 0 || (Carbon::parse($order['order_date'])->format('Y-m-d') == Carbon::now()->format('Y-m-d')/* && $order_time_difference <= ($this->store->future_order_print_time ? $this->store->future_order_print_time : 0)*/)) {
                 if ($this->store->sqs) {
                     // Todo : get print JSON data from EatcardPrint Service
                     $printRes = [];

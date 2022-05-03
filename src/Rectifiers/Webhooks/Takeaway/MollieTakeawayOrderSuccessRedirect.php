@@ -44,7 +44,7 @@ class MollieTakeawayOrderSuccessRedirect extends BaseWebhook
         }
         $this->updateOrder($update_data);
         /*set session if payment status updated to paid*/
-        if (! empty($new_order) && $payment->status == 'paid') {
+        if (isset($this->fetchedOrder) && ! empty($this->fetchedOrder) && $payment->status == 'paid') {
             Session::put('payment_update', [
                 'status'   => $payment->status,
                 'order_id' => $this->fetchedOrder->id,

@@ -82,7 +82,7 @@ trait Stage11CreateProcess
     protected function createDeliveryIntoDatabase()
     {
         if ($this->system === SystemTypes::TAKEAWAY) {
-            if ($this->createdOrder->method == 'cash' && $this->createdOrder->order_type == 'delivery') {
+            if (($this->createdOrder->method == 'cash' || $this->orderData['is_paylater_order'] == 1) && $this->createdOrder->order_type == 'delivery') {
                 createDeliveryDetail($this->createdOrder->id);
             }
         }

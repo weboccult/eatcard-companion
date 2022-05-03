@@ -26,7 +26,7 @@ trait Stage4EnableSettings
             }
         }
         if (in_array($this->system, [SystemTypes::TAKEAWAY, SystemTypes::DINE_IN])) {
-            if ($this->payload['method'] != 'cash' && isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
+            if (! in_array($this->payload['method'], ['cash', 'paylater']) && isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
                 $this->settings['additional_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->additional_fee ?? 0,
@@ -50,8 +50,9 @@ trait Stage4EnableSettings
 
     protected function enablePlasticBagFees()
     {
+        $plasticBagFee = (float) ($this->payload['plastic_bag_fee'] ?? 0);
         if ($this->system == SystemTypes::TAKEAWAY) {
-            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee) {
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee && $plasticBagFee > 0) {
                 $this->settings['plastic_bag_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
@@ -75,7 +76,7 @@ trait Stage4EnableSettings
 
         if ($this->system == SystemTypes::DINE_IN) {
             if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_dinein == 1 &&
-                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in' && (float) $this->payload['plastic_bag_fee'] > 0) {
+                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in' && $plasticBagFee > 0) {
                 $this->settings['plastic_bag_fee'] = [
                     'status' => true,
                     'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
@@ -96,6 +97,43 @@ trait Stage4EnableSettings
             $this->settings['news_letter'] = [
                 'status' => isset($this->payload['is_subscribe']),
             ];
+        }
+    }
+
+    protected function enableNotification()
+    {
+        $isNotification = $this->store->is_notification ?? 0;
+        $notificationSettings = $this->store->notificationSetting ?? [];
+        $isTakeawayNotification = $this->store->notificationSetting->is_takeaway_notification ?? 0;
+        $isDineInNotification = $this->store->notificationSetting->is_dine_in_notification ?? 0;
+
+        $this->settings['notification'] = [
+            'status' => false,
+        ];
+
+        //if setting is not exists then need to send all notification
+        if (empty($notificationSettings)) {
+            $this->settings['notification'] = [
+                'status' => true,
+            ];
+
+            return;
+        }
+
+        if ($this->system == SystemTypes::TAKEAWAY) {
+            if (! empty($isNotification) && ! empty($isTakeawayNotification)) {
+                $this->settings['notification'] = [
+                    'status' => true,
+                ];
+            }
+        }
+
+        if ($this->system == SystemTypes::DINE_IN) {
+            if (! empty($isNotification) && ! empty($isDineInNotification)) {
+                $this->settings['notification'] = [
+                    'status' => true,
+                ];
+            }
         }
     }
 }
