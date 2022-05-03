@@ -72,7 +72,7 @@ trait ReservationWebhookCommonActions
 
                     $one_signal_user_devices_oids = [];
                     if ($newNotification) {
-                        $newNotification->generalNotificationUsers()->attach($userIds);
+                        $newNotification->users()->attach($userIds);
                         $is_send_push = false;
                         $devices = Device::query()->whereIn('user_id', $userIds)->get();
                         if (count($devices) > 0) {
@@ -93,7 +93,7 @@ trait ReservationWebhookCommonActions
                     try {
                         $is_send_push = OneSignal::sendPushNotification($push_notification_data);
                         if ($is_send_push) {
-                            $newNotification->generalNotificationUsers()->detach($userIds);
+                            $newNotification->users()->detach($userIds);
                             $newNotification->delete();
                         }
                     } catch (\Exception $exception) {

@@ -42,7 +42,7 @@ trait Stage16PrepareResponse
 
     protected function takeawayResponse()
     {
-        if ($this->orderData['method'] == 'cash') {
+        if ($this->orderData['method'] == 'cash' || $this->createdOrder->is_paylater_order == 1) {
             $this->setDumpDieValue(['redirect_url' => $this->payload['url'].'?status=paid&type=takeaway&store='.$this->store->store_slug]);
         } else {
             $this->mollieAndMultiSafeResponse();
@@ -65,8 +65,8 @@ trait Stage16PrepareResponse
             }
 
             $response['payUrl'] = $this->createdOrder->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;
-            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && $this->takeawaySetting->print_dynamic_order_no == 1) {
-                $response['order_id'] = ''.substr($this->createdOrder->order_id, -3);
+            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+                $response['order_id'] = ''.substr($this->createdOrder->order_id, (-1 * ((int) $this->takeawaySetting->print_dynamic_order_no)));
             } else {
                 $response['order_id'] = ''.substr($this->createdOrder->order_id, -2);
             }

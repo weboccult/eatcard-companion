@@ -28,6 +28,7 @@ trait Stage6PrepareAdvanceData
             'parent_id',
             'order_id',
             'created_at',
+            'paid_on',
             'status',
             'order_date',
             'order_status',
@@ -44,7 +45,8 @@ trait Stage6PrepareAdvanceData
             'discount',
             'statiege_deposite_total',
             'thusibezorgd_order_id',
-            'uber_eats_order_id'
+            'uber_eats_order_id',
+            'is_paylater_order'
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
@@ -55,7 +57,7 @@ trait Stage6PrepareAdvanceData
             }, 'voidOrder' => function ($q5) {
                 $q5->where('restore_status', 0);
             }, 'subOrders' => function ($q4) {
-                $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '>', 0);
+                $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '!=', 0);
             }])
             ->where('store_id', $this->storeId)
 //            ->where('order_date', $this->date)
@@ -66,7 +68,11 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereMonth('order_date', $this->month);
                 $qDateMonth->whereYear('order_date', $this->year);
             })
-            ->where('status', 'paid')
+//            ->where('status', 'paid')
+            ->where(function ($q6) {
+                $q6->orWhere('status', 'paid');
+                $q6->orWhere('is_paylater_order', 1);
+            })
             ->where('is_ignored', 0)
             ->chunk(500, function ($orders) use (&$count) {
                 $this->calculateOrderDateRelatedData($orders);
@@ -80,6 +86,7 @@ trait Stage6PrepareAdvanceData
             'parent_id',
             'order_id',
             'created_at',
+            'paid_on',
             'status',
             'order_date',
             'order_status',
@@ -96,7 +103,8 @@ trait Stage6PrepareAdvanceData
             'discount',
             'statiege_deposite_total',
             'thusibezorgd_order_id',
-            'uber_eats_order_id'
+            'uber_eats_order_id',
+            'is_paylater_order'
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
@@ -107,7 +115,7 @@ trait Stage6PrepareAdvanceData
             }, 'voidOrder' => function ($q5) {
                 $q5->where('restore_status', 0);
             }, 'subOrders' => function ($q4) {
-                $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '>', 0);
+                $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '!=', 0);
             }])->where('store_id', $this->storeId)
 //                ->where('order_date', $this->date)
             ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
@@ -117,7 +125,11 @@ trait Stage6PrepareAdvanceData
                 $qDateMonth->whereMonth('order_date', $this->month);
                 $qDateMonth->whereYear('order_date', $this->year);
             })
-            ->where('status', 'paid')
+//            ->where('status', 'paid')
+            ->where(function ($q6) {
+                $q6->orWhere('status', 'paid');
+                $q6->orWhere('is_paylater_order', 1);
+            })
             ->where('is_ignored', 0)
             ->chunk(500, function ($orders) use (&$count) {
                 $this->calculateOrderDateRelatedData($orders);
@@ -128,7 +140,7 @@ trait Stage6PrepareAdvanceData
     {
 
         //get data from order
-        Order::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
+        Order::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
             ->with([
                 'orderItems' => function ($q1) {
                     $q1->with([
@@ -145,25 +157,29 @@ trait Stage6PrepareAdvanceData
                     $q5->where('restore_status', 0);
                 },
                 'subOrders'  => function ($q4) {
-                    $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '>', 0);
+                    $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '!=', 0);
                 },
             ])
             ->where('store_id', $this->storeId)
             //            ->where('order_date', $this->date)
             ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
-                $qDate->whereDate('created_at', $this->date);
+                $qDate->whereDate('paid_on', $this->date);
             })
             ->when($this->revenueType == RevenueTypes::MONTHLY, function ($qDateMonth) {
-                $qDateMonth->whereMonth('created_at', $this->month);
-                $qDateMonth->whereYear('created_at', $this->year);
+                $qDateMonth->whereMonth('paid_on', $this->month);
+                $qDateMonth->whereYear('paid_on', $this->year);
             })
-            ->where('status', 'paid')
+//            ->where('status', 'paid')
+            ->where(function ($q6) {
+                $q6->orWhere('status', 'paid');
+                $q6->orWhere('is_paylater_order', 1);
+            })
             ->where('is_ignored', 0)
             ->chunk(500, function ($orders) use (&$count) {
                 $this->calculateOrderCreateDateRelatedData($orders);
             });
         //get data from order
-        OrderHistory::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
+        OrderHistory::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
             ->with([
                 'orderItems' => function ($q1) {
                     $q1->with([
@@ -180,19 +196,23 @@ trait Stage6PrepareAdvanceData
                     $q5->where('restore_status', 0);
                 },
                 'subOrders'  => function ($q4) {
-                    $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '>', 0);
+                    $q4->where('status', 'paid')/*->where('method', 'cash')*/ ->where('total_price', '!=', 0);
                 },
             ])
             ->where('store_id', $this->storeId)
             //                ->where('order_date', $this->date)
             ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
-                $qDate->whereDate('created_at', $this->date);
+                $qDate->whereDate('paid_on', $this->date);
             })
             ->when($this->revenueType == RevenueTypes::MONTHLY, function ($qDateMonth) {
-                $qDateMonth->whereMonth('created_at', $this->month);
-                $qDateMonth->whereYear('created_at', $this->year);
+                $qDateMonth->whereMonth('paid_on', $this->month);
+                $qDateMonth->whereYear('paid_on', $this->year);
             })
-            ->where('status', 'paid')
+//            ->where('status', 'paid')
+            ->where(function ($q6) {
+                $q6->orWhere('status', 'paid');
+                $q6->orWhere('is_paylater_order', 1);
+            })
             ->where('is_ignored', 0)
             ->chunk(500, function ($orders) use (&$count) {
                 $this->calculateOrderCreateDateRelatedData($orders);
@@ -232,8 +252,8 @@ trait Stage6PrepareAdvanceData
                 $qDate->whereDate('created_at', $this->date);
             })
             ->when($this->revenueType == RevenueTypes::MONTHLY, function ($qDateMonth) {
-                $qDateMonth->whereMonth('created_at', $this->month);
-                $qDateMonth->whereYear('created_at', $this->year);
+                $qDateMonth->whereMonth('paid_on', $this->month);
+                $qDateMonth->whereYear('paid_on', $this->year);
             })
             ->sum('count');
     }
@@ -347,7 +367,7 @@ trait Stage6PrepareAdvanceData
     {
         foreach ($orders as $order) {
             $orderTotalPrice = (float) ($order->total_price ?? 0);
-            $orderDate = Carbon::parse($order->created_at)->format('Y-m-d');
+            $orderDate = Carbon::parse($order->paid_on)->format('Y-m-d');
             $tip_amount = (float) ($order->tip_amount ?? 0);
 
             //as per discussion not need to calculate tip amount in turnover
@@ -486,7 +506,7 @@ trait Stage6PrepareAdvanceData
             }
 
             //discount inc tax reverse calc (discount_inc_tax_legacy) not possible before 2021-06-01
-            if (Carbon::parse($order->created_at) >= Carbon::parse('2021-12-02 10:10:00')) {
+            if (Carbon::parse($order->paid_on) >= Carbon::parse('2021-12-02 10:10:00')) {
                 $this->calcData['total_discount_inc_tax_date'][$orderDate] += (float) ($order->discount_inc_tax ?? 0);
             } elseif ($orderDate >= '2021-06-01') {
                 $this->calcData['total_discount_inc_tax_date'][$orderDate] += (float) ($order->discount_inc_tax_legacy ?? 0);
@@ -529,7 +549,7 @@ trait Stage6PrepareAdvanceData
                     }
 
                     //-------------------------------------------------------------
-                    if (Carbon::parse($order['created_at'])->format('Y-m-d') >= '2021-06-01') {
+                    if (Carbon::parse($order['paid_on'])->format('Y-m-d') >= '2021-06-01') {
                         $this->calcData['total_discount_without_tax_date'][$orderDate] += (float) ($order['discount_amount']);
                     } else {
                         if ((isset($order['discount']) && (float) $order['discount'] > 0) && (isset($order['discount_amount']) && (float) $order['discount_amount'] > 0) && $order['order_type'] == 'pos') {
@@ -544,7 +564,7 @@ trait Stage6PrepareAdvanceData
                         } else {
                             foreach ($order['orderItems'] as $item) {
                                 if ($item['on_the_house'] == 0 && empty($item['void_id'])) {
-                                    if (Carbon::parse($order->created_at)->format('Y-m-d') >= '2021-06-01') {
+                                    if (Carbon::parse($order->paid_on)->format('Y-m-d') >= '2021-06-01') {
                                         $this->calcData['total_discount_without_tax_date'][$orderDate] += (float) $item['discount_price'];
                                     } else {
                                         if ((float) $item['discount_price'] > 0 && (isset($item['discount']) && $item['discount'] != '' && (float) $item['discount'] > 0)) {

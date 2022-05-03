@@ -25,7 +25,7 @@ class MultiSafeTakeawayOrderSuccessRedirect extends BaseWebhook
         // this will fetch order from db and set into class property
         $this->fetchAndSetOrder();
         $this->fetchAndSetStore();
-        $payment = MultiSafe::getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
         if ($payment['status'] == 'completed') {
             $formattedStatus = 'paid';
         } else {
@@ -46,7 +46,7 @@ class MultiSafeTakeawayOrderSuccessRedirect extends BaseWebhook
         }
         $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $this->updateOrder($update_data);
-        if (! empty($new_order) && $formattedStatus == 'paid') {
+        if (isset($this->fetchedOrder) && ! empty($this->fetchedOrder) && $formattedStatus == 'paid') {
             Session::put('payment_update', [
                 'status'   => $formattedStatus,
                 'order_id' => $this->fetchedOrder->id,

@@ -86,7 +86,7 @@ trait Stage5EnableSettings
             return;
         }
 
-        $this->additionalSettings['print_dynamic_order_no'] = $this->store->takeawaySetting->print_dynamic_order_no ?? 0;
+        $this->additionalSettings['print_dynamic_order_no'] = (int) ($this->store->takeawaySetting->print_dynamic_order_no ?? 2);
     }
 
     /**

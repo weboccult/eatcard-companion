@@ -16,6 +16,7 @@ use Weboccult\EatcardCompanion\Exceptions\TakeawayOrderTypeEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawayOrderTypeMisMatchedException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawayPaymentMethodMisMatchedException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawayPaymentMethodNotFoundException;
+use Weboccult\EatcardCompanion\Exceptions\TakeawayPickupDeliveryNotAvailableException;
 use Weboccult\EatcardCompanion\Exceptions\TakeawaySettingNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\WorldLineSecretsNotFoundException;
 use Weboccult\EatcardCompanion\Models\ZipCode;
@@ -82,6 +83,10 @@ trait Stage1PrepareValidationRules
                 Session::flash('error', __companionTrans('takeaway.order_must_greater', ['min_amount' => $this->takeawaySetting['pickup_min_amount']]));
                 $this->setDumpDieValue(['error' => 'error']);
             }
+
+            if ($this->payload['order_type'] == 'pickup' && (int) ($this->payload['is_pay_later_order'] ?? 0) == 1 && $this->takeawaySetting->is_pickup_paylater == 0) {
+                $this->addRuleToSystemSpecificRules(TakeawayPickupDeliveryNotAvailableException::class, true);
+            }
         }
     }
 
@@ -90,6 +95,10 @@ trait Stage1PrepareValidationRules
         if ($this->system == SystemTypes::TAKEAWAY) {
             $gift_card_amount = $this->payload['gift_card_amount'] ?? 0;
             if ($this->payload['order_type'] == 'delivery') {
+                if ((int) ($this->payload['is_pay_later_order'] ?? 0) == 1 && $this->takeawaySetting->is_delivery_paylater == 0) {
+                    $this->addRuleToSystemSpecificRules(TakeawayPickupDeliveryNotAvailableException::class, true);
+                }
+
                 if ($this->takeawaySetting->zip_code_setting) {
                     $zip_codes = ZipCode::query()
                         ->where('store_id', $this->takeawaySetting->store_id)

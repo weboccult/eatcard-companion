@@ -24,8 +24,8 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
      */
     public function handle(): bool
     {
-        companionLogger('Mollie webhook request started', 'OrderId #'.$this->orderId, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
-        companionLogger('Mollie payload', json_encode(['payload' => $this->payload], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+        companionLogger('MultiSafe webhook request started', 'OrderId #'.$this->orderId, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+        companionLogger('MultiSafe payload', json_encode(['payload' => $this->payload], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
         // this will fetch order from db and set into class property
         $this->fetchAndSetOrder();
@@ -33,7 +33,7 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
 
         $oldStatus = $this->fetchedOrder->status;
 
-        $payment = MultiSafe::getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
+        $payment = MultiSafe::setApiKey($this->fetchedStore->multiSafe->api_key)->getOrder($this->fetchedOrder->id.'-'.$this->fetchedOrder->order_id);
 
         if ($payment['status'] == 'refunded') {
             if ($this->fetchedOrder->is_refunded == 1) {
@@ -57,7 +57,7 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
         companionLogger('MultiSafe webhook Payment status', json_encode(['payment_status' => $formattedStatus.'-'.$oldStatus], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
         $update_data = [];
-        $update_data['multisafe_payment_id'] = $payment->id;
+        $update_data['multisafe_payment_id'] = $payment['transaction_id'];
         $update_data['status'] = $formattedStatus;
         if ($formattedStatus == 'paid' && $this->fetchedOrder->status != 'paid') {
             $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
@@ -68,12 +68,13 @@ class MultiSafeTakeawayOrderWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         if ($formattedStatus == 'paid' && $oldStatus != 'paid') {
             $this->applyCouponLogic();
+            $this->sendPrintJsonToSQS();
             $notificationResponse = $this->sendNotifications();
             if (isset($notificationResponse['exception'])) {
                 return $notificationResponse;
             }
         }
-        if ($formattedStatus != $oldStatus) {
+        if ($formattedStatus != $oldStatus && in_array($formattedStatus, ['paid', 'canceled'])) {
             sendOrderSms($this->fetchedStore, $this->fetchedOrder);
             $this->sendTakeawayUserEmail();
             $this->sendTakeawayOwnerEmail();

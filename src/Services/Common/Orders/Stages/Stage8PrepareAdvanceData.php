@@ -175,6 +175,10 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['ayce_price'] = $this->payload['ayce_amount'];
             }
         }
+
+        if (isset($this->payload['comment'])) {
+            $this->orderData['comment'] = $this->payload['comment'] ?? '';
+        }
     }
 
     protected function prepareTipAmount()
@@ -411,8 +415,8 @@ trait Stage8PrepareAdvanceData
                         }
                     }
                     if ($this->system === SystemTypes::TAKEAWAY) {
-                        if (isset($this->payload['is_takeaway']) && $this->payload['is_takeaway'] && ! $item['exclude_discount'] && $this->discountData['order_discount']['status'] && $this->payload['order_discount']['value'] > 0) {
-                            $this->orderData['total_alcohol_tax'] += ($current_sub - (($current_sub * (int) $this->discountData['order_discount']) / 100));
+                        if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float) $this->discountData['order_discount'] > 0) {
+                            $this->orderData['total_alcohol_tax'] += ($current_sub - (($current_sub * (float) $this->discountData['order_discount']) / 100));
                         } else {
                             $this->orderData['total_alcohol_tax'] += $current_sub;
                         }
@@ -439,8 +443,8 @@ trait Stage8PrepareAdvanceData
                     }
                 }
                 if ($this->system === SystemTypes::TAKEAWAY) {
-                    if (isset($this->payload['is_takeaway']) && $this->payload['is_takeaway'] && ! $item['exclude_discount'] && $this->discountData['order_discount']['status'] && $this->payload['order_discount']['value'] > 0) {
-                        $this->orderData['total_tax'] += ($current_sub - (($current_sub * (int) $this->discountData['order_discount']) / 100));
+                    if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float) $this->discountData['order_discount'] > 0) {
+                        $this->orderData['total_tax'] += ($current_sub - (($current_sub * (float) $this->discountData['order_discount']) / 100));
                     } else {
                         $this->orderData['total_tax'] += $current_sub;
                     }
@@ -485,13 +489,13 @@ trait Stage8PrepareAdvanceData
             }
             if ($this->system === SystemTypes::TAKEAWAY) {
                 if (! $item['exclude_discount'] && $this->discountData['order_discount'] && (float) $this->discountData['order_discount'] > 0) {
-                    $this->orderItemsData[$key]['discount'] = $this->discountData['order_discount'];
-                    $this->orderItemsData[$key]['discount_type'] = '%';
+                    $this->orderData['discount'] = $this->orderItemsData[$key]['discount'] = $this->discountData['order_discount'];
+                    $this->orderData['discount_type'] = $this->orderItemsData[$key]['discount_type'] = '%';
                     $this->orderItemsData[$key]['discount_price'] = (float) (($product_total - $current_sub) * $this->discountData['order_discount']) / 100;
                     $this->orderItemsData[$key]['discount_amount_wo_tax'] = (($product_total - $current_sub) * $this->discountData['order_discount']) / 100;
                     $this->orderItemsData[$key]['discount_inc_tax'] = (($product_total) * $this->discountData['order_discount']) / 100;
-//                    $this->orderData['discount_inc_tax'] += (($product_total) * $this->discountData['order_discount']) / 100;
-//                    $this->orderData['discount_amount'] += $items[$key]['discount_price'];
+                    $this->orderData['discount_inc_tax'] += (($product_total) * $this->discountData['order_discount']) / 100;
+                    $this->orderData['discount_amount'] += $this->orderItemsData[$key]['discount_price'];
                 }
             }
             $transferItems = [];
@@ -607,7 +611,7 @@ trait Stage8PrepareAdvanceData
 
     protected function calculateOrderDiscount()
     {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::TAKEAWAY])) {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
             if (isset($this->discountData['order_discount']) && $this->discountData['order_discount'] > 0) {
                 $this->orderData['discount_type'] = ($this->discountData['is_euro_discount'] == 1) ? 'EURO' : '%';
                 $this->orderData['discount'] = $this->discountData['order_discount'];
