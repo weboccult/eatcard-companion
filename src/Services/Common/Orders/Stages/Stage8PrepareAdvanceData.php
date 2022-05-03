@@ -86,7 +86,7 @@ trait Stage8PrepareAdvanceData
             }
         }
         if ($this->system === SystemTypes::TAKEAWAY) {
-            $this->orderData['is_paylater_order'] = $this->payload['is_pay_later_order'] = (int)($this->payload['is_pay_later_order'] ?? 0);
+            $this->orderData['is_paylater_order'] = $this->payload['is_pay_later_order'] = (int) ($this->payload['is_pay_later_order'] ?? 0);
             if (empty($this->orderData['is_paylater_order'])) {
                 if ($this->payload['type'] == 'mollie') {
                     $this->orderData['payment_method_type'] = 'mollie';
