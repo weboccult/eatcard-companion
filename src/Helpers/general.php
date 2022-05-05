@@ -732,6 +732,7 @@ if (! function_exists('sendResWebNotification')) {
                         'table_ids'               => $current_reservation_table,
                         'is_seated'               => $reservation->reservation->is_seated,
                         'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
+                        'is_until'                => $reservation->reservation->is_until,
                     ]);
                 } elseif ($channel == 'new_booking') {
                     $additionalData = json_encode([
@@ -745,6 +746,7 @@ if (! function_exists('sendResWebNotification')) {
                         'is_seated'               => $reservation->reservation->is_seated,
                         'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
                         'reservation_type'        => $reservation->reservation->reservation_type,
+                        'is_until'                => $reservation->reservation->is_until,
                     ]);
                 } else {
                     $additionalData = json_encode([
