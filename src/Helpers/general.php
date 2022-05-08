@@ -749,16 +749,16 @@ if (! function_exists('sendResWebNotification')) {
                         'is_until'                => $reservation->reservation->is_until,
                     ]);
                 } elseif ($channel == 'booking_orders_update') {
-	                $additionalData = json_encode([
-		                'reservation_id' => $reservation->reservation->id,
-		                'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
-		                'is_dine_in' => $reservation->reservation->is_dine_in,
-		                'table_ids' => $current_reservation_table,
-		                'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
-		                'all_tables' => isset($reservation->reservation->all_tables) ? $reservation->all_tables : [],
-		                'dinein_area_id' => $dinein_area_id,
-		                'reload' => 1
-	                ]);
+                    $additionalData = json_encode([
+                        'reservation_id' => $reservation->reservation->id,
+                        'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
+                        'is_dine_in' => $reservation->reservation->is_dine_in,
+                        'table_ids' => $current_reservation_table,
+                        'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
+                        'all_tables' => isset($reservation->reservation->all_tables) ? $reservation->all_tables : [],
+                        'dinein_area_id' => $dinein_area_id,
+                        'reload' => 1,
+                    ]);
                 } else {
                     $additionalData = json_encode([
                         'reservation'    => $tempReservation,
