@@ -734,6 +734,21 @@ if (! function_exists('sendResWebNotification')) {
                         'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
                         'is_until'                => $reservation->reservation->is_until,
                     ]);
+                } elseif ($channel == 'payment_status_update') {
+                    $additionalData = json_encode([
+	                    'reservation_id' => $reservation->reservation->id,
+	                    'socket_origin_client_id' => null,
+	                    'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
+	                    'dinein_area_id' => $dinein_area_id,
+	                    'status' => $reservation->reservation->status,
+	                    'payment_status' => $reservation->reservation->payment_status,
+	                    'local_payment_status' => $reservation->reservation->local_payment_status,
+	                    'table_ids' => $current_reservation_table,
+	                    'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
+	                    'all_tables' => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
+	                    'multisafe_payment_id' => $reservation->reservation->multisafe_payment_id,
+	                    'mollie_payment_id' => $reservation->reservation->mollie_payment_id,
+                    ]);
                 } elseif ($channel == 'new_booking') {
                     $additionalData = json_encode([
                         'reservation_id'          => $reservation->reservation->id,
