@@ -694,16 +694,84 @@ if (! function_exists('sendResWebNotification')) {
                 if ($table && $table['table']) {
                     $dinein_area_id = $table['table']->dining_area_id;
                 }
-                $additionalData = json_encode([
-                    'reservation'    => $tempReservation,
-                    'orders'         => $temp_orders,
-                    'is_reload'      => $reload,
-                    'reservation_id' => $reservation->reservation->id,
-                    'old_tables'     => $oldTables,
-                    'dinein_area_id' => $dinein_area_id,
-                    'table_ids'      => $current_reservation_table,
-                    'is_dine_in'     => $reservation->is_dine_in,
-                ]);
+                $channel = ! empty($channel) ? $channel : 'new_booking';
+                $start = Carbon::parse($reservation->from_time)->format('H:i');
+                $end = Carbon::parse($reservation->end_time)->diffInMinutes($start);
+                if ($channel == 'remove_booking') {
+                    $additionalData = json_encode([
+                        'reservation_id'          => $reservation->reservation->id,
+                        'status'                  => $reservation->reservation->status,
+                        'local_payment_status'    => $reservation->reservation->local_payment_status,
+                        'payment_status'          => $reservation->reservation->payment_status,
+                        'table_ids'               => $current_reservation_table,
+                        'reload'                  => 1,
+                        // here reload flag not set that's why set 1 by default
+                        'is_reload'               => 1,
+                        // here reload flag not set that's why set 1 by default
+                        'socket_origin_client_id' => null,
+                        'table_id'                => isset($reservation->table_id) ? $reservation->table_id : null,
+                        'reservation_type'        => $reservation->reservation->reservation_type,
+                        'dinein_price_id'         => $reservation->reservation->dinein_price_id,
+                        'end'                     => $end,
+                        'reservation_date'        => $reservation->reservation->getRawOriginal('res_date'),
+                        'swap_id'                 => null,
+                        'id'                      => $reservation->reservation->id,
+                        'store_id'                => $reservation->reservation->store_id,
+                        'parked_table_id'         => null,
+                        'old_tables'              => $oldTables,
+                        'dinein_area_id'          => $dinein_area_id,
+                        'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
+                    ]);
+                } elseif ($channel == 'checkin') {
+                    $additionalData = json_encode([
+                        'reservation_id'          => $reservation->reservation->id,
+                        'socket_origin_client_id' => null,
+                        'reservation_date'        => $reservation->reservation->getRawOriginal('res_date'),
+                        'dinein_area_id'          => $dinein_area_id,
+                        'table_id'                => isset($reservation->table_id) ? $reservation->table_id : null,
+                        'table_ids'               => $current_reservation_table,
+                        'is_seated'               => $reservation->reservation->is_seated,
+                        'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
+                        'is_until'                => $reservation->reservation->is_until,
+                    ]);
+                } elseif ($channel == 'new_booking') {
+                    $additionalData = json_encode([
+                        'reservation_id'          => $reservation->reservation->id,
+                        'socket_origin_client_id' => null,
+                        'reservation_date'        => $reservation->reservation->getRawOriginal('res_date'),
+                        'dinein_area_id'          => $dinein_area_id,
+                        'dinein_price_id'         => $reservation->reservation->dinein_price_id,
+                        'table_id'                => isset($reservation->table_id) ? $reservation->table_id : null,
+                        'table_ids'               => $current_reservation_table,
+                        'is_seated'               => $reservation->reservation->is_seated,
+                        'all_tables'              => isset($reservation->reservation->all_tables) ? $reservation->reservation->all_tables : [],
+                        'reservation_type'        => $reservation->reservation->reservation_type,
+                        'is_until'                => $reservation->reservation->is_until,
+                    ]);
+                } elseif ($channel == 'booking_orders_update') {
+                    $additionalData = json_encode([
+                        'reservation_id' => $reservation->reservation->id,
+                        'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
+                        'is_dine_in' => $reservation->reservation->is_dine_in,
+                        'table_ids' => $current_reservation_table,
+                        'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
+                        'all_tables' => isset($reservation->reservation->all_tables) ? $reservation->all_tables : [],
+                        'dinein_area_id' => $dinein_area_id,
+                        'reload' => 1,
+                    ]);
+                } else {
+                    $additionalData = json_encode([
+                        'reservation'    => $tempReservation,
+                        'orders'         => $temp_orders,
+                        'is_reload'      => $reload,
+                        'reservation_id' => $reservation->reservation->id,
+                        'old_tables'     => $oldTables,
+                        'dinein_area_id' => $dinein_area_id,
+                        'table_ids'      => $current_reservation_table,
+                        'is_dine_in'     => $reservation->is_dine_in,
+                    ]);
+                }
+
                 $redis = LRedis::connection();
                 $redis->publish('reservation_booking', json_encode([
                     'store_id'        => $store_id,
