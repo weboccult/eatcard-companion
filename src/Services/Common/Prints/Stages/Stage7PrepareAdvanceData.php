@@ -58,7 +58,7 @@ trait Stage7PrepareAdvanceData
             if ($this->systemType == SystemTypes::KDS) {
                 $tableName = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             } elseif ($this->additionalSettings['dinein_guest_order'] && ! empty($tableName)) {
-                $tableName = ($this->order['table_name']) ? __companionPrintTrans('general.table_name').' '.$this->order['table_name'] : '';
+                $tableName = ($this->order['table_name']) ? __companionPrintTrans('print.table_name').' '.$this->order['table_name'] : '';
             }
         }
 
@@ -70,7 +70,7 @@ trait Stage7PrepareAdvanceData
         }
 
         if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservationOrderItems)) {
-            $tableName = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+            $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
         }
         $this->advanceData['tableName'] = $tableName;
     }

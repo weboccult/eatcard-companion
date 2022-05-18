@@ -151,8 +151,8 @@ trait Stage8PrepareFinalJson
                 $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
             }
 
-            // for reservation order need to add table name prefix before name
-            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation)) {
+            // for reservation order need to add table name prefix before name | skip for dine-in guest orders (is_dine_in)
+            if (! empty($this->advanceData['tableName']) && ! empty($this->reservation) && ! $this->additionalSettings['dinein_guest_order']) {
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $orderNo .= $this->additionalSettings['show_main_order_number_in_print'] == 0 ? ' '.$dynamicOrderNo : '';
             } else {
@@ -384,7 +384,8 @@ trait Stage8PrepareFinalJson
                 $orderType = '';
             }
 
-            if ($tableName != '' && $this->additionalSettings['show_main_order_number_in_print'] == 0) {
+            //not for dine-in guest order
+            if ($tableName != '' && $this->additionalSettings['show_main_order_number_in_print'] == 0 && ! $this->additionalSettings['dinein_guest_order']) {
                 $tableName .= ! empty($this->advanceData['dynamicOrderNo']) ? (' #'.$this->advanceData['dynamicOrderNo']) : '';
             }
         }
