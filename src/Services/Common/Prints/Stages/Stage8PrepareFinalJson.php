@@ -374,7 +374,8 @@ trait Stage8PrepareFinalJson
 
             $total = $this->order['total_price'] ?? '0';
 
-            if (! in_array($this->systemType, [SystemTypes::POS])) {
+            //skip for dine-in guest orders
+            if (! in_array($this->systemType, [SystemTypes::POS]) && ! $this->additionalSettings['dinein_guest_order']) {
                 $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
             }
 
