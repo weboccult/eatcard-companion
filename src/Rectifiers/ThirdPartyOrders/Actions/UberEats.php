@@ -166,6 +166,7 @@ class UberEats extends ThirdPartyOrders
                 'dutch_payment_status' => __companionTrans('general.'.$this->existedOrder->status),
                 'uber_eats_order_id'   => $this->existedOrder->uber_eats_order_id,
                 'message'              => __companionTrans('dinein.dine_in_order_notification_message', ['status' => $this->existedOrder->dutch_order_status]),
+                'system_name'     => env('APP_NAME', 'Package'),
             ]));
         }
     }
@@ -416,6 +417,7 @@ class UberEats extends ThirdPartyOrders
             'store_id'        => $this->store->id,
             'notification_id' => $this->createdNotification->id,
             'additional_data' => $this->createdNotification->additional_data,
+            'system_name'     => env('APP_NAME', 'Package'),
         ]));
     }
 }
