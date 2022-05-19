@@ -801,7 +801,7 @@ if (! function_exists('sendResWebNotification')) {
                     'channel'         => ! empty($channel) ? $channel : 'new_booking',
                     'notification_id' => 0,
                     'additional_data' => $additionalData,
-                    'system_name'     => 'Package',
+                    'system_name'     => env('APP_NAME', 'Package'),
                 ]));
             }
 
@@ -894,7 +894,7 @@ if (! function_exists('sendWebNotification')) {
                 'store_id'        => $order['store_id'],
                 'notification_id' => $notification->id,
                 'additional_data' => $notification->additional_data,
-                'system_name'     => 'Package',
+                'system_name'     => env('APP_NAME', 'Package'),
             ];
         } catch (\Exception $e) {
             companionLogger('takeaway - web notification', 'error : '.$e->getMessage(), 'file : '.$e->getFile(), 'line : '.$e->getLine(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'), );
