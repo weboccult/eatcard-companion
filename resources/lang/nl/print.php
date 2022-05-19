@@ -4,6 +4,9 @@ return [
 
     /* Main receipt and kitchen print related labels */
 
+    /* 0. -> Main recipe header fields */
+    'table_name' => 'Tafel',
+
     /* 1. -> order status use from general */
     /* 2. -> order types use from general */
     /* 3. -> order dine_in_type use from general */

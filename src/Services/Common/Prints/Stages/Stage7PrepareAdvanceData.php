@@ -58,19 +58,19 @@ trait Stage7PrepareAdvanceData
             if ($this->systemType == SystemTypes::KDS) {
                 $tableName = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
             } elseif ($this->additionalSettings['dinein_guest_order'] && ! empty($tableName)) {
-                $tableName = ($this->order['table_name']) ? __companionPrintTrans('general.table_name').' '.$this->order['table_name'] : '';
+                $tableName = ($this->order['table_name']) ? __companionPrintTrans('print.table_name').' '.$this->order['table_name'] : '';
             }
         }
 
         if (! empty($this->reservation)) {
-            if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 0) {
+            if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 1) {
                 $tables = $this->reservation['tables2']->pluck('name')->toArray();
                 $tableName = implode(',', $tables);
             }
         }
 
         if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservationOrderItems)) {
-            $tableName = 'Table #'.($this->reservationOrderItems->table->name ?? '');
+            $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
         }
         $this->advanceData['tableName'] = $tableName;
     }
