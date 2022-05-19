@@ -775,12 +775,12 @@ if (! function_exists('sendResWebNotification')) {
                         'reload' => 1,
                     ]);
                 } elseif ($channel == 'person') {
-	                $additionalData = json_encode([
-		                'reservation_id' => $reservation->reservation->id,
-		                'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
-		                'socket_origin_client_id' => null,
-		                'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
-	                ]);
+                    $additionalData = json_encode([
+                        'reservation_id' => $reservation->reservation->id,
+                        'reservation_date' => $reservation->reservation->getRawOriginal('res_date'),
+                        'socket_origin_client_id' => null,
+                        'table_id' => isset($reservation->table_id) ? $reservation->table_id : null,
+                    ]);
                 } else {
                     $additionalData = json_encode([
                         'reservation'    => $tempReservation,
@@ -801,7 +801,7 @@ if (! function_exists('sendResWebNotification')) {
                     'channel'         => ! empty($channel) ? $channel : 'new_booking',
                     'notification_id' => 0,
                     'additional_data' => $additionalData,
-                    'system_name'     => 'Package'
+                    'system_name'     => 'Package',
                 ]));
             }
 
