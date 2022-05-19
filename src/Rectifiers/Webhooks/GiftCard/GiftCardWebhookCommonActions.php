@@ -140,7 +140,7 @@ trait GiftCardWebhookCommonActions
                 'store_id' => $order->store_id,
                 'notification_id' => $notification->id,
                 'additional_data' => $notification->additional_data,
-                'system_name'     => 'Package'
+                'system_name'     => 'Package',
             ]));
         } catch (\Exception $e) {
             companionLogger('giftcard - web notification error'.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));

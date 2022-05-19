@@ -394,7 +394,7 @@ class Thusibezorgd extends ThirdPartyOrders
             'store_id'        => $store->id,
             'notification_id' => $createdNotification->id,
             'additional_data' => $createdNotification->additional_data,
-            'system_name'     => 'Package'
+            'system_name'     => 'Package',
         ]));
     }
 
