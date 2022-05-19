@@ -417,6 +417,7 @@ class UberEats extends ThirdPartyOrders
             'store_id'        => $this->store->id,
             'notification_id' => $this->createdNotification->id,
             'additional_data' => $this->createdNotification->additional_data,
+            'system_name'     => 'Package'
         ]));
     }
 }
