@@ -61,14 +61,15 @@ class CcvKioskOrderWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         Cache::forget('get-order-'.$this->fetchedOrder->id);
         Cache::tags([ORDERS])->flush();
-
-        if ($response['status'] == 'success' && $oldStatus != 'paid') {
-            $notificationResponse = $this->sendNotifications();
-            if (isset($notificationResponse['exception'])) {
-                return $notificationResponse;
+        if ($response['status'] == 'success' || $response['status'] == 'failed') {
+            if ($response['status'] == 'success' && $oldStatus != 'paid') {
+                $notificationResponse = $this->sendNotifications();
+                if (isset($notificationResponse['exception'])) {
+                    return $notificationResponse;
+                }
+                $this->sendPrintJsonToSQS();
             }
-            $this->sendPrintJsonToSQS();
-            $this->sendTakeawayOwnerEmail();
+            $this->sendKioskOwnerEmail($response['status']);
         }
 
         return true;

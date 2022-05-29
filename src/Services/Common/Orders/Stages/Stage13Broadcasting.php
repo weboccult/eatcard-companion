@@ -19,8 +19,8 @@ trait Stage13Broadcasting
 {
     protected function sendWebNotification()
     {
-        //send only for cash,pin,pay-later orders
-        if (! (in_array($this->orderData['method'], ['cash', 'pin']) || $this->createdOrder->is_paylater_order == 1)) {
+        //send only for cash,pin,pay-later orders and Kiosk bop payments
+        if (! (in_array($this->orderData['method'], ['cash', 'pin']) || $this->createdOrder->is_paylater_order == 1 || $this->settings['bop_kiosk']['status'])) {
             return;
         }
 
@@ -36,6 +36,11 @@ trait Stage13Broadcasting
         }
         $order = $this->createdOrder->toArray();
         $socket_data = sendWebNotification($this->store, $order, $current_data, 0, $force_refresh);
+
+        if ($this->system === SystemTypes::KIOSK) {
+            $socket_data['type'] = 'kiosk';
+            $socket_data['kiosk_id'] = $order->kiosk->id ?? null;
+        }
 
         if ($socket_data) {
             $redis = LRedis::connection();
@@ -55,19 +60,30 @@ trait Stage13Broadcasting
 
     protected function sendAppNotification()
     {
+        $isSendAppNotification = false;
         //no need to send OneSignal notification for pay-later order because current we're not showing palate order in partner app
         if ($this->system === SystemTypes::TAKEAWAY && ($this->orderData['method'] == 'cash' /*|| $this->createdOrder->is_paylater_order == 1*/)) {
             if (($this->store->is_notification) && (! $this->store->notificationSetting || ($this->store->notificationSetting && $this->store->notificationSetting->is_takeaway_notification))) {
-                /*send app notification after order status updated to paid or canceled*/
-                $order = Order::query()->with('orderItems.product:id,image,sku')->findOrFail($this->createdOrder->id);
-                $order = $order->toArray();
-//                $order['paid_on'] = Carbon::parse($order['paid_on'])->format('d-m-Y H:i');
-                $order['order_date'] = Carbon::parse($order['order_date'])->format('d-m-Y');
-                foreach ($order['order_items'] as $key => $item) {
-                    $order['order_items'][$key]['extra'] = json_decode($item['extra']);
-                }
-                sendAppNotificationHelper($order, $this->store);
+                $isSendAppNotification = true;
             }
+        }
+
+        if ($this->system === SystemTypes::KIOSK && $this->settings['bop_kiosk']['status']) {
+            if (($this->store->is_notification) && (! $this->store->notificationSetting || ($this->store->notificationSetting && $this->store->notificationSetting->is_dine_in_notification))) {
+                $isSendAppNotification = true;
+            }
+        }
+
+        if ($isSendAppNotification) {
+            /*send app notification after order status updated to paid or canceled*/
+            $order = Order::query()->with('orderItems.product:id,image,sku')->findOrFail($this->createdOrder->id);
+            $order = $order->toArray();
+            //$order['paid_on'] = Carbon::parse($order['paid_on'])->format('d-m-Y H:i');
+            $order['order_date'] = Carbon::parse($order['order_date'])->format('d-m-Y');
+            foreach ($order['order_items'] as $key => $item) {
+                $order['order_items'][$key]['extra'] = json_decode($item['extra']);
+            }
+            sendAppNotificationHelper($order, $this->store);
         }
     }
 

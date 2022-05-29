@@ -81,6 +81,7 @@ trait Stage1PrepareValidationRules
             $gift_card_amount = $this->payload['gift_card_amount'] ?? 0;
             if ($this->payload['order_type'] == 'pickup' && ((! $gift_card_amount && $this->takeawaySetting->pickup_min_amount > $this->payload['total']) || ($gift_card_amount && $this->takeawaySetting->pickup_min_amount > $this->payload['old_total']))) {
                 Session::flash('error', __companionTrans('takeaway.order_must_greater', ['min_amount' => $this->takeawaySetting['pickup_min_amount']]));
+                companionLogger('setTakeawayPickupValidation validation error : ', __companionTrans('takeaway.order_must_greater', ['min_amount' => $this->takeawaySetting['pickup_min_amount']]));
                 $this->setDumpDieValue(['error' => 'error']);
             }
 
@@ -106,6 +107,7 @@ trait Stage1PrepareValidationRules
                         ->get();
                     $user_zipcode = $this->payload['delivery_postcode'] ?? '';
                     if (empty($user_zipcode)) {
+                        companionLogger('setTakeawayDeliveryValidation validation error : delivery_not_available');
                         $this->setDumpDieValue(['delivery_not_available' => 'error']);
                     } elseif (count($zip_codes) > 0) {
                         $check_available_or_not = false;
@@ -124,15 +126,18 @@ trait Stage1PrepareValidationRules
                                     $distance = getDistance($this->store->address, $this->payload['delivery_address']);
                                     companionLogger('Distance data fetched if delivery zipcode is on : ', $distance);
                                     if ($distance === 'ZERO_RESULTS') {
+                                        companionLogger('setTakeawayDeliveryValidation validation error 1 : delivery_not_available -> ZERO_RESULTS');
                                         $this->setDumpDieValue(['delivery_not_available' => 'error']);
                                     }
                                     if ((! $gift_card_amount && $zip_code->is_delivery_min_amount > (float) $this->payload['total']) || ($gift_card_amount && $zip_code->is_delivery_min_amount > (float) $this->payload['old_total'])) {
                                         /*not in used*/
                                         /*Session::flash('error', __('messages.order_must_greater', ['min_amount' => $zip_code->is_delivery_min_amount]));*/
-                                        $this->setDumpDieValue([
+                                        $dumpDieValue = [
                                             'minimum_amount_zip_code' => $zip_code->is_delivery_min_amount,
                                             'zip_code' => $from_zip_code.'-'.$to_zip_code.' range',
-                                        ]);
+                                        ];
+                                        companionLogger('setTakeawayDeliveryValidation validation error 1 : check_available_or_not -> minimum_amount_zip_code ', $dumpDieValue);
+                                        $this->setDumpDieValue($dumpDieValue);
                                     }
                                 }
                             }
@@ -157,51 +162,64 @@ trait Stage1PrepareValidationRules
                                         $distance = getDistance($this->store->address, $this->payload['delivery_address']);
                                         companionLogger('Distance data fetched if delivery zipcode is on : ', $distance);
                                         if ($distance === 'ZERO_RESULTS') {
+                                            companionLogger('setTakeawayDeliveryValidation validation error 2 : check_available_or_not -> ZERO_RESULTS');
                                             $this->setDumpDieValue(['delivery_not_available' => 'error']);
                                         }
                                         if ((! $gift_card_amount && $zip_code->is_delivery_min_amount > (float) $this->payload['total']) || ($gift_card_amount && $zip_code->is_delivery_min_amount > (float) $this->payload['old_total'])) {
                                             /*not in used*/
                                             /*Session::flash('error', __('messages.order_must_greater', ['min_amount' => $zip_code->is_delivery_min_amount]));*/
-                                            $this->setDumpDieValue([
+                                            $dumpDieValue = [
                                                 'minimum_amount_zip_code' => $zip_code->is_delivery_min_amount,
                                                 'zip_code' => $from_zip_code.'-'.$to_zip_code.' range',
-                                            ]);
+                                            ];
+                                            companionLogger('setTakeawayDeliveryValidation validation error 2 : check_available_or_not -> minimum_amount_zip_code', $dumpDieValue);
+                                            $this->setDumpDieValue($dumpDieValue);
                                         }
                                     }
                                 }
                             }
                         }
                         if (! $check_available_or_not) {
-                            $this->setDumpDieValue([
+                            $dumpDieValue = [
                                 'zip_code_not_available' => 'error',
                                 'user_zipcode' => $user_zipcode,
-                            ]);
+                            ];
+                            companionLogger('setTakeawayDeliveryValidation validation error 3 : check_available_or_not', $dumpDieValue);
+                            $this->setDumpDieValue($dumpDieValue);
                         }
                     } else {
-                        $this->setDumpDieValue([
+                        $dumpDieValue = [
                             'zip_code_not_available' => 'error',
                             'user_zipcode' => $user_zipcode,
-                        ]);
+                        ];
+                        companionLogger('setTakeawayDeliveryValidation validation error 3 : check_available_or_not else', $dumpDieValue);
+                        $this->setDumpDieValue($dumpDieValue);
                     }
                 } elseif ($this->takeawaySetting->delivery_radius_setting) {
                     $store_address = $this->store->address;
                     $radius_data = checkRadiusDistance($store_address, $this->payload['delivery_address'], $this->takeawaySetting, (float) $this->payload['total']);
                     if (isset($radius_data['delivery_not_available'])) {
+                        companionLogger('setTakeawayDeliveryValidation validation error 4 : delivery_not_available');
                         $this->setDumpDieValue(['delivery_not_available' => 'error']);
                     } elseif (isset($radius_data['distance_error'])) {
+                        companionLogger('setTakeawayDeliveryValidation validation error 4 : distance_error', $radius_data['distance']);
                         $this->setDumpDieValue(['distance_error' => $radius_data['distance']]);
                     } elseif (isset($radius_data['error'])) {
+                        companionLogger('setTakeawayDeliveryValidation validation error 4 : error', $radius_data['error']);
                         $this->setDumpDieValue(['distance_error' => $radius_data['error']]);
                     } else {
                         if ((! $gift_card_amount && $radius_data['delivery_minimum_amount'] > (float) $this->payload['total']) || ($gift_card_amount && $radius_data['delivery_minimum_amount'] > (float) $this->payload['old_total'])) {
                             Session::flash('error', __companionTrans('takeaway.order_must_greater', ['min_amount' => $radius_data['delivery_minimum_amount']]));
-                            $this->setDumpDieValue([
+                            $dumpDieValue = [
                                 'minimum_amount_radius' => $radius_data['delivery_minimum_amount'],
                                 'distance' => $radius_data['distance'],
-                            ]);
+                            ];
+                            companionLogger('setTakeawayDeliveryValidation validation error 4  delivery_radius_setting', $dumpDieValue);
+                            $this->setDumpDieValue($dumpDieValue);
                         }
                     }
                 } else {
+                    companionLogger('setTakeawayDeliveryValidation validation error 4 last else : ', ['both_setting_off' => 'error']);
                     $this->setDumpDieValue(['both_setting_off' => 'error']);
                 }
             }

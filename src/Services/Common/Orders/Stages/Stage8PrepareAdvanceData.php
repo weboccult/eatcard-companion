@@ -106,7 +106,7 @@ trait Stage8PrepareAdvanceData
             // $this->orderData['payment_method_type'] = $this->payload['type'];
         }
         if ($this->system == SystemTypes::KIOSK) {
-            if (isset($this->payload['bop']) && ($this->payload['bop'] != '' || $this->payload['bop'] != null) && $this->payload['bop'] == 'wot@kiosk') {
+            if ($this->settings['bop_kiosk']['status']) {
                 $this->orderData['status'] = 'paid';
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
             }
@@ -209,6 +209,7 @@ trait Stage8PrepareAdvanceData
         foreach ($this->getCart() as $key => $item) {
             /*This variable used for checked product and it/s supplement price count or not in total price*/
             $is_product_chargeable = true;
+            $productPriceTypeForLog = '';
 
             $is_euro_discount = isset($item['is_euro_discount']) ? (int) $item['is_euro_discount'] : 0;
 
@@ -228,6 +229,7 @@ trait Stage8PrepareAdvanceData
             $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
             $product = $this->productData->where('id', $item['id'])->first();
             $productCalcPrice = 0;
+            $product_price = $product->price;
 
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS, SystemTypes::DINE_IN]) && ! empty($this->storeReservation)) {
                 if ((isset($product->ayce_class) && ! empty($product->ayce_class)) && $product->ayce_class->count() > 0 && $this->storeReservation->dineInPrice && isset($this->storeReservation->dineInPrice->dinein_category_id) && $this->storeReservation->dineInPrice->dinein_category_id != '') {
@@ -237,9 +239,11 @@ trait Stage8PrepareAdvanceData
                             ->pluck('price');
                         if (isset($allYouCanEatIndividualPrice[0]) && $allYouCanEatIndividualPrice[0] > 0 && ! empty($allYouCanEatIndividualPrice[0]) && $product->all_you_can_eat_price >= 0) {
                             $productCalcPrice = $allYouCanEatIndividualPrice[0];
+                            $productPriceTypeForLog = 'ayce-product';
                         } else {
                             if (! empty($product->all_you_can_eat_price)) {
                                 $productCalcPrice = $product->all_you_can_eat_price;
+                                $productPriceTypeForLog = 'ayce-category';
                             }
                         }
                     }
@@ -248,10 +252,10 @@ trait Stage8PrepareAdvanceData
                     if (isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '' && $this->storeReservation->reservation_type != 'all_you_eat') {
                         $productCalcPrice = (float) $product->pieces_price;
                         $product->show_pieces = 1;
+                        $productPriceTypeForLog = 'al-a-cate-pieces';
                         // set_product_pieces_in_name($product, $is_need_update);
                     }
                 }
-                companionLogger('Product ayce price', $productCalcPrice);
             }
 
             //set product default price first
@@ -263,6 +267,7 @@ trait Stage8PrepareAdvanceData
                 } elseif (! $item['base_price']) {
                     $product->price = 0;
                     $is_product_chargeable = false;
+                    $productPriceTypeForLog = 'base-price-zero';
                 }
             } elseif ($this->system === SystemTypes::DINE_IN) {
 
@@ -276,6 +281,7 @@ trait Stage8PrepareAdvanceData
                     if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
                         $product->price = (float) $product->pieces_price;
                         $product->show_pieces = 1;
+                        $productPriceTypeForLog = 'al-a-cate-pieces';
                     }
                 }
             } elseif ($this->system === SystemTypes::TAKEAWAY) {
@@ -287,18 +293,34 @@ trait Stage8PrepareAdvanceData
                         if ($product->from_date && $product->to_date) {
                             /*use normal price*/
                             $product->price = $product_price;
+                            $productPriceTypeForLog = 'normal';
                         } else {
                             /*use discount price*/
                             $product->price = $product->discount_price;
+                            $productPriceTypeForLog = 'discount';
                         }
                     } else {
                         /*use discount price*/
                         $product->price = $product->discount_price;
+                        $productPriceTypeForLog = 'discount';
                     }
                 }
             }
 
-            companionLogger('Product price', $product->price);
+            //for log purpose only -----------------------------------------------------------------
+//            if (empty($productPriceTypeForLog) && empty($productCalcPrice)) {
+//                if ($product->price == $product->discount_price) {
+//                    $productPriceTypeForLog = 'discount';
+//                } elseif ($product->price == $product_price) {
+//                    $productPriceTypeForLog = 'normal';
+//                } else {
+//                    $productPriceTypeForLog = 'not-set';
+//                }
+//            }
+//
+//            companionLogger('Product ('.($product->name ?? '').') price : ', [$productPriceTypeForLog, $product->price, $productCalcPrice]);
+            //-----------------------------------------------------------------
+
             $supplement_total = 0;
             $this->orderItemsData[$key]['void_id'] = $item['void_id'] ?? 0;
             $this->orderItemsData[$key]['on_the_house'] = $item['on_the_house'] ?? 0;
@@ -332,7 +354,7 @@ trait Stage8PrepareAdvanceData
                         if ($supTotalVal == 0) {
                             $supTotalVal = $supVal * $supQty;
                         }
-                        $supCategoryId = (int) ($i['categoryId'] ?? $i['supplement_cat_id'] ?? 0);
+                        $supCategoryId = (int) ($i['categoryId'] ?? $i['category_id'] ?? $i['supplement_cat_id'] ?? 0);
 
                         $currentPreparedSupplement = [
                             'id'         => $i['id'],
@@ -517,11 +539,11 @@ trait Stage8PrepareAdvanceData
             if ($this->system === SystemTypes::KIOSK) {
                 $selected_supplements_data = $item['supplements'];
                 $final_selected_supplements_data = [];
-                companionLogger('Kiosk - selected supplement data', $selected_supplements_data);
+//                companionLogger('Kiosk - selected supplement data', $selected_supplements_data);
                 foreach ($selected_supplements_data as $select_supplement_data) {
-                    $final_selected_supplements_data[$select_supplement_data['category_id']]['sub_cat_id'] = $select_supplement_data['category_id'];
-                    $final_selected_supplements_data[$select_supplement_data['category_id']]['sub_cat_name'] = $select_supplement_data['category_name'];
-                    $final_selected_supplements_data[$select_supplement_data['category_id']]['display_deselected'] = $select_supplement_data['deselect_supplement'] > 0;
+                    $final_selected_supplements_data[$select_supplement_data['categoryId']]['sub_cat_id'] = $select_supplement_data['categoryId'];
+                    $final_selected_supplements_data[$select_supplement_data['categoryId']]['sub_cat_name'] = $select_supplement_data['category_name'];
+                    $final_selected_supplements_data[$select_supplement_data['categoryId']]['display_deselected'] = $select_supplement_data['deselect_supplement'] > 0;
                     $select_supplement = [];
                     $current_supplement = collect($this->supplementData)->where('id', $select_supplement_data['id'])->first();
                     $select_supplement['id'] = $select_supplement_data['id'];
@@ -531,11 +553,11 @@ trait Stage8PrepareAdvanceData
                     $select_supplement['qty'] = $select_supplement_data['qty'];
                     $select_supplement['categoryId'] = isset($select_supplement_data['categoryId']) ? (int) $select_supplement_data['categoryId'] : null;
                     $select_supplement['alt_name'] = $current_supplement['alt_name'] ?? null;
-                    $final_selected_supplements_data[$select_supplement_data['category_id']]['selected'][] = $select_supplement;
+                    $final_selected_supplements_data[$select_supplement_data['categoryId']]['selected'][] = $select_supplement;
                 }
-                companionLogger('Kiosk - final selected supplement data', $final_selected_supplements_data);
+//                companionLogger('Kiosk - final selected supplement data', $final_selected_supplements_data);
 
-                companionLogger('Kiosk - deselected supplement data', $item['deselect_sups']);
+//                companionLogger('Kiosk - deselected supplement data', $item['deselect_sups']);
                 $deselected_supplements_data = (isset($item['deselect_sups']) && ! empty($item['deselect_sups'])) ? $item['deselect_sups'] : [];
                 foreach ($deselected_supplements_data as $deselect_supplement_data) {
                     $final_selected_supplements_data[$deselect_supplement_data['category_id']]['sub_cat_id'] = $deselect_supplement_data['category_id'];
@@ -553,7 +575,7 @@ trait Stage8PrepareAdvanceData
                     $final_selected_supplements_data[$deselect_supplement_data['category_id']]['deselected'][] = $deselect_supplement;
                 }
 
-                companionLogger('Kiosk - final after deselect supplement data', $final_selected_supplements_data);
+//                companionLogger('Kiosk - final after deselect supplement data', $final_selected_supplements_data);
 
                 $finalPreparedSupplementData = [];
                 foreach ($final_selected_supplements_data as $supplementData) {

@@ -11,6 +11,7 @@ use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use Weboccult\EatcardCompanion\Services\Facades\EatcardPrint;
 use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
@@ -53,15 +54,29 @@ trait KioskWebhookCommonActions
         }
     }
 
-    public function sendTakeawayOwnerEmail()
+    public function sendKioskOwnerEmail($status)
     {
-        if ($this->fetchedStore->store_email && filter_var($this->fetchedStore->store_email, FILTER_VALIDATE_EMAIL) && ($this->fetchedStore->is_notification) && (! $this->fetchedStore->notificationSetting || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_takeaway_email))) {
+        $isSendEmail = false;
+        if ($status == 'success' && $this->fetchedStore->store_email
+                                 && filter_var($this->fetchedStore->store_email, FILTER_VALIDATE_EMAIL)
+                                 && ($this->fetchedStore->is_notification)
+                                 && (! $this->fetchedStore->notificationSetting
+                                        || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_dine_in_email))
+                                    ) {
+            $isSendEmail = true;
+        }
+
+        if ($status == 'failed' && $this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_cancel_payment_email) {
+            $isSendEmail = true;
+        }
+
+        if ($isSendEmail) {
             try {
                 $content = eatcardPrint()
                     ->generator(PaidOrderGenerator::class)
                     ->method(PrintMethod::HTML)
                     ->type(PrintTypes::MAIN)
-                    ->system(SystemTypes::TAKEAWAY)
+                    ->system(SystemTypes::KIOSK)
                     ->payload([
                         'order_id'          => ''.$this->fetchedOrder->id,
                         'takeawayEmailType' => 'owner',
@@ -78,18 +93,23 @@ trait KioskWebhookCommonActions
                     ->content($content)
                     ->dispatch();
                 updateEmailCount('success');
-                companionLogger('Takeaway order create mail success', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                companionLogger('KIOSK order create mail success', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             } catch (Exception | Throwable $e) {
                 updateEmailCount('error');
-                companionLogger('Takeaway order create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                companionLogger('KIOSK order create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
         }
     }
 
     public function sendPrintJsonToSQS()
     {
-        // Todo : get print JSON data from EatcardPrint Service
-        $printRes = [];
+        $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                            ->method(PrintMethod::SQS)
+                            ->type(PrintTypes::DEFAULT)
+                            ->system(SystemTypes::KIOSK)
+                            ->payload(['order_id'=>''.$this->fetchedOrder->id])
+                            ->generate();
+
         if (! empty($printRes)) {
             config([
                 'queue.connections.sqs.region' => $this->fetchedStore->sqs->sqs_region,
