@@ -65,12 +65,12 @@
         "EatcardEmail": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardEmail",
         "EatcardOrder": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardOrder",
         "EatcardPrint": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardPrint",
+        "EatcardReservation": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardReservation",
         "EatcardRevenue": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardRevenue",
         "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
         "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
         "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal",
-        "Untill": "Weboccult\\EatcardCompanion\\Services\\Facades\\Untill",
-        "EatcardReservation": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardReservation"
+        "Untill": "Weboccult\\EatcardCompanion\\Services\\Facades\\Untill"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",
