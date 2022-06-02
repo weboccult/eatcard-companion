@@ -12,11 +12,9 @@ use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 
 /**
  * @description Stag 4
- *
  */
 trait Stage4CreateProcess
 {
-
     protected function isSimulateEnabled()
     {
         if ($this->getSimulate()) {
@@ -35,16 +33,16 @@ trait Stage4CreateProcess
 
     protected function createReservationJob()
     {
-       if (empty($this->createdReservation)) {
-           return;
-       }
+        if (empty($this->createdReservation)) {
+            return;
+        }
 
-       $this->createdReservation['data_model'] = $this->slotType;
+        $this->createdReservation['data_model'] = $this->slotType;
 
-       $this->reservationJobData['store_id'] = $this->store->id;
-       $this->reservationJobData['reservation_id'] = $this->createdReservation->id;
-       $this->reservationJobData['attempt'] = 0;
-       $this->reservationJobData['reservation_front_data'] = (json_encode($this->createdReservation,true));
+        $this->reservationJobData['store_id'] = $this->store->id;
+        $this->reservationJobData['reservation_id'] = $this->createdReservation->id;
+        $this->reservationJobData['attempt'] = 0;
+        $this->reservationJobData['reservation_front_data'] = (json_encode($this->createdReservation, true));
 
         /*create reservation entry on reservation jobs table*/
         $this->isReservationCronStop = false;
@@ -53,7 +51,7 @@ trait Stage4CreateProcess
             ->where('is_completed', 0)
             ->where('is_failed', 0)
             ->first();
-        if(!empty($first_reservation)) {
+        if (! empty($first_reservation)) {
             $first_reservation = ReservationJob::query()->where('attempt', 2)
                 ->where('in_queue', 0)
                 ->where('is_completed', 0)
@@ -61,18 +59,18 @@ trait Stage4CreateProcess
                 ->first();
         }
         $time_difference = 0;
-        if(isset($first_reservation->created_at)) {
+        if (isset($first_reservation->created_at)) {
             $current_time = Carbon::now();
             $end_time = Carbon::parse($first_reservation->created_at);
             $time_difference = $current_time->diffInSeconds($end_time);
         }
-        if($time_difference > 90) {
+        if ($time_difference > 90) {
             ReservationJob::query()->whereNotNull('id')->update(['is_failed'=> 1, 'attempt' => 2]);
             $this->isReservationCronStop = true;
             companionLogger('reservation through normal functionality : ', (['reservation_job_first_res'=>$first_reservation]));
         }
         /*<---- for testing manually cron stop using this variable ---->*/
-        if (env('FORCE_STOP_CREATE_RESERVATION_USING_CRON', false)){
+        if (env('FORCE_STOP_CREATE_RESERVATION_USING_CRON', false)) {
             $this->isReservationCronStop = true;
             companionLogger('Manually cron skip for testing if you want to stop this remove env FORCE_STOP_CREAT_RESERVATION_USING_CRON variable or make it FALSE');
         }
@@ -83,14 +81,15 @@ trait Stage4CreateProcess
 
     protected function assignTableIfCronStop()
     {
-        if (!$this->isReservationCronStop) {
-            return ;
+        if (! $this->isReservationCronStop) {
+            return;
         }
 
         // TODO : add manual cron assign table code here
     }
 
-    protected function checkReservationJobForAssignTableStatus() {
+    protected function checkReservationJobForAssignTableStatus()
+    {
         if ($this->isReservationCronStop) {
             return;
         }
@@ -103,13 +102,12 @@ trait Stage4CreateProcess
         $check_res_status_array = [1, 2, 3, 4, 5];
         for ($i = 0; $i < 5; $i++) {
             $reservation_jobs_count = ReservationJob::query()->where('id', $this->createdReservationJobs->id)->count();
-            if($reservation_jobs_count > 0) {
+            if ($reservation_jobs_count > 0) {
                 sleep($check_res_status_array[$i]);
             } else {
                 break;
             }
         }
-
     }
 
     protected function checkReservationForAssignTableStatus()
@@ -122,35 +120,32 @@ trait Stage4CreateProcess
 
             if ($storeReservation->res_status != null) {
                 $count = 4;
-            }
-            else {
+            } else {
                 sleep(3);
                 $count++;
             }
-        }
-        while (($storeReservation->res_status == null || $storeReservation->res_status == '') && $count <= 3);
+        } while (($storeReservation->res_status == null || $storeReservation->res_status == '') && $count <= 3);
 
         companionLogger('do while end');
 
         if (empty($storeReservation->res_status) || $storeReservation->res_status == 'failed') {
             companionLogger('res_status is null');
-            StoreReservation::where('id', $storeReservation->id)->update(['status'=> 'declined','is_manually_cancelled' => 2]);
+            StoreReservation::where('id', $storeReservation->id)->update(['status'=> 'declined', 'is_manually_cancelled' => 2]);
             $this->setDumpDieValue([
                 'status'  => 'error',
                 'message' => 'Sorry selected slot is not available.Please try another time slot',
-                'code'    => 400
+                'code'    => 400,
             ]);
         }
 
         //if reservation table assigned successfully then send notification
         sendResWebNotification($this->createdReservation->id, $this->createdReservation->store_id);
-
     }
 
     protected function createChatThread()
     {
         $thread = Thread::query()->create([
-            'subject' => 'reservation'
+            'subject' => 'reservation',
         ]);
         $this->createdReservation->update(['thread_id' => $thread->id]);
         $ownerId = ($this->store) ? $this->store->created_by : 0;
@@ -172,8 +167,7 @@ trait Stage4CreateProcess
                 'last_read'  => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-            ]
+            ],
         ]);
     }
-
 }
