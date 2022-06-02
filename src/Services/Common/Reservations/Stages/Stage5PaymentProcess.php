@@ -5,7 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
-use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;

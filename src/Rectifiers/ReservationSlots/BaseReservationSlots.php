@@ -158,7 +158,7 @@ abstract class BaseReservationSlots
 
     protected function Stage3SetStoreOffDates()
     {
-        $this->date = Carbon::now()->format('Y-m-d');
+        $this->date = Carbon::parse($this->date)->format('Y-m-d');
         $this->nextForDay = Carbon::parse($this->date)->addDays(3)->format('Y-m-d');
 
         $isMealModified = ($this->meal->is_meal_res == 1) || $this->meal->is_week_meal_res == 1;
@@ -172,7 +172,8 @@ abstract class BaseReservationSlots
                             $q2->where('is_day_meal', 0);
                         })
                         ->where('store_id', $this->storeId)
-                        ->whereBetween('store_date', [$this->date, $this->nextForDay])
+//                        ->whereBetween('store_date', [$this->date, $this->nextForDay])
+                        ->whereBetween('store_date', [Carbon::now()->format('Y-m-d'), $this->nextForDay])
                         ->orderBy('store_date', 'desc')
                         ->get()
                         ->toArray();
@@ -209,7 +210,8 @@ abstract class BaseReservationSlots
     {
         $closeDayAndDates = [];
         if (count($slotModifiedData) > 0) {
-            $currentDate = $this->date;
+//            $currentDate = $this->date;
+            $currentDate = Carbon::now()->format('Y-m-d');
 
             $closeDates = [];
             $workingDates = [];
@@ -237,7 +239,8 @@ abstract class BaseReservationSlots
         }
 
         if (count($storeWeekDays) > 0) {
-            $currentDate = $this->date;
+//            $currentDate = $this->date;
+            $currentDate = Carbon::now()->format('Y-m-d');
 
             $closeDays = [];
             $workingDays = [];
@@ -348,7 +351,8 @@ abstract class BaseReservationSlots
                     $this->pickUpSlot[$index]->disable = true;
                 }
                 // check if Set time is equal to current time or bigger than SET TIME
-                if (strtotime($current24Time) >= strtotime($this->store->booking_off_time == '00:00' ? '24:00' : $this->store->booking_off_time) && $this->date >= Carbon::now()->format('Y-m-d')) {
+                $bookingOffTime = strtotime($this->store->booking_off_time == '00:00' ? '24:00' : $this->store->booking_off_time);
+                if ($this->store->is_booking_enable == 1 && strtotime($current24Time) >= $bookingOffTime && $this->date >= Carbon::now()->format('Y-m-d')) {
                     if (strtotime($pickTime->from_time) >= strtotime($current24Time)) {
                         companionLogger('4. Slot is disable | stage :- Stage6EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
                         $this->pickUpSlot[$index]->disable = true;

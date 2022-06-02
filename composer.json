@@ -81,7 +81,8 @@
         "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardSmsServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\OneSignalServiceProvider",
         "Weboccult\\EatcardCompanion\\Services\\Providers\\MultiSafeServiceProvider",
-        "Weboccult\\EatcardCompanion\\Services\\Providers\\UntillServiceProvider"
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\UntillServiceProvider",
+        "Weboccult\\EatcardCompanion\\Services\\Providers\\EatcardReservationServiceProvider"
       ]
     }
   },

@@ -80,11 +80,11 @@ trait Stage0BasicDatabaseInteraction
 
         if (! empty($slotId)) {
             if ($this->slotType == 'StoreSlot') {
-                $slot = StoreSlot::query()->where('id', $slotId);
+                $slot = StoreSlot::query()->where('id', $slotId)->first();
             }
 
             if ($this->slotType == 'StoreSlotModified') {
-                $slot = StoreSlotModified::query()->where('id', $slotId);
+                $slot = StoreSlotModified::query()->where('id', $slotId)->first();
             }
 
             if (! empty($slot)) {

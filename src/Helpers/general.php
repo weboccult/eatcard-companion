@@ -2008,9 +2008,10 @@ if (! function_exists('generateQrCode')) {
             $size = $extra['size'] ?? 300;
 
             $qrImage = QrCode::format($format)
-                ->merge($mergeImage, .3, true)
+//                ->merge($mergeImage, .3, true)
                 ->size($size)
                 ->generate($returnQrData['generated_qr']);
+//            dd($qrImage);
 
             Storage::disk('s3')->put($s3path, $qrImage, 'public');
             $returnQrData['aws_image'] = trim(Config('filesystems.disks.s3.url'), '/').$s3path;
