@@ -158,6 +158,9 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->validateCommonRules(),
             fn () => $this->validateSystemSpecificRules(),
             fn () => $this->validateExtraRules(),
+            fn () => $this->validateSlot(),
+            fn () => $this->validateTime(),
+            fn () => $this->validateSlotLimits(),
         ]);
     }
 

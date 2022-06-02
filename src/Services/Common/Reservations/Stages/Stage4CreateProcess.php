@@ -27,6 +27,7 @@ trait Stage4CreateProcess
     protected function createReservation()
     {
         companionLogger('--- Reservation create data : ', $this->reservationData);
+        $this->reservationData['all_you_eat_data'] = json_encode($this->reservationData['all_you_eat_data']);
         $this->createdReservation = StoreReservation::query()->create($this->reservationData);
         $this->createdReservation->refresh();
     }
@@ -37,12 +38,13 @@ trait Stage4CreateProcess
             return;
         }
 
-        $this->createdReservation['data_model'] = $this->slotType;
+        $this->reservationData['data_model'] = $this->slotType;
+        $this->reservationData['store_slug'] = $this->payload['store_slug'] ?? '';
 
         $this->reservationJobData['store_id'] = $this->store->id;
         $this->reservationJobData['reservation_id'] = $this->createdReservation->id;
         $this->reservationJobData['attempt'] = 0;
-        $this->reservationJobData['reservation_front_data'] = (json_encode($this->createdReservation, true));
+        $this->reservationJobData['reservation_front_data'] = (json_encode($this->reservationData, true));
 
         /*create reservation entry on reservation jobs table*/
         $this->isReservationCronStop = false;
@@ -149,7 +151,7 @@ trait Stage4CreateProcess
         ]);
         $this->createdReservation->update(['thread_id' => $thread->id]);
         $ownerId = ($this->store) ? $this->store->created_by : 0;
-        $owner = $this->store->store_owner->where('store_id', is->store->store_id)->first();
+        $owner = $this->store->store_owner->where('store_id', $this->store->store_id)->first();
         if ($owner) {
             $ownerId = $owner->user_id;
         }

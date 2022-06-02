@@ -24,7 +24,7 @@ trait Stage3PrepareBasicData
 
         $this->reservationData['from_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
         $this->reservationData['res_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
-        $this->reservationData['to_time'] = Carbon::parse($this->slot->to_time)->format('H:i');
+//        $this->reservationData['to_time'] = Carbon::parse($this->slot->to_time)->format('H:i');
         $this->reservationData['user_id'] = null;
 
         $this->reservationData['reservation_id'] = generateReservationId();
@@ -46,15 +46,15 @@ trait Stage3PrepareBasicData
         $this->reservationData['res_origin'] = $this->payload['res_origin'] ?? '';
         $this->reservationData['gastnaam'] = $this->payload['gastnaam'] ?? '';
         $this->reservationData['comments'] = $this->payload['comments'] ?? '';
-        $this->reservationData['store_slug'] = $this->payload['store_slug'] ?? '';
-        $this->reservationData['is_subscribe'] = $this->payload['is_subscribe'] ?? false;
-        $this->reservationData['url'] = $this->payload['url'] ?? '';
+//        $this->reservationData['store_slug'] = $this->payload['store_slug'] ?? '';
+//        $this->reservationData['is_subscribe'] = $this->payload['is_subscribe'] ?? false;
+//        $this->reservationData['url'] = $this->payload['url'] ?? '';
         $this->reservationData['section_id'] = $this->payload['section_id'] ?? '';
         $this->reservationData['is_household_check'] = $this->payload['is_household_check'] ?? 0;
         $this->reservationData['household_person'] = $this->payload['household_person'] ?? 2;
         $this->reservationData['payment_method_type'] = $this->payload['payment_method_type'] ?? '';
         $this->reservationData['method'] = $this->payload['method'] ?? '';
-        $this->reservationData['issuer_id'] = $this->payload['issuer_id'] ?? '';
+//        $this->reservationData['issuer_id'] = $this->payload['issuer_id'] ?? '';
     }
 
     protected function prepareAllYouCanEatData()
