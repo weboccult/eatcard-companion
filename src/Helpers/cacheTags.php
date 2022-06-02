@@ -212,3 +212,8 @@ if (! defined('FLUSH_REVIEW')) {
 if (! defined('FLUSH_POS')) {
     define('FLUSH_POS', 'flush-pos');
 }
+
+/* RESERVATION TICKET CACHING TAGS */
+if (! defined('RESERVATION_TICKETS_KIOSK_BANNER_AND_SLIDER_IMAGES')) {
+    define('RESERVATION_TICKETS_KIOSK_BANNER_AND_SLIDER_IMAGES', 'reservation-tickets-kiosk-banner-and-slider-images-');
+}

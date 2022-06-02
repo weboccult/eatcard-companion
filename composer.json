@@ -34,7 +34,7 @@
     "nunomaduro/collision": "^5.0 || ^6.1",
     "pestphp/pest": "^1.0",
     "phpunit/phpunit": "^9.0",
-    "simplesoftwareio/simple-qrcode": "^4.2",
+    "simplesoftwareio/simple-qrcode": "~4",
     "spatie/laravel-newsletter": "^4.11",
     "twilio/sdk": "^6.33"
   },

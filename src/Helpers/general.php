@@ -6,6 +6,8 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Weboccult\EatcardCompanion\Models\AllYouEatCategories;
 use Weboccult\EatcardCompanion\Models\Device;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
@@ -1841,6 +1843,158 @@ if (! function_exists('calculateAllYouCanEatPerson')) {
             companionLogger('calculateAllYouCanEatPerson error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
 
             return $person;
+        }
+    }
+}
+
+if (! function_exists('checkSlotAvailability')) {
+
+    /**
+     * @param $start_time
+     * @param $key
+     * @param $picktimes
+     *
+     * @return string
+     */
+    function checkSlotAvailability($start_time, $key, $picktimes)
+    {
+        $start_picktime = Carbon::parse($start_time);
+        $diff_picktime = 120;
+        if (isset($picktimes[$key + 1])) {
+            $end_picktime = Carbon::parse($picktimes[$key + 1]->from_time);
+            $diff_picktime = ($start_picktime->diffInMinutes($end_picktime) <= 120) ? $start_picktime->diffInMinutes($end_picktime) : 120;
+        } else {
+            if (! isset($picktimes[$key + 1])) {
+                if (isset($picktimes[$key - 1])) {
+                    $end_picktime = Carbon::parse($picktimes[$key - 1]->from_time);
+                    $diff_picktime = ($start_picktime->diffInMinutes($end_picktime) <= 120) ? $start_picktime->diffInMinutes($end_picktime) : 120;
+                }
+            }
+        }
+        $end_time = Carbon::parse($start_picktime)->addMinutes($diff_picktime)->format('H:i');
+        if (strtotime($start_picktime) > strtotime($end_time)) {
+            return '24:00';
+        } else {
+            return $end_time;
+        }
+    }
+}
+
+if (! function_exists('getAnotherMeeting')) {
+    function getAnotherMeeting($reservation, $meal, $item)
+    {
+        if (! $reservation->end_time) {
+            $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
+            $reservation->end_time = Carbon::parse($reservation->from_time)
+                ->addMinutes($time_limit)
+                ->format('H:i');
+        }
+        if (! isset($time_limit)) {
+            $time_limit = ($meal->time_limit) ? $meal->time_limit : 120;
+        }
+        $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+
+        $another_meeting = (strtotime($item->from_time) > strtotime($reservation->from_time) && strtotime($item->from_time) < strtotime($reservation->end_time)) ||
+            (strtotime($reservation->from_time) > strtotime($item->from_time) && strtotime($reservation->from_time) < strtotime($end_time)) ||
+            (strtotime($item->from_time) == strtotime($reservation->from_time));
+
+        return $another_meeting;
+    }
+}
+
+if (! function_exists('bestsum')) {
+    function bestsum($data, $maxsum)
+    {
+        $res = array_fill(0, $maxsum + 1, '0');
+        $res[0] = [];              //base case
+        foreach ($data as $group) {
+            $new_res = $res;               //copy res
+            foreach ($group as $ele) {
+                for ($i = 0; $i < ($maxsum - $ele + 1); $i++) {
+                    if ($res[$i] != 0) {
+                        $ele_index = $i + $ele;
+                        $new_res[$ele_index] = $res[$i];
+                        $new_res[$ele_index][] = $ele;
+                    }
+                }
+            }
+            $res = $new_res;
+        }
+
+        for ($i = $maxsum; $i > 0; $i--) {
+            if ($res[$i] != 0) {
+                return $res[$i];
+                break;
+            }
+        }
+
+        return [];
+    }
+}
+
+if (! function_exists('getStoreInitial')) {
+    /**
+     * @param $string
+     *
+     * @return string
+     */
+    function getStoreInitial($string)
+    {
+        if (preg_match('/\s/', $string)) {
+            $words = explode(' ', $string);
+            $acronym = '';
+            foreach ($words as $w) {
+                $acronym .= $w[0];
+                if (strlen($acronym) >= 2) {
+                    break;
+                }
+            }
+        } else {
+            $acronym = substr($string, 0, 2);
+        }
+
+        return strtoupper($acronym);
+    }
+}
+
+if (! function_exists('generateQrCode')) {
+    function generateQrCode($store, $uniqueId, string $postFix = 'RT', $uploadInS3 = false, $extra = [])
+    {
+        try {
+            $returnQrData = [
+                'generated_qr' => null,
+                'aws_image'    => '',
+            ];
+
+            $perFix = getStoreInitial($store->store_name);
+            if (strtoupper($postFix) == 'RT') {
+                $returnQrData['generated_qr'] = $perFix.'-'.$uniqueId.'-'.$postFix;
+            }
+
+            if (! $uploadInS3) {
+                return $returnQrData;
+            }
+
+            $destinationFolder = $extra['destination_folder'] ?? 'assets';
+            if ($destinationFolder) {
+                $s3path = $destinationFolder != 'assets' ? 'assets/'.$extra['destination_folder'] : '/assets';
+                $s3path .= '/'.$store->id;
+            }
+
+            $format = $extra['format'] ?? 'png';
+            $mergeImage = $extra['merge_image'] ?? 0;
+            $size = $extra['size'] ?? 300;
+
+            $qrImage = QrCode::format($format)
+                ->merge($mergeImage, .3, true)
+                ->size($size)
+                ->generate($returnQrData['generated_qr']);
+
+            Storage::disk('s3')->put($s3path, $qrImage, 'public');
+            $returnQrData['aws_image'] = trim(Config('filesystems.disks.s3.url'), '/').$s3path;
+
+            return $returnQrData;
+        } catch (\Exception $e) {
         }
     }
 }
