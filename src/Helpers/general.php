@@ -304,12 +304,26 @@ if (! function_exists('generateReservationId')) {
     function generateReservationId(): int
     {
         $id = rand(1111111, 9999999);
+        $id = (string) $id; //convert it into string because of query optimize, here in db reservation_id datatype is a string
         $exist = StoreReservation::query()->where('reservation_id', $id)->first();
         if ($exist) {
             return generateReservationId();
         } else {
             return $id;
         }
+    }
+}
+
+if (! function_exists('generateRandomNumberV2')) {
+    /**
+     * @param int $length : Integer
+     *
+     * @return int
+     * @Description generate 4 digit number for reservation gast-pin
+     */
+    function generateRandomNumberV2($length = 4)
+    {
+        return rand(pow(10, $length - 1) - 1, pow(10, $length) - 1);
     }
 }
 if (! function_exists('carbonParseAddHoursFormat')) {
@@ -363,6 +377,38 @@ if (! function_exists('getAycePrice')) {
         }
 
         return $ayce_amount;
+    }
+}
+if (! function_exists('calculateAllYouCanEatPerson')) {
+    /**
+     * @param $ayceData
+     *
+     * @return int|mixed
+     */
+    function calculateAllYouCanEatPerson($ayceData)
+    {
+        try {
+            $person = 0;
+            if (! empty($ayceData)) {
+                $person += isset($ayceData['no_of_adults']) && ! empty($ayceData['no_of_adults']) ? $ayceData['no_of_adults'] : 0;
+                $person += isset($ayceData['no_of_kids']) && ! empty($ayceData['no_of_kids']) ? $ayceData['no_of_kids'] : 0;
+                $person += isset($ayceData['no_of_kids2']) && ! empty($ayceData['no_of_kids2']) ? $ayceData['no_of_kids2'] : 0;
+            }
+            if (isset($ayceData['dinein_price']['dynamic_prices'])) {
+                $ayce_dynamic_childe_list = collect($ayceData['dinein_price']['dynamic_prices'])
+                    ->pluck('person')
+                    ->map(function ($item) {
+                        return (int) $item;
+                    });
+                $person += (int) $ayce_dynamic_childe_list->sum();
+            }
+
+            return $person;
+        } catch (\Exception $e) {
+            companionLogger('calculateAllYouCanEatPerson error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+
+            return $person;
+        }
     }
 }
 
@@ -570,6 +616,7 @@ if (! function_exists('sendResWebNotification')) {
             })->with([
                 'reservation' => function ($q) use ($store_id) {
                     $q->with([
+                        'reservation_serve_requests',
                         'meal:id,name,time_limit',
                         'tables.table',
                         'user' => function ($q2) use ($store_id) {
@@ -581,14 +628,12 @@ if (! function_exists('sendResWebNotification')) {
                                 },
                             ]);
                         },
-                    ])->where('status', 'approved')->where(function ($q1) {
-                        $q1->whereIn('payment_status', [
-                            'paid',
-                            '',
-                        ])->orWhere('total_price', null);
+                    ])->whereIn('status', ['approved', 'pending', 'cancelled', 'declined'])->where(function ($q1) {
+                        $q1->whereIn('local_payment_status', ['paid', '', 'pending', 'failed'])->orWhere('total_price', null);
                     });
                 },
             ])->where('reservation_id', $id)->first();
+
             if ($reservation && $reservation->reservation) {
                 $reservation->reservation->end = 120;
                 if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
@@ -675,6 +720,7 @@ if (! function_exists('sendResWebNotification')) {
                 }
 
                 $reservation->reservation->orders = $temp_orders;
+
                 $last_message = Message::query()->where('thread_id', $reservation->reservation->thread_id)
                     ->orderBy('created_at', 'desc')
                     ->first();
@@ -683,20 +729,28 @@ if (! function_exists('sendResWebNotification')) {
                 } else {
                     $reservation->reservation->last_message = null;
                 }
+
                 $reservation->reservation->orders = $temp_orders;
+
                 $tempReservation = $reservation->toArray();
                 $tempReservation['reservation']['reservation_date'] = $reservation->reservation->getRawOriginal('res_date');
                 companionLogger('new booking web notification', $tempReservation);
+
                 $dinein_area_id = '';
+
                 $table = ReservationTable::with(['table'])->where('reservation_id', $id)->first();
-                $current_reservation_table = ReservationTable::query()
-                    ->where('reservation_id', $id)
-                    ->pluck('table_id')
-                    ->toArray();
+
                 if ($table && $table['table']) {
                     $dinein_area_id = $table['table']->dining_area_id;
                 }
+
+                $current_reservation_table = ReservationTable::query()
+                                    ->where('reservation_id', $id)
+                                    ->pluck('table_id')
+                                    ->toArray();
+
                 $channel = ! empty($channel) ? $channel : 'new_booking';
+
                 $start = Carbon::parse($reservation->from_time)->format('H:i');
                 $end = Carbon::parse($reservation->end_time)->diffInMinutes($start);
                 if ($channel == 'remove_booking') {

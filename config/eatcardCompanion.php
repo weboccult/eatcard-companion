@@ -167,14 +167,19 @@ return [
                     'pos'   => [
                         'order'     => '/pos/webhook/<%id%>/<%store_id%>',
                         'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
+                        'reservation' => '/pos/webhook-reservation/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
                         'order' => '/kiosk/webhook/<%id%>/<%store_id%>',
+                    ],
+                    'kiosk-tickets' => [
+                        'reservation' => '/kiosk/webhook/<%id%>/<%store_id%>',
                     ],
                 ],
                 'returnUrl'  => [
                     'pos'   => '/pos',
                     'kiosk' => '/<%device_id%>',
+                    'kiosk-tickets' => '/<%device_id%>',
                 ],
             ],
             'wipay'     => [

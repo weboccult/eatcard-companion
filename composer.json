@@ -69,7 +69,8 @@
         "EatcardSms": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardSms",
         "MultiSafe": "Weboccult\\EatcardCompanion\\Services\\Facades\\MultiSafe",
         "OneSignal": "Weboccult\\EatcardCompanion\\Services\\Facades\\OneSignal",
-        "Untill": "Weboccult\\EatcardCompanion\\Services\\Facades\\Untill"
+        "Untill": "Weboccult\\EatcardCompanion\\Services\\Facades\\Untill",
+        "EatcardReservation": "Weboccult\\EatcardCompanion\\Services\\Facades\\EatcardReservation"
       },
       "providers": [
         "Weboccult\\EatcardCompanion\\EatcardCompanionServiceProvider",

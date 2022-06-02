@@ -6,13 +6,11 @@ use Weboccult\EatcardCompanion\Exceptions\Core\EatcardException;
 
 /**
  * Class Not Found Exception.
- *
- * @author Darshit Hedpara
  */
-class MealEmptyException extends EatcardException
+class ReservationDateEmptyException extends EatcardException
 {
     public function __construct()
     {
-        parent::__construct('Meal can\'t be empty.!');
+        parent::__construct('Reservation date can\'t be empty or invalid !');
     }
 }
