@@ -379,38 +379,6 @@ if (! function_exists('getAycePrice')) {
         return $ayce_amount;
     }
 }
-if (! function_exists('calculateAllYouCanEatPerson')) {
-    /**
-     * @param $ayceData
-     *
-     * @return int|mixed
-     */
-    function calculateAllYouCanEatPerson($ayceData)
-    {
-        try {
-            $person = 0;
-            if (! empty($ayceData)) {
-                $person += isset($ayceData['no_of_adults']) && ! empty($ayceData['no_of_adults']) ? $ayceData['no_of_adults'] : 0;
-                $person += isset($ayceData['no_of_kids']) && ! empty($ayceData['no_of_kids']) ? $ayceData['no_of_kids'] : 0;
-                $person += isset($ayceData['no_of_kids2']) && ! empty($ayceData['no_of_kids2']) ? $ayceData['no_of_kids2'] : 0;
-            }
-            if (isset($ayceData['dinein_price']['dynamic_prices'])) {
-                $ayce_dynamic_childe_list = collect($ayceData['dinein_price']['dynamic_prices'])
-                    ->pluck('person')
-                    ->map(function ($item) {
-                        return (int) $item;
-                    });
-                $person += (int) $ayce_dynamic_childe_list->sum();
-            }
-
-            return $person;
-        } catch (\Exception $e) {
-            companionLogger('calculateAllYouCanEatPerson error -', $e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
-
-            return $person;
-        }
-    }
-}
 
 if (! function_exists('discountCalc')) {
     /**
