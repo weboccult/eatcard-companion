@@ -9,10 +9,10 @@ use Weboccult\EatcardCompanion\Exceptions\Core\EatcardException;
  *
  * @author Darshit Hedpara
  */
-class MealEmptyException extends EatcardException
+class SlotEmptyException extends EatcardException
 {
     public function __construct()
     {
-        parent::__construct('Meal can\'t be empty.!');
+        parent::__construct('Slot can\'t be empty or not provided.!');
     }
 }
