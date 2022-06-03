@@ -73,6 +73,7 @@ return [
         'kiosk'            => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
         'dine_in'          => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in-api.local'),
         'dine_in_frontend' => env('COMPANION_DINE_FRONTEND_ENDPOINT', 'http://eatcard-dine_in.local'),
+        'kiosktickets'    => env('COMPANION_KIOSK_TICKET_ENDPOINT', 'http://eatcard-kiosk.local'),
     ],
 
     /*

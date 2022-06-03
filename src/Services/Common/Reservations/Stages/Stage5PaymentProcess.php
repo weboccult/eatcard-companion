@@ -36,15 +36,16 @@ trait Stage5PaymentProcess
                             'kiosk_id' => $this->createdReservation->kiosk_id,
                         ]);
 
-//            $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
-            $order_id = $this->createdReservation->id;
+            $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
+            companionLogger('---ccv-order-id', $order_id, $this->createdReservation);
+//            $order_id = $this->createdReservation->id;
 
             if ($this->system == SystemTypes::POS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
                     'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::POS);
-                $meta_data = "{'reservation': '".$this->createdReservation->reservation_id."', paymentId : '".$paymentDetails->id."'}";
+                $meta_data = "{'reservation': '".$this->createdReservation->id."', paymentId : '".$paymentDetails->id."'}";
                 $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
             }
             if ($this->system == SystemTypes::KIOSKTICKETS) {
@@ -52,8 +53,8 @@ trait Stage5PaymentProcess
                     'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::KIOSKTICKETS);
-                $meta_data = "{'reservation': '".$this->createdReservation->order_id."', paymentId : '".$paymentDetails->id."'}";
-                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.reservation', [
+                $meta_data = "{'reservation': '".$this->createdReservation->id."', paymentId : '".$paymentDetails->id."'}";
+                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.kiosk-tickets', [
                     'device_id' => phpEncrypt($this->device->id),
                 ], [], SystemTypes::KIOSKTICKETS);
             }
