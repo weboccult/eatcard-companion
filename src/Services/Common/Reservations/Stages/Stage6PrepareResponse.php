@@ -45,7 +45,7 @@ trait Stage6PrepareResponse
         if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk-tickets') {
             $this->paymentResponse['id'] = $this->createdReservation->id;
             $this->setDumpDieValue($this->paymentResponse);
-        } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
+        } elseif ($this->createdReservation->payment_method_type == 'ccv' || $this->createdReservation->payment_method_type == 'wipay') {
             $response = [];
 
             if (isset($this->paymentResponse['error']) && $this->paymentResponse['error'] == 1) {
@@ -53,7 +53,7 @@ trait Stage6PrepareResponse
                 $response['error'] = $this->paymentResponse['errormsg'];
             }
 
-            $response['payUrl'] = $this->createdOrder->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;
+            $response['payUrl'] = $this->createdReservation->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;
             $response['reservation_id'] = $this->createdReservation->reservation_id;
             $response['id'] = $this->createdReservation->id;
 
