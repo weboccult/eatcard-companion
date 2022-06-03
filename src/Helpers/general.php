@@ -2010,7 +2010,7 @@ if (! function_exists('generateQrCode')) {
 
             if (! empty($mergeImage)) {
                 $qrImage = QrCode::format($format)
-                        ->merge($mergeImage, .3, true)
+                        ->merge($mergeImage, .2, true)
                         ->size($size)
                         ->generate($returnQrData['generated_qr']);
             } else {
@@ -2023,7 +2023,7 @@ if (! function_exists('generateQrCode')) {
                 Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
             }
 
-            companionLogger('generatedQrCode data | Reservation-QR :- '.$returnQrData['generated_qr'].' | AWS link  :- '.env('COMPANION_AWS_URL').$s3ImagePath);
+//            companionLogger('generatedQrCode data | Reservation-QR :- '.$returnQrData['generated_qr'].' | AWS link  :- '.env('COMPANION_AWS_URL').$s3ImagePath);
             $returnQrData['aws_image'] = env('COMPANION_AWS_URL').$s3ImagePath;
 
             return $returnQrData;
