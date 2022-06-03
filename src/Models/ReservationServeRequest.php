@@ -9,10 +9,5 @@ class ReservationServeRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'reservation_id',
-        'table_id',
-        'serve_request_id',
-        'is_served',
-    ];
+    protected $guarded = [];
 }
