@@ -84,4 +84,9 @@ class StoreReservation extends Model
     {
         return $this->hasMany(ReservationOrderItem::class, 'reservation_id')->orderBy('round');
     }
+
+    public function reservation_serve_requests()
+    {
+        return $this->hasMany(ReservationServeRequest::class, 'reservation_id');
+    }
 }
