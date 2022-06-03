@@ -1999,25 +1999,36 @@ if (! function_exists('generateQrCode')) {
 
             $destinationFolder = $extra['destination_folder'] ?? 'assets';
             if ($destinationFolder) {
-                $s3path = $destinationFolder != 'assets' ? 'assets/'.$extra['destination_folder'] : '/assets';
-                $s3path .= '/'.$store->id;
+                $s3ImagePath = $destinationFolder != 'assets' ? 'assets/'.$extra['destination_folder'] : '/assets';
+                $s3ImagePath .= '/'.$store->id;
+                $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.($extra['format'] ?? 'png');
             }
 
             $format = $extra['format'] ?? 'png';
             $mergeImage = $extra['merge_image'] ?? 0;
             $size = $extra['size'] ?? 300;
 
-            $qrImage = QrCode::format($format)
-//                ->merge($mergeImage, .3, true)
-                ->size($size)
-                ->generate($returnQrData['generated_qr']);
-//            dd($qrImage);
+            if (! empty($mergeImage)) {
+                $qrImage = QrCode::format($format)
+                        ->merge($mergeImage, .3, true)
+                        ->size($size)
+                        ->generate($returnQrData['generated_qr']);
+            } else {
+                $qrImage = QrCode::format($format)
+                    ->size($size)
+                    ->generate($returnQrData['generated_qr']);
+            }
 
-            Storage::disk('s3')->put($s3path, $qrImage, 'public');
-            $returnQrData['aws_image'] = trim(Config('filesystems.disks.s3.url'), '/').$s3path;
+            if (! Storage::disk('s3')->exists($s3ImagePath)) {
+                Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
+            }
+
+            companionLogger('generatedQrCode data | Reservation-QR :- '.$returnQrData['generated_qr'].' | AWS link  :- '.env('COMPANION_AWS_URL').$s3ImagePath);
+            $returnQrData['aws_image'] = env('COMPANION_AWS_URL').$s3ImagePath;
 
             return $returnQrData;
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
+            companionLogger('generateQrCode function exception', 'Line - '.$exception->getLine(), 'Error - '.$exception->getMessage());
         }
     }
 }
