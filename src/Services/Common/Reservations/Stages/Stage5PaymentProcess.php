@@ -36,7 +36,8 @@ trait Stage5PaymentProcess
                             'kiosk_id' => $this->createdReservation->kiosk_id,
                         ]);
 
-            $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
+//            $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
+            $order_id = $this->createdReservation->id;
 
             if ($this->system == SystemTypes::POS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
@@ -72,6 +73,9 @@ trait Stage5PaymentProcess
                     'accessProtocol'     => 'OPI_NL',
                 ],
             ];
+
+            companionLogger('--CCV input parameter', $inputs);
+
             $client = new Client();
 
             $url = $this->device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
