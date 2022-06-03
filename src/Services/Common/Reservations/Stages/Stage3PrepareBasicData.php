@@ -52,8 +52,9 @@ trait Stage3PrepareBasicData
         $this->reservationData['section_id'] = $this->payload['section_id'] ?? 0;
         $this->reservationData['is_household_check'] = $this->payload['is_household_check'] ?? 0;
         $this->reservationData['household_person'] = $this->payload['household_person'] ?? 2;
-        $this->reservationData['payment_method_type'] = $this->payload['payment_method_type'] ?? '';
-        $this->reservationData['method'] = $this->payload['method'] ?? '';
+        $this->reservationData['method'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
+        $this->reservationData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
+
 //        $this->reservationData['issuer_id'] = $this->payload['issuer_id'] ?? '';
     }
 
