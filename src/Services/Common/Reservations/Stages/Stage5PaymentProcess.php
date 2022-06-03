@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Enums\TransactionTypes;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
@@ -25,20 +26,32 @@ trait Stage5PaymentProcess
     protected function ccvPayment()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS]) && $this->createdReservation->payment_method_type == 'ccv') {
+            $paymentDetails = $this->createdReservation->paymentTable()->create([
+                            'transaction_type' => TransactionTypes::CREDIT,
+                            'payment_method_type' => $this->createdReservation->payment_method_type,
+                            'method' => $this->createdReservation->method,
+                            'payment_status' => $this->createdReservation->payment_status,
+                            'local_payment_status' => $this->createdReservation->local_payment_status,
+                            'amount' => $this->createdReservation->total_price,
+                            'kiosk_id' => $this->createdReservation->kiosk_id,
+                        ]);
+
+            $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
+
             if ($this->system == SystemTypes::POS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
-                    'id'       => $this->createdReservation->id,
+                    'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::POS);
-                $meta_data = "{'reservation': '".$this->createdReservation->reservation_id."'}";
+                $meta_data = "{'reservation': '".$this->createdReservation->reservation_id."', paymentId : '".$paymentDetails->id."'}";
                 $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
             }
             if ($this->system == SystemTypes::KIOSKTICKETS) {
-                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.kiosk.reservation', [
-                    'id'       => $this->createdReservation->id,
+                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.kiosk-tickets.reservation', [
+                    'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::KIOSKTICKETS);
-                $meta_data = "{'reservation': '".$this->createdReservation->order_id."'}";
+                $meta_data = "{'reservation': '".$this->createdReservation->order_id."', paymentId : '".$paymentDetails->id."'}";
                 $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.reservation', [
                     'device_id' => phpEncrypt($this->device->id),
                 ], [], SystemTypes::KIOSKTICKETS);
@@ -78,18 +91,20 @@ trait Stage5PaymentProcess
             $response = json_decode($request->getBody()->getContents(), true);
             companionLogger('ccv api res', $response);
             /*update ccv payment for the order*/
-            $this->createdReservation->update(['ccv_payment_ref' => $response['reference']]);
+            $paymentDetails->update(['transaction_id' => $response['reference']]);
 
             if ($this->system == SystemTypes::POS) {
                 $this->paymentResponse = [
                     'pay_url'  => $response['payUrl'],
                     'reservation_id' => $this->createdReservation->id,
+                    'payment_id' => $paymentDetails->id,
                 ];
             }
             if ($this->system == SystemTypes::KIOSKTICKETS) {
                 $this->paymentResponse = [
                     'payUrl'  => $response['payUrl'],
                     'reservation_id' => $this->createdReservation->id,
+                    'payment_id' => $paymentDetails->id,
                 ];
             }
         }
@@ -106,15 +121,25 @@ trait Stage5PaymentProcess
             $order_price = round($this->createdReservation->total_price * 100, 0);
             $order_type = 'reservation';
 
+            $paymentDetails = $this->createdReservation->paymentTable()->create([
+                'transaction_type' => TransactionTypes::CREDIT,
+                'payment_method_type' => $this->createdReservation->payment_method_type,
+                'method' => $this->createdReservation->method,
+                'payment_status' => $this->createdReservation->payment_status,
+                'local_payment_status' => $this->createdReservation->local_payment_status,
+                'amount' => $this->createdReservation->total_price,
+                'kiosk_id' => $this->createdReservation->kiosk_id,
+            ]);
+
             $inputs = [
                 'amount'    => $order_price,
                 'terminal'  => $this->device->terminal_id,
                 'reference' => $this->createdReservation->id,
-                'txid'      => $order_type.'-'.$this->createdReservation->id.'-'.$this->createdReservation->store_id.'-'.(@$this->payload['is_last_payment'] ? '1' : '0'),
+                'txid'      => $order_type.'-'.$this->createdReservation->id.'-'.$this->createdReservation->store_id.'-'.($paymentDetails->id ?? 0),
             ];
 
             companionLogger('Wipay payment details', $inputs);
-            companionLogger('wipay started!', 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            companionLogger('Wipay started!', 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
             $client = new Client();
             $url = $this->device->environment == 'live' ? config('eatcardCompanion.payment.gateway.wipay.production') : config('eatcardCompanion.payment.gateway.wipay.staging');
@@ -131,18 +156,20 @@ trait Stage5PaymentProcess
             $response = json_decode($request_data->getBody()->getContents(), true);
 
             if ($response['error'] == 1) {
+                companionLogger('Wipay payment initialize error', $response);
                 $this->paymentResponse = $response;
 
                 return;
             }
 
-            companionLogger('Wipay payment Response', 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
+            companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
 
-            isset($response['ssai']) && $response['ssai'] ? $this->createdReservation->update(['worldline_ssai' => $response['ssai']]) : '';
+            isset($response['ssai']) && $response['ssai'] ? $paymentDetails->update(['transaction_id' => $response['ssai']]) : '';
 
             $this->paymentResponse = [
                 'pay_url'  => null,
                 'reservation_id' => $this->createdReservation->id,
+                'payment_id' => $paymentDetails->id,
             ];
         }
     }

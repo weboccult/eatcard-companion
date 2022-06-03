@@ -173,7 +173,7 @@ return [
                         'order' => '/kiosk/webhook/<%id%>/<%store_id%>',
                     ],
                     'kiosk-tickets' => [
-                        'reservation' => '/kiosk/webhook/<%id%>/<%store_id%>',
+                        'reservation' => '/ccv/webhook/<%id%>/<%store_id%>',
                     ],
                 ],
                 'returnUrl'  => [

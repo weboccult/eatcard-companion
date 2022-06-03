@@ -51,6 +51,7 @@ trait Stage6PrepareResponse
             if (isset($this->paymentResponse['error']) && $this->paymentResponse['error'] == 1) {
                 // Wipay will set error
                 $response['error'] = $this->paymentResponse['errormsg'];
+                $this->setDumpDieValue($response);
             }
 
             $response['payUrl'] = $this->createdReservation->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;

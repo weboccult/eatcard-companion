@@ -133,11 +133,7 @@ trait Stage4CreateProcess
         if (empty($storeReservation->res_status) || $storeReservation->res_status == 'failed') {
             companionLogger('res_status is null');
             StoreReservation::where('id', $storeReservation->id)->update(['status'=> 'declined', 'is_manually_cancelled' => 2]);
-            $this->setDumpDieValue([
-                'status'  => 'error',
-                'message' => 'Sorry selected slot is not available.Please try another time slot',
-                'code'    => 400,
-            ]);
+            $this->setDumpDieValue(['error' =>'Sorry selected slot is not available.Please try another time slot']);
         }
 
         //if reservation table assigned successfully then send notification
