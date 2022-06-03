@@ -60,6 +60,8 @@ trait Stage6PrepareResponse
 
             $this->setDumpDieValue($response);
         } else {
+            $response['error'] = 'Not supported method found.!';
+            $this->setDumpDieValue($response);
             companionLogger('Not supported method found.!');
         }
     }
