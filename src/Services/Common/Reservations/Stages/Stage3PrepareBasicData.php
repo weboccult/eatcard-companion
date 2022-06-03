@@ -49,7 +49,7 @@ trait Stage3PrepareBasicData
 //        $this->reservationData['store_slug'] = $this->payload['store_slug'] ?? '';
 //        $this->reservationData['is_subscribe'] = $this->payload['is_subscribe'] ?? false;
 //        $this->reservationData['url'] = $this->payload['url'] ?? '';
-        $this->reservationData['section_id'] = $this->payload['section_id'] ?? '';
+        $this->reservationData['section_id'] = $this->payload['section_id'] ?? 0;
         $this->reservationData['is_household_check'] = $this->payload['is_household_check'] ?? 0;
         $this->reservationData['household_person'] = $this->payload['household_person'] ?? 2;
         $this->reservationData['payment_method_type'] = $this->payload['payment_method_type'] ?? '';
