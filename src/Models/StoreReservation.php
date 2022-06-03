@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Weboccult\EatcardCompanion\Traits\PaymentTable;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 
 class StoreReservation extends Model
 {
     use SoftDeletes;
+    use PaymentTable;
 
     protected $table = 'store_reservations';
 

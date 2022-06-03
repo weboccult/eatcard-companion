@@ -55,7 +55,6 @@ trait Stage0BasicDatabaseInteraction
             if (! empty($device)) {
                 $this->device = $device;
                 $this->reservationData['kiosk_id'] = $device->id;
-                // Todo : need to add migration for kiosk_id in store_reservation table
             }
         }
     }
