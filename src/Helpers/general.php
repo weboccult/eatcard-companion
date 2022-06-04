@@ -1466,6 +1466,7 @@ if (! function_exists('extractRequestType')) {
             'receipt_pos_sub', // Print sub order default
             'receipt_kiosk', // Print default for kiosk
             'receipt_kitchen', // Reprint only kitchen and label from admin for paid orders
+            'receipt_kiosk_tickets', // Print proforma with QR for tickets
         ];
 
         if (strpos($requestType, '@') !== false) {
@@ -1512,6 +1513,11 @@ if (! function_exists('extractRequestType')) {
         } elseif ($requestType == 'receipt_kiosk') {
             $systemType = SystemTypes::KIOSK;
             $systemPrintType = PrintTypes::DEFAULT;
+        } elseif ($requestType == 'receipt_kiosk_tickets') {
+            $generator = RunningOrderGenerator::class;
+            $printType = 'reservation';
+            $systemType = SystemTypes::KIOSKTICKETS;
+            $systemPrintType = PrintTypes::PROFORMA;
         }
 
         return [
@@ -2005,7 +2011,7 @@ if (! function_exists('generateQrCode')) {
             }
 
             $format = $extra['format'] ?? 'png';
-            $mergeImage = $extra['merge_image'] ?? 0;
+            $mergeImage = $extra['merge_image'] ?? env('COMPANION_TICKETS_QR_LOGO_URL', 'https://eatcard-stage.s3/.eu-central-1.amazonaws.com/Eatcard_app_icon.png');
             $size = $extra['size'] ?? 300;
 
             if (! empty($mergeImage)) {

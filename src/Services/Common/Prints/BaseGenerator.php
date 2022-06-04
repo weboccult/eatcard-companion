@@ -245,6 +245,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setDeliveryAddress();
         $this->setStoreAddress();
         $this->setLogo();
+        $this->setTicketsQR();
         $this->setOtherDetails();
         $this->setItems();
         $this->setReceipt();
