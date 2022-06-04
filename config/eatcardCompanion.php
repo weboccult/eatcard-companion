@@ -188,6 +188,7 @@ return [
                 'production' => 'https://wipay.worldline.nl',
                 'endpoints'  => [
                     'createOrder' => '/api/2.0/json/debit',
+                    'fetchOrderStatus' => '/api/2.0/json/status',
                 ],
                 'webhook'    => null,
                 // No need, it will point to main domain directly.
