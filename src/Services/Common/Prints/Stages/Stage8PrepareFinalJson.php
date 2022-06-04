@@ -11,6 +11,7 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\generateQrCode;
 
 /**
  * @description Stag 8
@@ -340,6 +341,18 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['eatcardlogo'] = $eatcardLogo;
         $this->jsonFormatFullReceipt['showstorename'] = $showStoreName;
         $this->jsonFormatFullReceipt['showeatcardname'] = $showEatcardName;
+    }
+
+    protected function setTicketsQR()
+    {
+        if ($this->systemType != SystemTypes::KIOSKTICKETS) {
+            return;
+        }
+
+        $qrImage = generateQrCode($this->store, $this->reservationId, 'RT', true);
+
+        $this->jsonFormatFullReceipt['qrtext'] = 'eatcard';
+        $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
     }
 
     /**
