@@ -221,7 +221,7 @@ trait TicketsWebhookCommonActions
      *
      * @return void
      */
-    public function afterStatusGetProcess($update_data)
+    public function afterStatusGetProcess($update_data, $update_payment_data)
     {
         companionLogger('Reservation Old status', $this->fetchedReservation->status);
         companionLogger('Reservation Old payment_status', $this->fetchedReservation->payment_status);
@@ -237,6 +237,7 @@ trait TicketsWebhookCommonActions
         }
 
         $this->fetchedReservation->update($update_data);
+        $this->fetchedPaymentDetails->update($update_payment_data);
 
         if ($update_data['local_payment_status'] == 'paid') {
             $this->setLimitHoursIntoStoreData();

@@ -102,6 +102,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     protected string $slotType = '';
     protected $reservationDate = '';
 
+    protected $isBOP = false;
+
     /**
      * @throws Exception
      */

@@ -55,6 +55,12 @@ trait Stage3PrepareBasicData
         $this->reservationData['method'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         $this->reservationData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
 
+        $this->isBOP = isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets';
+        if ($this->isBOP) {
+            $this->reservationData['method'] = '';
+            $this->reservationData['payment_method_type'] = 'cash';
+        }
+
 //        $this->reservationData['issuer_id'] = $this->payload['issuer_id'] ?? '';
     }
 

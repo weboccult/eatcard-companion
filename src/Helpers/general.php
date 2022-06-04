@@ -2011,7 +2011,7 @@ if (! function_exists('generateQrCode')) {
             }
 
             $format = $extra['format'] ?? 'png';
-            $mergeImage = $extra['merge_image'] ?? env('COMPANION_TICKETS_QR_LOGO_URL', 'https://eatcard-stage.s3/.eu-central-1.amazonaws.com/Eatcard_app_icon.png');
+            $mergeImage = $extra['merge_image'] ?? env('COMPANION_TICKETS_QR_LOGO_URL', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png');
             $size = $extra['size'] ?? 300;
 
             if (! empty($mergeImage)) {
