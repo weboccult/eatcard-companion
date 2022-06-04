@@ -420,6 +420,7 @@ abstract class BaseReservationSlots
                 ->where('dining_areas.is_automatic', 1)
                 ->where('dining_areas.status', 1)
                 ->where('tables.status', 1)
+                ->where('tables.online_status', 1)
                 ->get();
 
             $this->pickUpSlot->map(function ($pickTime, $index) use ($person) {
@@ -461,6 +462,7 @@ abstract class BaseReservationSlots
                         $sections = DiningArea::with([
                             'tables' => function ($q1) use ($availableTables, $person) {
                                 $q1->whereIn('id', $availableTables)
+                                    ->where('online_status', 1)
                                     ->where('status', 1)
                                     ->where('no_of_seats', '<=', $person);
                             },
