@@ -29,6 +29,9 @@ use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MollieTakeawayOrderW
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MultiSafeTakeawayOrderCancelRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MultiSafeTakeawayOrderSuccessRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MultiSafeTakeawayOrderWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CcvTicketsWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\WorldLineTicketsWebhook;
 
 /**
  * @author Darshit Hedpara
@@ -53,6 +56,9 @@ class EatcardWebhook
 
     /** @var string|int|null */
     private static $reservationId;
+
+    /** @var string|int|null */
+    private static $paymentId;
 
     /** @var string|int|null */
     private static $giftCardPurchaseOrderId;
@@ -159,6 +165,18 @@ class EatcardWebhook
     }
 
     /**
+     * @param string|int $paymentId
+     *
+     * @return static
+     */
+    public static function setPaymentId($paymentId): self
+    {
+        static::$paymentId = $paymentId;
+
+        return static::getInstance();
+    }
+
+    /**
      * @param string $domainUrl
      *
      * @return static
@@ -222,6 +240,16 @@ class EatcardWebhook
             case WorldLineWebhook::class:
             case WorldLineGetFinalPaymentStatusAction::class:
                 static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId);
+                // only payload is required, which is already being set before running handle method.
+                break;
+
+            case WorldLineTicketsWebhook::class:
+            case CcvTicketsWebhook::class:
+            case CashTicketsWebhook::class:
+                static::$webhook->setOrderType(static::$orderType)
+                                ->setReservationId(static::$reservationId)
+                                ->setPaymentId(static::$paymentId)
+                                ->setStoreId(static::$storeId);
                 // only payload is required, which is already being set before running handle method.
                 break;
             default:

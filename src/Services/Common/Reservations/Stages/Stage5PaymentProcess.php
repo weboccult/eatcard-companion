@@ -6,6 +6,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
@@ -37,13 +39,15 @@ trait Stage5PaymentProcess
                         ]);
 
             $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
+            companionLogger('---ccv-order-id', $order_id, $this->createdReservation);
+//            $order_id = $this->createdReservation->id;
 
             if ($this->system == SystemTypes::POS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
                     'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::POS);
-                $meta_data = "{'reservation': '".$this->createdReservation->reservation_id."', paymentId : '".$paymentDetails->id."'}";
+                $meta_data = "{'reservation': '".$this->createdReservation->id."', paymentId : '".$paymentDetails->id."'}";
                 $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
             }
             if ($this->system == SystemTypes::KIOSKTICKETS) {
@@ -51,8 +55,8 @@ trait Stage5PaymentProcess
                     'id'       => $order_id,
                     'store_id' => $this->store->id,
                 ], [], SystemTypes::KIOSKTICKETS);
-                $meta_data = "{'reservation': '".$this->createdReservation->order_id."', paymentId : '".$paymentDetails->id."'}";
-                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.reservation', [
+                $meta_data = "{'reservation': '".$this->createdReservation->id."', paymentId : '".$paymentDetails->id."'}";
+                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.kiosk-tickets', [
                     'device_id' => phpEncrypt($this->device->id),
                 ], [], SystemTypes::KIOSKTICKETS);
             }
@@ -72,6 +76,9 @@ trait Stage5PaymentProcess
                     'accessProtocol'     => 'OPI_NL',
                 ],
             ];
+
+            companionLogger('--CCV input parameter', $inputs);
+
             $client = new Client();
 
             $url = $this->device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
@@ -103,7 +110,8 @@ trait Stage5PaymentProcess
             if ($this->system == SystemTypes::KIOSKTICKETS) {
                 $this->paymentResponse = [
                     'payUrl'  => $response['payUrl'],
-                    'reservation_id' => $this->createdReservation->id,
+                    'id' => $this->createdReservation->id,
+                    'reservation_id' => $this->createdReservation->reservation_id,
                     'payment_id' => $paymentDetails->id,
                 ];
             }
@@ -157,9 +165,7 @@ trait Stage5PaymentProcess
 
             if ($response['error'] == 1) {
                 companionLogger('Wipay payment initialize error', $response);
-                $this->paymentResponse = $response;
-
-                return;
+                $this->setDumpDieValue(['error' => $response['errormsg']]);
             }
 
             companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
@@ -168,7 +174,8 @@ trait Stage5PaymentProcess
 
             $this->paymentResponse = [
                 'pay_url'  => null,
-                'reservation_id' => $this->createdReservation->id,
+                'id' => $this->createdReservation->id,
+                'reservation_id' => $this->createdReservation->reservation_id,
                 'payment_id' => $paymentDetails->id,
             ];
         }
@@ -177,12 +184,35 @@ trait Stage5PaymentProcess
     protected function cashPayment()
     {
         if ($this->system == SystemTypes::KIOSKTICKETS) {
-            if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk-tickets') {
+            if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets') {
+                $paymentDetails = $this->createdReservation->paymentTable()->create([
+                    'transaction_type' => TransactionTypes::CREDIT,
+                    'payment_method_type' => $this->createdReservation->payment_method_type,
+                    'method' => $this->createdReservation->method,
+                    'payment_status' => $this->createdReservation->payment_status,
+                    'local_payment_status' => $this->createdReservation->local_payment_status,
+                    'amount' => $this->createdReservation->total_price,
+                    'kiosk_id' => $this->createdReservation->kiosk_id,
+                    'transaction_receipt' => 'fake-bop payment',
+                ]);
+
                 $this->paymentResponse = [
                     'ssai'      => 'fake_ssai',
                     'reference' => 'fake_response',
                     'payUrl'    => 'https://www.google.com',
+                    'id' => $this->createdReservation->id,
+                    'reservation_id' => $this->createdReservation->reservation_id,
+                    'payment_id' => $paymentDetails->id,
                 ];
+
+                EatcardWebhook::action(CashTicketsWebhook::class)
+                    ->setOrderType('reservation')
+                    ->setReservationId($this->createdReservation->id)
+                    ->setPaymentId($paymentDetails->id)
+                    ->setStoreId($this->store->id)
+                    ->payload([
+                        'status' => $this->payload['bop_status'] ?? 'paid',
+                    ])->dispatch();
             }
         }
     }

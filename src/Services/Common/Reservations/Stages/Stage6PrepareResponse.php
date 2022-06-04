@@ -42,24 +42,13 @@ trait Stage6PrepareResponse
 
     protected function kioskTicketsResponse()
     {
-        if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk-tickets') {
-            $this->paymentResponse['id'] = $this->createdReservation->id;
+        if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets') {
             $this->setDumpDieValue($this->paymentResponse);
         } elseif ($this->createdReservation->payment_method_type == 'ccv' || $this->createdReservation->payment_method_type == 'wipay') {
-            $response = [];
-
-            if (isset($this->paymentResponse['error']) && $this->paymentResponse['error'] == 1) {
-                // Wipay will set error
-                $response['error'] = $this->paymentResponse['errormsg'];
-                $this->setDumpDieValue($response);
-            }
-
-            $response['payUrl'] = $this->createdReservation->payment_method_type == 'ccv' ? $this->paymentResponse['payUrl'] : null;
-            $response['reservation_id'] = $this->createdReservation->reservation_id;
-            $response['id'] = $this->createdReservation->id;
-
-            $this->setDumpDieValue($response);
+            $this->setDumpDieValue($this->paymentResponse);
         } else {
+            $response['error'] = 'Not supported method found.!';
+            $this->setDumpDieValue($response);
             companionLogger('Not supported method found.!');
         }
     }

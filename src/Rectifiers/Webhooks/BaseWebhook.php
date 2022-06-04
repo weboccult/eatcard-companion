@@ -8,6 +8,7 @@ use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
@@ -32,6 +33,9 @@ abstract class BaseWebhook
     /** @var string|int|null */
     public $reservationId = null;
 
+    /** @var string|int|null */
+    public $paymentId = null;
+
     /** @var array|null */
     public ?array $payload = null;
 
@@ -43,6 +47,9 @@ abstract class BaseWebhook
 
     /** @var StoreReservation|null|object */
     protected $fetchedReservation = null;
+
+    /** @var StoreReservation|null|object */
+    protected $fetchedPaymentDetails = null;
 
     /** @var GiftPurchaseOrder|null|object */
     protected $fetchedGiftPurchaseOrder = null;
@@ -70,6 +77,18 @@ abstract class BaseWebhook
     public function setReservationId($reservationId): self
     {
         $this->reservationId = $reservationId;
+
+        return $this;
+    }
+
+    /**
+     * @param int|string|null $reservationId
+     *
+     * @return BaseWebhook
+     */
+    public function setPaymentId($paymentId): self
+    {
+        $this->paymentId = $paymentId;
 
         return $this;
     }
@@ -223,7 +242,14 @@ abstract class BaseWebhook
     protected function fetchAndSetReservation()
     {
         if (! empty($this->reservationId)) {
-            $this->fetchedReservation = StoreReservation::with('meal')->findOrFail($this->reservationId);
+            $this->fetchedReservation = StoreReservation::with('meal', 'kiosk')->findOrFail($this->reservationId);
+        }
+    }
+
+    protected function fetchAndSePaymentDetails()
+    {
+        if (! empty($this->paymentId)) {
+            $this->fetchedPaymentDetails = PaymentDetail::query()->findOrFail($this->paymentId);
         }
     }
 }

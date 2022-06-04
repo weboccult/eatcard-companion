@@ -89,4 +89,12 @@ class StoreReservation extends Model
     {
         return $this->hasMany(ReservationServeRequest::class, 'reservation_id');
     }
+
+    /**
+     * @return BelongsTo
+     */
+    public function kiosk(): BelongsTo
+    {
+        return $this->belongsTo(KioskDevice::class, 'kiosk_id', 'id');
+    }
 }
