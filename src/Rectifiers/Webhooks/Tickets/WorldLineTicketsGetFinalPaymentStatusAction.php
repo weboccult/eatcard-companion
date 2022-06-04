@@ -52,24 +52,27 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $request_data->getHeaderLine('content-type');
         $response = json_decode($request_data->getBody()->getContents(), true);
 
-        $update_data['payment_status'] = 'pending';
-        $update_data['local_payment_status'] = 'pending';
+        $update_data = [];
+        $update_payment_data = [];
+
+        $update_data['payment_status'] = $update_payment_data['payment_status'] = 'pending';
+        $update_data['local_payment_status'] = $update_payment_data['payment_status'] = 'pending';
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
-            $update_data['payment_status'] = 'paid';
-            $update_data['local_payment_status'] = 'paid';
-            $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_data['transaction_receipt'] = isset($response['ticket']) ? $response['ticket'] : '';
+            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
+            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $update_payment_data['transaction_receipt'] = isset($response['ticket']) ? $response['ticket'] : '';
             companionLogger('Worldline status => final + approved : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'final' && $response['cancelled'] == 1) {
-            $update_data['status'] = 'canceled';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['status'] = $update_payment_data['status'] = 'canceled';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
             companionLogger('Worldline status => canceled : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'final') {
             companionLogger('Worldline status => final : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'error') {
-            $update_data['status'] = 'failed';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['status'] = $update_payment_data['status'] = 'failed';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
             companionLogger('Worldline status => error : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'busy') {
             companionLogger('Worldline status => busy : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
@@ -85,7 +88,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
             $update_data['is_uncertain_status'] = 1;
         }
 
-        $this->afterStatusGetProcess($update_data);
+        $this->afterStatusGetProcess($update_data, $update_payment_data);
 
         return $this->fetchedReservation;
     }

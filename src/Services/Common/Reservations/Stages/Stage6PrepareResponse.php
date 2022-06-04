@@ -42,7 +42,7 @@ trait Stage6PrepareResponse
 
     protected function kioskTicketsResponse()
     {
-        if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets') {
+        if ($this->isBOP) {
             $this->setDumpDieValue($this->paymentResponse);
         } elseif ($this->createdReservation->payment_method_type == 'ccv' || $this->createdReservation->payment_method_type == 'wipay') {
             $this->setDumpDieValue($this->paymentResponse);

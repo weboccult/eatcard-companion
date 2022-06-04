@@ -25,21 +25,24 @@ class CashTicketsWebhook extends BaseWebhook
         $this->fetchAndSetReservation();
         $this->fetchAndSePaymentDetails();
 
-        $update_data['payment_status'] = 'pending';
-        $update_data['local_payment_status'] = 'pending';
+        $update_data = [];
+        $update_payment_data = [];
+
+        $update_data['payment_status'] = $update_payment_data['payment_status'] = 'pending';
+        $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'pending';
         if ($this->payload['status'] == 'paid') {
-            $update_data['payment_status'] = 'paid';
-            $update_data['local_payment_status'] = 'paid';
-            $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_data['transaction_receipt'] = 'fake-bop payment';
+            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
+            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $update_payment_data['transaction_receipt'] = 'fake-bop payment';
         } elseif ($this->payload['status'] == 'failed') {
-            $update_data['payment_status'] = 'failed';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'failed';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
         } else {
             companionLogger('invalid cash payment status', $this->payload);
         }
 
-        $this->afterStatusGetProcess($update_data);
+        $this->afterStatusGetProcess($update_data, $update_payment_data);
 
         return true;
     }

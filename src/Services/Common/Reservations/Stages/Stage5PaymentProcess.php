@@ -184,7 +184,7 @@ trait Stage5PaymentProcess
     protected function cashPayment()
     {
         if ($this->system == SystemTypes::KIOSKTICKETS) {
-            if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets') {
+            if ($this->isBOP) {
                 $paymentDetails = $this->createdReservation->paymentTable()->create([
                     'transaction_type' => TransactionTypes::CREDIT,
                     'payment_method_type' => $this->createdReservation->payment_method_type,

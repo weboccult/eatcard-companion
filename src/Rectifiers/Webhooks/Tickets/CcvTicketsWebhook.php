@@ -51,16 +51,19 @@ class CcvTicketsWebhook extends BaseWebhook
 
         companionLogger('CCV status response', json_encode(['payment_status' => $response['status']], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 
+        $update_data = [];
+        $update_payment_data = [];
+
         $update_data['status'] = ($response['status'] == 'success') ? 'paid' : $response['status'];
         if ($response['status'] == 'success' && $old_status != 'paid') {
-            $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_data['transaction_receipt'] = isset($response['details']) ? $response['details']['customerReceipt'] : '';
+            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $update_payment_data['transaction_receipt'] = isset($response['details']) ? $response['details']['customerReceipt'] : '';
         } elseif ($response['status'] == 'failed' && $old_status != 'failed') {
-            $update_data['payment_status'] = 'failed';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'failed';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
         }
 
-        $this->afterStatusGetProcess($update_data);
+        $this->afterStatusGetProcess($update_data, $update_payment_data);
 
         return true;
     }
