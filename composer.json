@@ -38,7 +38,7 @@
     "phpunit/phpunit": "^9.0",
     "simplesoftwareio/simple-qrcode": "~4",
     "spatie/laravel-newsletter": "^4.9 || ^4.11",
-    "twilio/sdk": "^6.33"
+    "twilio/sdk": "^6.15 || ^6.33"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
