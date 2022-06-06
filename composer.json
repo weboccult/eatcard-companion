@@ -32,7 +32,7 @@
     "illuminate/support": "^8.0 || ^9.0",
     "league/flysystem-aws-s3-v3": "^1.0 || ^3.0",
     "league/flysystem-sftp": "^1.0 || ^3.0",
-    "mollie/laravel-mollie": "^2.14 || ^2.17",
+    "mollie/laravel-mollie": "^2.14 || ^2.15 || ^2.17",
     "nunomaduro/collision": "^5.0 || ^6.1",
     "pestphp/pest": "^1.0",
     "phpunit/phpunit": "^9.0",
