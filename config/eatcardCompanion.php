@@ -266,4 +266,20 @@ return [
     */
 
     'aws_url' => env('COMPANION_AWS_URL', 'https://eatcard.s3.REGION-X.amazonaws.com'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Qr Setting
+    |--------------------------------------------------------------------------
+    |
+    | Qr related setting can be manage form here
+    |
+    */
+
+    'generate_qr' => [
+        'size' => env('QR_SIZE', 300),
+        'merge_image' => env('QR_MERGE_IMAGE', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png'),
+        'format' => env('QR_FORMAT', 'png'),
+        'destination_folder' => env('QR_DESTINATION_FOLDER', 'assets'),
+    ],
 ];

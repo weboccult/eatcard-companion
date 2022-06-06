@@ -157,11 +157,8 @@ trait ReservationWebhookCommonActions
                     $uniqueId = $this->fetchedReservation->reservation_id;
                     $postFix = 'RT';
                     $uploadInS3 = true;
-                    $extra = [
-                        'merge_image' => env('TICKETS_QR_MERGE_IMAGE', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png'),
-                    ];
 
-                    $qrResponse = generateQrCode($store, $uniqueId, $postFix, $uploadInS3, $extra);
+                    $qrResponse = generateQrCode($store, $uniqueId, $postFix, $uploadInS3);
                     $this->fetchedReservation->qr_image = $qrResponse['aws_image'] ?? '#';
                 }
 

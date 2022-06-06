@@ -1989,6 +1989,11 @@ if (! function_exists('generateQrCode')) {
     function generateQrCode($store, $uniqueId, string $postFix = 'RT', $uploadInS3 = false, $extra = [])
     {
         try {
+            $format = config('eatcardCompanion.generate_qr.format');
+            $mergeImage = config('eatcardCompanion.generate_qr.merge_image');
+            $size = config('eatcardCompanion.generate_qr.size');
+            $destinationFolder = config('eatcardCompanion.generate_qr.destination_folder');
+
             $returnQrData = [
                 'generated_qr' => null,
                 'aws_image'    => '',
@@ -2003,34 +2008,23 @@ if (! function_exists('generateQrCode')) {
                 return $returnQrData;
             }
 
-            $destinationFolder = $extra['destination_folder'] ?? 'assets';
             if ($destinationFolder) {
-                $s3ImagePath = $destinationFolder != 'assets' ? 'assets/'.$extra['destination_folder'] : '/assets';
+                $s3ImagePath = $destinationFolder != 'assets' ? '/assets/'.$destinationFolder : '/assets';
                 $s3ImagePath .= '/'.$store->id;
-                $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.($extra['format'] ?? 'png');
+                $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.$format;
             }
 
-            $format = $extra['format'] ?? 'png';
-            $mergeImage = $extra['merge_image'] ?? env('COMPANION_TICKETS_QR_LOGO_URL', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png');
-            $size = $extra['size'] ?? 300;
-
-            if (! empty($mergeImage)) {
-                $qrImage = QrCode::format($format)
-                        ->merge($mergeImage, .2, true)
-                        ->size($size)
-                        ->generate($returnQrData['generated_qr']);
-            } else {
-                $qrImage = QrCode::format($format)
+            $qrImage = QrCode::format($format)
+                    ->merge($mergeImage, .2, true)
                     ->size($size)
                     ->generate($returnQrData['generated_qr']);
-            }
 
             if (! Storage::disk('s3')->exists($s3ImagePath)) {
                 Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
             }
 
-//            companionLogger('generatedQrCode data | Reservation-QR :- '.$returnQrData['generated_qr'].' | AWS link  :- '.env('COMPANION_AWS_URL').$s3ImagePath);
             $returnQrData['aws_image'] = env('COMPANION_AWS_URL').$s3ImagePath;
+            companionLogger('generateQrCode response', $returnQrData);
 
             return $returnQrData;
         } catch (\Exception $exception) {
