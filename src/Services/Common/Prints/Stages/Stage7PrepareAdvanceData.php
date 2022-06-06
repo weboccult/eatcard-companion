@@ -262,7 +262,7 @@ trait Stage7PrepareAdvanceData
             $item['printername'] = [];
             $item['labelprintname'] = [];
             $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_kids2']);
-            $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_adults'];
+            $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_kids2'];
             $item['kitchendescription'] = '';
             $item['mainproductcomment'] = '';
             $item['itemaddons'] = [];
