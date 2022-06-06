@@ -39,7 +39,7 @@ trait Stage3PrepareBasicData
         $this->reservationData['created_from'] = $this->createdFrom;
         $this->reservationData['gastpin'] = generateRandomNumberV2();
 
-        $this->reservationData['voornaam'] = $this->payload['voornaam'] ?? '';
+        $this->reservationData['voornaam'] = $this->payload['voornaam'] ?? 'Guest';
         $this->reservationData['achternaam'] = $this->payload['achternaam'] ?? '';
         $this->reservationData['email'] = $this->payload['email'] ?? '';
         $this->reservationData['geboortedatum'] = $this->payload['geboortedatum'] ?? '';

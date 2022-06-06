@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Generators;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
@@ -401,7 +402,7 @@ class RunningOrderGenerator extends BaseGenerator
             $this->item_discount = (float) $item['discount'];
         }
 
-        $notVoided = ! (isset($item['void_id']) && $item['void_id'] != '');
+        $notVoided = ! (isset($item['void_id']) && (int) ($item['void_id']) > 0);
         $this->isVoidProduct = ! $notVoided;
         $notOnTheHouse = ! (isset($item['on_the_house']) && $item['on_the_house'] == '1');
         $this->isOnTheHouseProduct = ! $notOnTheHouse;
@@ -485,6 +486,10 @@ class RunningOrderGenerator extends BaseGenerator
     protected function prepareSummary()
     {
         if ($this->skipMainPrint) {
+            return;
+        }
+
+        if ($this->systemType == SystemTypes::KIOSKTICKETS) {
             return;
         }
 

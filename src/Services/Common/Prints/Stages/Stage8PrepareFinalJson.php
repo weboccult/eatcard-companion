@@ -180,6 +180,17 @@ trait Stage8PrepareFinalJson
                 $title5 = 'Table #'.($this->reservationOrderItems->table->name ?? '');
                 $orderNo = $title5;
             }
+
+            if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+                $title1 = 'Tickets';
+                $title2 = $this->reservation['voornaam'] ?? '';
+                $title3 = $this->reservation['gsm_no'] ?? '';
+                if ($this->additionalSettings['is_print_exclude_email'] == 0) {
+                    $title4 = $this->reservation['email'] ?? '';
+                }
+                $title5 = '#'.($this->reservation['reservation_id'] ?? '');
+                $title6 = date('Y-m-d').' om '.date('H:i');
+            }
         }
 
         if ($this->orderType == OrderTypes::SAVE) {
@@ -412,6 +423,10 @@ trait Stage8PrepareFinalJson
             $dateTime = date('Y-m-d').' om '.date('H:i');
             if ($this->systemType == SystemTypes::KDS) {
                 $typeOrder = 'Dine-in';
+            }
+
+            if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+                $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
             }
 
             if ($this->printType == PrintTypes::PROFORMA && isset($this->total_price)) {
