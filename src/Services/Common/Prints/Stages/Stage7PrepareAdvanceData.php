@@ -52,6 +52,7 @@ trait Stage7PrepareAdvanceData
     protected function prepareTableName()
     {
         $tableName = '';
+        $singleTableName = '';
         if ($this->orderType == OrderTypes::PAID) {
             $tableName = $this->order['table_name'] ?? '';
 
@@ -66,11 +67,17 @@ trait Stage7PrepareAdvanceData
             if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 1) {
                 $tables = $this->reservation['tables2']->pluck('name')->toArray();
                 $tableName = implode(',', $tables);
+            } elseif (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() == 1) {
+                $singleTableName = $this->reservation['tables2']->pluck('name') ?? '';
             }
         }
 
-        if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservationOrderItems)) {
-            $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
+        if ($this->orderType == OrderTypes::RUNNING) {
+            if (! empty($this->reservationOrderItems)) {
+                $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
+            } else {
+                $tableName = __companionPrintTrans('print.table_name').' #'.(! empty($tableName) ? $tableName : $singleTableName);
+            }
         }
         $this->advanceData['tableName'] = $tableName;
     }

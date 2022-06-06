@@ -173,23 +173,25 @@ trait Stage8PrepareFinalJson
 
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $titleTime = '';
+
+                if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+                    $title1 = 'Tickets';
+                    $title2 = $this->reservation['voornaam'] ?? '';
+                    $title3 = $this->reservation['gsm_no'] ?? '';
+                    if ($this->additionalSettings['is_print_exclude_email'] == 0) {
+                        $title4 = $this->reservation['email'] ?? '';
+                    }
+                    $title6 = date('Y-m-d').' om '.date('H:i');
+
+                    $this->jsonFormatFullReceipt['titteTime'][0]['key2'] = 'Betaald op:';
+                    $titleTime = $this->reservation['paid_on'] ?? '';
+                }
             }
 
             //reservation order item set then it will be kitchen print of round order
             if (! empty($this->reservationOrderItems)) {
                 $title5 = 'Table #'.($this->reservationOrderItems->table->name ?? '');
                 $orderNo = $title5;
-            }
-
-            if ($this->systemType == SystemTypes::KIOSKTICKETS) {
-                $title1 = 'Tickets';
-                $title2 = $this->reservation['voornaam'] ?? '';
-                $title3 = $this->reservation['gsm_no'] ?? '';
-                if ($this->additionalSettings['is_print_exclude_email'] == 0) {
-                    $title4 = $this->reservation['email'] ?? '';
-                }
-                $title5 = '#'.($this->reservation['reservation_id'] ?? '');
-                $title6 = date('Y-m-d').' om '.date('H:i');
             }
         }
 
@@ -362,7 +364,7 @@ trait Stage8PrepareFinalJson
 
         $qrImage = generateQrCode($this->store, $this->reservationId, 'RT', true);
 
-        $this->jsonFormatFullReceipt['qrtext'] = 'eatcard';
+        $this->jsonFormatFullReceipt['qrtext'] = $this->reservationId;
         $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
     }
 
