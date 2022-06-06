@@ -68,7 +68,8 @@ trait Stage7PrepareAdvanceData
                 $tables = $this->reservation['tables2']->pluck('name')->toArray();
                 $tableName = implode(',', $tables);
             } elseif (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() == 1) {
-                $singleTableName = $this->reservation['tables2']->pluck('name') ?? '';
+                $tables = $this->reservation['tables2']->pluck('name')->toArray();
+                $singleTableName = implode(',', $tables);
             }
         }
 
