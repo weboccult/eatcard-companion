@@ -362,9 +362,9 @@ trait Stage8PrepareFinalJson
             return;
         }
 
-        $qrImage = generateQrCode($this->store, $this->reservationId, 'RT', true);
+        $qrImage = generateQrCode($this->store, $this->reservation->reservation_id, 'RT', true);
 
-        $this->jsonFormatFullReceipt['qrtext'] = $this->reservationId;
+        $this->jsonFormatFullReceipt['qrtext'] = $this->reservation->reservation_id;
         $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
     }
 
