@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
+use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Classes\ImageFilters;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
@@ -183,8 +184,9 @@ trait Stage8PrepareFinalJson
                     }
                     $title6 = date('Y-m-d').' om '.date('H:i');
 
+                    $orderNo = $this->advanceData['tableName'];
                     $this->jsonFormatFullReceipt['titteTime'][0]['key2'] = 'Betaald op:';
-                    $titleTime = $this->reservation['paid_on'] ?? '';
+                    $titleTime = Carbon::parse($this->reservation['paid_on'])->format('Y-m-d H:i') ?? '';
                 }
             }
 
