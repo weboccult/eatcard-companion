@@ -209,7 +209,7 @@ abstract class BaseReservationSlots
     {
         companionLogger('--------Stage4GetPickUpTimeSlots', $this->offDayAndDate, $this->date, in_array($this->date, $this->offDayAndDate->toArray()));
         if (! empty($this->offDayAndDate) && in_array($this->date, $this->offDayAndDate->toArray())) {
-//            throw new ReservationOffException();
+            throw new ReservationOffException();
         }
 
         $this->pickUpSlot = [];
