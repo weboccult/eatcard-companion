@@ -202,83 +202,12 @@ abstract class BaseReservationSlots
         }
 
         $this->offDayAndDate = $this->getOffDates($slotModifiedData, $storeWeekDays);
-    }
-
-    /**
-     * @param $slotModifiedData
-     * @param $storeWeekDays
-     *
-     * @return mixed
-     */
-    private function getOffDates($slotModifiedData, $storeWeekDays)
-    {
-        $closeDayAndDates = [];
-        if (count($slotModifiedData) > 0) {
-            companionLogger('--------slot date wise');
-//            $currentDate = $this->date;
-            $currentDate = Carbon::now()->format('Y-m-d');
-
-            $closeDates = [];
-            $workingDates = [];
-            foreach ($slotModifiedData as $key => $row) {
-                if (empty($row['is_available'])) {
-                    $closeDates[] = $row['store_date'];
-                }
-                if (! empty($row['is_available'])) {
-                    $workingDates[] = $row['store_date'];
-                }
-            }
-            do {
-                if (in_array(Carbon::parse($currentDate)->format('Y-m-d'), $workingDates)) {
-                    // all  working dates
-                } elseif (! empty($closeDates) && empty($workingDates) && in_array(Carbon::parse($currentDate)->format('Y-m-d'), $closeDates)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                } elseif (! empty($closeDates) && ! empty($workingDates) && ! in_array(Carbon::parse($currentDate)->format('Y-m-d'), $workingDates)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                } elseif (empty($closeDates) && ! empty($workingDates)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                }
-
-                $currentDate = Carbon::parse($currentDate)->addDays(1)->format('Y-m-d');
-            } while ($currentDate <= $this->nextForDay);
-        }
-
-        if (count($storeWeekDays) > 0) {
-            companionLogger('--------slot day wise');
-//            $currentDate = $this->date;
-            $currentDate = Carbon::now()->format('Y-m-d');
-
-            $closeDays = [];
-            $workingDays = [];
-            foreach ($storeWeekDays as $key => $row) {
-                if (empty($row['is_active'])) {
-                    $closeDays[] = $row['name'];
-                }
-                if (! empty($row['is_active'])) {
-                    $workingDays[] = $row['name'];
-                }
-            }
-
-            do {
-                if (in_array(Carbon::parse($currentDate)->format('l'), $workingDays)) {
-                    // all working day
-                } elseif (! empty($closeDays) && empty($workingDays) && in_array(Carbon::parse($currentDate)->format('l'), $closeDays)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                } elseif (! empty($closeDays) && ! empty($workingDays) && ! in_array(Carbon::parse($currentDate)->format('l'), $workingDays)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                } elseif (empty($closeDays) && ! empty($workingDays)) {
-                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
-                }
-
-                $currentDate = Carbon::parse($currentDate)->addDays(1)->format('Y-m-d');
-            } while ($currentDate <= $this->nextForDay);
-        }
-
-        return collect($closeDayAndDates)->unique()->values();
+        companionLogger('--------offDayAndDate', $this->offDayAndDate);
     }
 
     protected function Stage4GetPickUpTimeSlots()
     {
+        companionLogger('--------Stage4GetPickUpTimeSlots', $this->offDayAndDate, $this->date, in_array($this->date, $this->offDayAndDate->toArray()));
         if (! empty($this->offDayAndDate) && in_array($this->date, $this->offDayAndDate->toArray())) {
             throw new ReservationOffException();
         }
@@ -533,5 +462,78 @@ abstract class BaseReservationSlots
         if (! empty($this->store->is_booking_default_msg ?? null)) {
             $this->returnResponseData['error_messages']['disable_slot'] = str_replace('#PHONE#', $this->store->store_phone, $this->store->booking_default_msg);
         }
+    }
+
+    /**
+     * @param $slotModifiedData
+     * @param $storeWeekDays
+     *
+     * @return mixed
+     */
+    private function getOffDates($slotModifiedData, $storeWeekDays)
+    {
+        $closeDayAndDates = [];
+        if (count($slotModifiedData) > 0) {
+            companionLogger('--------slot date wise');
+//            $currentDate = $this->date;
+            $currentDate = Carbon::now()->format('Y-m-d');
+
+            $closeDates = [];
+            $workingDates = [];
+            foreach ($slotModifiedData as $key => $row) {
+                if (empty($row['is_available'])) {
+                    $closeDates[] = $row['store_date'];
+                }
+                if (! empty($row['is_available'])) {
+                    $workingDates[] = $row['store_date'];
+                }
+            }
+            do {
+                if (in_array(Carbon::parse($currentDate)->format('Y-m-d'), $workingDates)) {
+                    // all  working dates
+                } elseif (! empty($closeDates) && empty($workingDates) && in_array(Carbon::parse($currentDate)->format('Y-m-d'), $closeDates)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                } elseif (! empty($closeDates) && ! empty($workingDates) && ! in_array(Carbon::parse($currentDate)->format('Y-m-d'), $workingDates)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                } elseif (empty($closeDates) && ! empty($workingDates)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                }
+
+                $currentDate = Carbon::parse($currentDate)->addDays(1)->format('Y-m-d');
+            } while ($currentDate <= $this->nextForDay);
+        }
+
+        if (count($storeWeekDays) > 0) {
+            companionLogger('--------slot day wise');
+//            $currentDate = $this->date;
+            $currentDate = Carbon::now()->format('Y-m-d');
+
+            $closeDays = [];
+            $workingDays = [];
+            foreach ($storeWeekDays as $key => $row) {
+                if (empty($row['is_active'])) {
+                    $closeDays[] = $row['name'];
+                }
+                if (! empty($row['is_active'])) {
+                    $workingDays[] = $row['name'];
+                }
+            }
+
+            do {
+                if (in_array(Carbon::parse($currentDate)->format('l'), $workingDays)) {
+                    // all working day
+                } elseif (! empty($closeDays) && empty($workingDays) && in_array(Carbon::parse($currentDate)->format('l'), $closeDays)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                } elseif (! empty($closeDays) && ! empty($workingDays) && ! in_array(Carbon::parse($currentDate)->format('l'), $workingDays)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                } elseif (empty($closeDays) && ! empty($workingDays)) {
+                    $closeDayAndDates[] = Carbon::parse($currentDate)->format('Y-m-d');
+                }
+
+                $currentDate = Carbon::parse($currentDate)->addDays(1)->format('Y-m-d');
+            } while ($currentDate <= $this->nextForDay);
+        }
+
+        return collect($closeDayAndDates)->unique()->values();
     }
 }
