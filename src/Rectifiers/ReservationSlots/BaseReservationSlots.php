@@ -319,6 +319,7 @@ abstract class BaseReservationSlots
                     $q2->where('store_weekdays.is_week_day_meal', 0);
                 });
             })->where('store_slots.store_id', $this->storeId)
+            ->select('store_slots.*')
             ->where('store_slots.meal_id', $this->mealId)
             ->where('store_slots.store_weekdays_id', '!=', null)
             ->orderBy('store_slots.from_time', 'ASC')
