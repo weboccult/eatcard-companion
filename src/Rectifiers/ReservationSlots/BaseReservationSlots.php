@@ -178,8 +178,11 @@ abstract class BaseReservationSlots
                         ->get()
                         ->toArray();
 
+        companionLogger('--------date wise slot', $slotModifiedData);
+        companionLogger('--------meal is modified', $isMealModified);
         $storeWeekDays = [];
         if (! $isMealModified || $this->meal->is_week_meal_res == 1) {
+            companionLogger('--------day wise meal', $this->meal->is_week_meal_res);
             $storeWeekDays = StoreWeekDay::query()
                 ->when(($this->meal->is_week_meal_res == 1), function ($q) {
                     $q->leftjoin('store_slots', 'store_slots.store_weekdays_id', '=', 'store_weekdays.id');
@@ -195,6 +198,7 @@ abstract class BaseReservationSlots
                 ->selectRaw('DISTINCT store_weekdays.name, store_weekdays.is_active ,store_weekdays.is_week_day_meal')
                 ->get()
                 ->toArray();
+            companionLogger('--------slot day wise', $storeWeekDays);
         }
 
         $this->offDayAndDate = $this->getOffDates($slotModifiedData, $storeWeekDays);
@@ -210,6 +214,7 @@ abstract class BaseReservationSlots
     {
         $closeDayAndDates = [];
         if (count($slotModifiedData) > 0) {
+            companionLogger('--------slot date wise');
 //            $currentDate = $this->date;
             $currentDate = Carbon::now()->format('Y-m-d');
 
@@ -239,6 +244,7 @@ abstract class BaseReservationSlots
         }
 
         if (count($storeWeekDays) > 0) {
+            companionLogger('--------slot day wise');
 //            $currentDate = $this->date;
             $currentDate = Carbon::now()->format('Y-m-d');
 
