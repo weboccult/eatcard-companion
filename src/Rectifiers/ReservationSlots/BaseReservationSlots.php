@@ -432,7 +432,7 @@ abstract class BaseReservationSlots
                         $anotherMeeting = getAnotherMeeting($reservation, $this->meal, $pickTime);
                         if ($anotherMeeting) {
                             collect($reservation->tables)->each(function ($q) use (&$assignTables) {
-                                $assignTables[] = $q->id;
+                                $assignTables[] = $q->table_id;
                             });
                         }
                     }
