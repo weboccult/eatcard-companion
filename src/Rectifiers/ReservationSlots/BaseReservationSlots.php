@@ -436,8 +436,10 @@ abstract class BaseReservationSlots
                             });
                         }
                     }
+                    companionLogger('-------assignTables', $assignTables);
                     $availableTables = array_diff($tableIds, $assignTables);
 
+                    companionLogger('-------availableTables', $availableTables);
                     if (! $availableTables) {
                         companionLogger('4. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
                         $this->pickUpSlot[$index]->disable = true;
@@ -476,6 +478,8 @@ abstract class BaseReservationSlots
                                 $refTable[] = [$table->no_of_seats];
                                 $refTableTotalSeats += (int) $table->no_of_seats;
                             }
+
+                            companionLogger('-------section wise availableTables', $refTable, $refTableTotalSeats);
 
                             if ($refTableTotalSeats >= $person) {
 
