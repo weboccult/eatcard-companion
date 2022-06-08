@@ -31,6 +31,11 @@ trait Stage8PrepareFinalJson
             return;
         }
 
+        //need to skip default printer for kioskTickets
+        if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+            return;
+        }
+
         $printer_name = [];
         //set printer as per system setting
         if ($this->systemType == SystemTypes::KIOSK && ! empty($this->additionalSettings['kiosk_printer_name'])) {
