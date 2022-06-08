@@ -141,13 +141,13 @@ trait TicketsWebhookCommonActions
         if (! empty($userEmail) && filter_var($this->fetchedReservation->email, FILTER_VALIDATE_EMAIL)) {
             try {
                 if ($this->fetchedReservation->status == 'approved') {
-                    $view = 'email.reservation_approved';
+                    $view = 'reservation.approved';
                     $translatedSubject = __companionTrans('reservation.reservation_approved_email_subject');
                 } elseif ($this->fetchedReservation->status == 'declined') {
-                    $view = 'email.reservation_declined';
+                    $view = 'reservation.declined';
                     $translatedSubject = __companionTrans('reservation.reservation_declined_email_subject');
                 } else {
-                    $view = 'email.reservation_cancelled';
+                    $view = 'reservation.cancelled';
                     $translatedSubject = __companionTrans('reservation.reservation_cancelled_email_subject');
                 }
 
@@ -179,10 +179,10 @@ trait TicketsWebhookCommonActions
                     ->content($content)
                     ->dispatch();
                 updateEmailCount('success');
-                companionLogger('Reservation status change create mail success', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                companionLogger('Reservation status change create mail success', '#OrderId : '.$this->fetchedReservation->id, '#Email : '.$this->fetchedReservation->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             } catch (Exception | Throwable $e) {
                 updateEmailCount('error');
-                companionLogger('Reservation status change create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                companionLogger('Reservation status change create mail error', '#OrderId : '.$this->fetchedReservation->id, '#Email : '.$this->fetchedReservation->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
         }
     }
