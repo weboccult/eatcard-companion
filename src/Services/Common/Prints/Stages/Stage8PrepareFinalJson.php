@@ -31,6 +31,11 @@ trait Stage8PrepareFinalJson
             return;
         }
 
+        //need to skip default printer for kioskTickets
+        if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+            return;
+        }
+
         $printer_name = [];
         //set printer as per system setting
         if ($this->systemType == SystemTypes::KIOSK && ! empty($this->additionalSettings['kiosk_printer_name'])) {
@@ -368,6 +373,11 @@ trait Stage8PrepareFinalJson
 
         $this->jsonFormatFullReceipt['qrtext'] = $this->reservation->reservation_id;
         $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
+
+        //need to set start printer flag because all kiosk tickets device have start printer
+        if (! empty($this->additionalSettings['main_print_logo_hide'])) {
+            $this->jsonFormatFullReceipt['starPrintfullreceipt'] = 1;
+        }
     }
 
     /**
