@@ -26,7 +26,12 @@ if (! function_exists('packageVersion')) {
     function packageVersion(): string
     {
         try {
-            return (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
+            $packageVersion = 'Unknown';
+            if (class_exists(InstalledVersions::class)) {
+                $packageVersion = (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
+            }
+
+            return $packageVersion;
         } catch (Exception $e) {
             return 'Unknown';
         }
@@ -58,8 +63,8 @@ if (! function_exists('companionLogger')) {
         $logContent = collect($values)->pipeInto(Stringable::class)->jsonSerialize();
         switch ($driver) {
             case LoggerTypes::FILE:
-//                Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
-                Log::info('[ Companion package Version : kiosk-tickets-release] - '.$logContent);
+                Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
+//                Log::info('[ Companion package Version : Unknown] - '.$logContent);
                 break;
             case LoggerTypes::CLOUDWATCH:
                 break;
