@@ -191,7 +191,7 @@ trait TicketsWebhookCommonActions
     {
         if ($this->fetchedStore->store_email && filter_var($this->fetchedStore->store_email, FILTER_VALIDATE_EMAIL) && ($this->fetchedStore->is_notification) && (! $this->fetchedStore->notificationSetting || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_res_booking_email))) {
             try {
-                $content = __companionViews('email.booking-reservation-owner-notification', [
+                $content = __companionViews('reservation.booking-reservation-owner-notification', [
                                 'storeRes' => $this->fetchedReservation,
                                 'store' => $this->fetchedStore,
                                 'resHis' => [],
