@@ -58,7 +58,8 @@ if (! function_exists('companionLogger')) {
         $logContent = collect($values)->pipeInto(Stringable::class)->jsonSerialize();
         switch ($driver) {
             case LoggerTypes::FILE:
-                Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
+//                Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
+                Log::info('[ Companion package Version : kiosk-tickets-release] - '.$logContent);
                 break;
             case LoggerTypes::CLOUDWATCH:
                 break;
