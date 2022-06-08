@@ -211,7 +211,8 @@ trait TicketsWebhookCommonActions
                 companionLogger('Booking notification store owner mail stored in queue success', '#ReservationId : '.$this->fetchedReservation->id, '#Email : '.$this->fetchedReservation->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             } catch (Exception | Throwable $e) {
                 updateEmailCount('error');
-                companionLogger('Booking notification store owner mail failed to save in queue', '#ReservationId : '.$this->fetchedReservation->id, '#Email : '.$this->fetchedReservation->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+                companionLogger('Booking notification store owner mail failed to save in queue', '#ReservationId : '
+                    .$this->fetchedReservation->id, '#Email : '.$this->fetchedReservation->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), '#ErrorFile : '.$e->getFile(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
             }
         }
     }
