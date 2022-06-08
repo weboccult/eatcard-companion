@@ -27,23 +27,23 @@ class WorldLineTicketsWebhook extends BaseWebhook
         if (! empty($this->fetchedReservation) && ! empty($this->fetchedPaymentDetails->paid_on) && $this->payload['status'] == 'final' && $this->payload['approved'] == 1) {
             return;
         }
-        $update_data['payment_status'] = 'pending';
-        $update_data['local_payment_status'] = 'pending';
+        $update_data['payment_status'] = $update_payment_data['payment_status'] = 'pending';
+        $update_data['local_payment_status'] = $update_payment_data['payment_status'] = 'pending';
         if ($this->payload['status'] == 'final' && $this->payload['approved'] == 1) {
-            $update_data['payment_status'] = 'paid';
-            $update_data['local_payment_status'] = 'paid';
-            $update_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_data['transaction_receipt'] = isset($this->payload['ticket']) ? $this->payload['ticket'] : '';
+            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
+            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $update_payment_data['transaction_receipt'] = isset($response['ticket']) ? $response['ticket'] : '';
             companionLogger('Worldline status => final + approved : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($this->payload['status'] == 'final' && $this->payload['cancelled'] == 1) {
-            $update_data['payment_status'] = 'canceled';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['status'] = $update_payment_data['status'] = 'canceled';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
             companionLogger('Worldline status => canceled : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($this->payload['status'] == 'final') {
             companionLogger('Worldline status => final : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($this->payload['status'] == 'error') {
-            $update_data['payment_status'] = 'failed';
-            $update_data['local_payment_status'] = 'failed';
+            $update_data['status'] = $update_payment_data['status'] = 'failed';
+            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
             companionLogger('Worldline status => error : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($this->payload['status'] == 'busy') {
             companionLogger('Worldline status => busy : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
@@ -55,7 +55,7 @@ class WorldLineTicketsWebhook extends BaseWebhook
             companionLogger('Worldline status => unknown : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
 
-        $this->afterStatusGetProcess($update_data);
+        $this->afterStatusGetProcess($update_data, $update_payment_data);
 
         return true;
     }
