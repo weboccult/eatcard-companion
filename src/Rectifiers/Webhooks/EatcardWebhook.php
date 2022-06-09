@@ -239,7 +239,7 @@ class EatcardWebhook
             /* Wipay Global Webhook */
             case WorldLineWebhook::class:
             case WorldLineGetFinalPaymentStatusAction::class:
-                static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId);
+                static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId)->setStoreId(static::$storeId);
                 // only payload is required, which is already being set before running handle method.
                 break;
 
