@@ -36,6 +36,7 @@ trait Stage5PaymentProcess
                             'local_payment_status' => $this->createdReservation->local_payment_status,
                             'amount' => $this->createdReservation->total_price,
                             'kiosk_id' => $this->createdReservation->kiosk_id,
+                            'process_type' => 'create',
                         ]);
 
             $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
@@ -137,6 +138,7 @@ trait Stage5PaymentProcess
                 'local_payment_status' => $this->createdReservation->local_payment_status,
                 'amount' => $this->createdReservation->total_price,
                 'kiosk_id' => $this->createdReservation->kiosk_id,
+                'process_type' => 'create',
             ]);
 
             $inputs = [
@@ -194,6 +196,7 @@ trait Stage5PaymentProcess
                     'amount' => $this->createdReservation->total_price,
                     'kiosk_id' => $this->createdReservation->kiosk_id,
                     'transaction_receipt' => 'fake-bop payment',
+                    'process_type' => 'create',
                 ]);
 
                 $this->paymentResponse = [
