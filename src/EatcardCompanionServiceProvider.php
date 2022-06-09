@@ -74,6 +74,10 @@ class EatcardCompanionServiceProvider extends ServiceProvider
             return "<?php echo Weboccult\EatcardCompanion\Helpers\changePriceFormat($arguments); ?>";
         });
 
+        Blade::directive('companionGetCachedImagePath', function ($arguments) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\getCachedImagePath($arguments); ?>";
+        });
+
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
     }

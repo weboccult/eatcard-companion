@@ -2032,3 +2032,21 @@ if (! function_exists('generateQrCode')) {
         }
     }
 }
+
+if (! function_exists('getCachedImagePath')) {
+    /**
+     * @param $path
+     *
+     * @return mixed|string
+     */
+    function getCachedImagePath($path)
+    {
+        if ($path) {
+            $url = parse_url($path);
+
+            return $url['path'];
+        } else {
+            return '';
+        }
+    }
+}

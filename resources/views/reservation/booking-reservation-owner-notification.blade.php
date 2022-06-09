@@ -116,7 +116,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 										<tr>
 											<td align="center" style="padding:20px 0 0 0">
                                                 @if($store->page_logo)
-												    <img src="@companionGeneralHelper('getS3File',{{$store->email_page_logo}})" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Eatcard"/>
+												    <img src="@companionGetS3File('{{$store->email_page_logo}}')" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Eatcard"/>
 											    @endif
                                             </td>
 										</tr>
@@ -139,7 +139,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                         <tr>
                                             <td align="center" style="padding:0 0 0 0">
                                                 @if($storeRes->meal->meal_image)
-                                                <img class="em_img" src="{{asset('imagecache/BookingMailMealImage'.getCachedImagePath($storeRes->meal->meal_image))}}" style="display:block" width="520" height="174" border="0" alt="Image"/>
+                                                <img class="em_img" src="{{asset('imagecache/BookingMailMealImage/'.\Weboccult\EatcardCompanion\Helpers\getCachedImagePath($storeRes->meal->meal_image))}}" style="display:block" width="520" height="174" border="0" alt="Image"/>
                                                 @endif
                                             </td>
                                         </tr>
@@ -290,7 +290,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                                             <table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
                                                                 <tr>
                                                                     <td align="left" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:normal; font-style:normal; color:#000000; padding:0 0 0 0">
-                                                                        <b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€@companionGeneralHelper('changePriceFormat', {{@$storeRes->meal->price}}))
+                                                                        <b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€@companionChangePriceFormat('{{@$storeRes->meal->price}}')
                                                                     </td>
                                                                 </tr>
                                                             </table>
@@ -299,7 +299,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
                                                             <table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
                                                                 <tr>
                                                                     <td align="right" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:bold; font-style:normal; color:#000000; padding:0 0 0 0">
-                                                                        €@companionGeneralHelper('changePriceFormat',{{$storeRes->total_price}})
+                                                                        €@companionChangePriceFormat('{{$storeRes->total_price}}')
                                                                     </td>
                                                                 </tr>
                                                             </table>
