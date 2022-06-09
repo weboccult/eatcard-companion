@@ -2014,10 +2014,14 @@ if (! function_exists('generateQrCode')) {
                 $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.$format;
             }
 
-            $qrImage = QrCode::format($format)
+            if (empty($mergeImage)) {
+                $qrImage = QrCode::format($format)->size($size)->generate($returnQrData['generated_qr']);
+            } else {
+                $qrImage = QrCode::format($format)
                     ->merge($mergeImage, .2, true)
                     ->size($size)
                     ->generate($returnQrData['generated_qr']);
+            }
 
             if (! Storage::disk('s3')->exists($s3ImagePath)) {
                 Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
