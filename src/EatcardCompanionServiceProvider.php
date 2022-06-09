@@ -66,6 +66,14 @@ class EatcardCompanionServiceProvider extends ServiceProvider
             return "<?php echo Weboccult\EatcardCompanion\Helpers\\$function('$value'); ?>";
         });
 
+        Blade::directive('companionGetS3File', function ($arguments) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\getS3File($arguments); ?>";
+        });
+
+        Blade::directive('companionChangePriceFormat', function ($arguments) {
+            return "<?php echo Weboccult\EatcardCompanion\Helpers\changePriceFormat($arguments); ?>";
+        });
+
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
     }

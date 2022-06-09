@@ -201,7 +201,7 @@ trait TicketsWebhookCommonActions
                 eatcardEmail()
                     ->entityType('booking_notification_store_owner')
                     ->entityId($this->fetchedReservation->id)
-                    ->email($this->fetchedStore->email)
+                    ->email($this->fetchedStore->store_email)
                     ->mailType('Booking notification store owner')
                     ->mailFromName($this->fetchedStore->store_name)
                     ->subject($translatedSubject)

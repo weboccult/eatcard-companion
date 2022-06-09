@@ -142,7 +142,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 										<tr>
 											<td align="center" style="padding:20px 0 0 0">
                                                 @if($store->page_logo)
-												    <img src="@companionGeneralHelper('getS3File',{{$store->email_page_logo}})" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Logo"/>
+												    <img src="@companionGetS3File('{{$store->email_page_logo}}')" style="display:block" {{--width="auto" height="80"--}} border="0" alt="Logo"/>
 											    @endif
                                             </td>
 										</tr>
@@ -287,7 +287,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 															<table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
 																<tr>
 																	<td align="left" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:normal; font-style:normal; color:#000000; padding:0 0 0 0">
-																		<b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€@companionGeneralHelper('changePriceFormat', {{@$storeRes->meal->price}}))
+																		<b>Totaal</b> aanbetaling ({{ $storeRes->person }}x€@companionChangePriceFormat('{{$storeRes->total_price}}')
 																	</td>
 																</tr>
 															</table>
@@ -296,7 +296,7 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 															<table class="em_wrapper" align="left" width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%">
 																<tr>
 																	<td align="right" style="font-family:Arial, Tahoma; font-size:14px; line-height:17px; font-weight:bold; font-style:normal; color:#000000; padding:0 0 0 0">
-                                                                        €@companionGeneralHelper('changePriceFormat',{{$storeRes->total_price}})
+                                                                        €@companionChangePriceFormat('{{$storeRes->total_price}}')
 																	</td>
 																</tr>
 															</table>
