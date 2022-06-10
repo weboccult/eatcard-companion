@@ -23,7 +23,7 @@ class CashTicketsWebhook extends BaseWebhook
 
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
-        $this->fetchAndSePaymentDetails();
+        $this->fetchAndSetPaymentDetails();
 
         $update_data = [];
         $update_payment_data = [];

@@ -246,7 +246,7 @@ abstract class BaseWebhook
         }
     }
 
-    protected function fetchAndSePaymentDetails()
+    protected function fetchAndSetPaymentDetails()
     {
         if (! empty($this->paymentId)) {
             $this->fetchedPaymentDetails = PaymentDetail::query()->findOrFail($this->paymentId);

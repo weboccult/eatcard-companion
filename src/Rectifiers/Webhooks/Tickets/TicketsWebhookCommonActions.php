@@ -38,6 +38,9 @@ trait TicketsWebhookCommonActions
             }
             $desc_title = $this->fetchedStore->store_name.': '.$name;
             $desc = appDutchDate($this->fetchedReservation->getRawOriginal('res_date')).' | '.$this->fetchedReservation->from_time.' | '.$person;
+            if ($this->fetchedPaymentDetails->process_type == 'update') {
+                $desc = ' | Reservation Updated';
+            }
             $notificationData = [
                 'type' => 'StoreBooking',
                 'description' => $desc,
@@ -201,7 +204,7 @@ trait TicketsWebhookCommonActions
                 eatcardEmail()
                     ->entityType('booking_notification_store_owner')
                     ->entityId($this->fetchedReservation->id)
-                    ->email($this->fetchedStore->email)
+                    ->email($this->fetchedStore->store_email)
                     ->mailType('Booking notification store owner')
                     ->mailFromName($this->fetchedStore->store_name)
                     ->subject($translatedSubject)
@@ -226,29 +229,42 @@ trait TicketsWebhookCommonActions
     {
         companionLogger('Reservation Old status', $this->fetchedReservation->status);
         companionLogger('Reservation Old payment_status', $this->fetchedReservation->payment_status);
-        $this->fetchedPaymentDetails->update($update_data);
 
-        if ($update_data['local_payment_status'] == 'failed' && $this->fetchedReservation->status == 'cancelled' && $this->fetchedReservation->is_manually_cancelled == 1) {
-            $update_data['is_manually_cancelled'] = 1;
-            companionLogger(' This reservation is already cancelled manually');
-        } elseif ($update_data['local_payment_status'] == 'pending') {
-            $update_data['is_manually_cancelled'] = 0;
-        } else {
-            $update_data['is_manually_cancelled'] = 2;
+        if ($this->fetchedPaymentDetails->process_type == 'create') {
+            if ($update_data['local_payment_status'] == 'failed' && $this->fetchedReservation->status == 'cancelled' && $this->fetchedReservation->is_manually_cancelled == 1) {
+                $update_data['is_manually_cancelled'] = 1;
+                companionLogger(' This reservation is already cancelled manually');
+            } elseif ($update_data['local_payment_status'] == 'pending') {
+                $update_data['is_manually_cancelled'] = 0;
+            } else {
+                $update_data['is_manually_cancelled'] = 2;
+            }
         }
 
         $this->fetchedReservation->update($update_data);
         $this->fetchedPaymentDetails->update($update_payment_data);
 
-        if ($update_data['local_payment_status'] == 'paid') {
-            $this->setLimitHoursIntoStoreData();
-            $this->sendReservationStatusChangeEmail();
-            $this->sendNewReservationEmailToOwner();
-            $this->sendNotification();
-            /*Publish new reservation socket*/
-            sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'payment_status_update');
-        } elseif ($update_data['local_payment_status'] == 'failed') {
-            sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
+        if ($this->fetchedPaymentDetails->process_type == 'create') {
+            if ($update_data['local_payment_status'] == 'paid') {
+                $this->setLimitHoursIntoStoreData();
+                $this->sendReservationStatusChangeEmail();
+                $this->sendNewReservationEmailToOwner();
+                $this->sendNotification();
+                /*Publish new reservation socket*/
+                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'payment_status_update');
+            } elseif ($update_data['local_payment_status'] == 'failed') {
+                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
+            }
+        }
+
+        if ($this->fetchedPaymentDetails->process_type == 'update') {
+            if ($update_payment_data['local_payment_status'] == 'paid') {
+                $this->sendReservationStatusChangeEmail();
+                $this->sendNewReservationEmailToOwner();
+                $this->sendNotification();
+                /*Publish update reservation socket*/
+                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'booking_orders_update');
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
 
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
-        $this->fetchAndSePaymentDetails();
+        $this->fetchAndSetPaymentDetails();
 
         if (! empty($this->fetchedReservation) && ! empty($this->fetchedPaymentDetails->paid_on)) {
             return $this->fetchedReservation;

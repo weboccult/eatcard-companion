@@ -26,7 +26,7 @@ class CcvTicketsWebhook extends BaseWebhook
         // this will fetch order from db and set into class property
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
-        $this->fetchAndSePaymentDetails();
+        $this->fetchAndSetPaymentDetails();
 
         $device = $this->fetchedReservation->kiosk;
 
