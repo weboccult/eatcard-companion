@@ -25,22 +25,43 @@ class CashTicketsWebhook extends BaseWebhook
         $this->fetchAndSetReservation();
         $this->fetchAndSetPaymentDetails();
 
-        $update_data = [];
-        $update_payment_data = [];
+        $paymentStatus = 'pending';
+        $localPaymentStatus = 'pending';
+        $status = $this->fetchedReservation->status;
+        $paidOn = null;
+        $processType = $this->fetchedPaymentDetails->process_type ?? '';
+        $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
 
-        $update_data['payment_status'] = $update_payment_data['payment_status'] = 'pending';
-        $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'pending';
         if ($this->payload['status'] == 'paid') {
-            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
-            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $paymentStatus = 'paid';
+            $localPaymentStatus = 'paid';
+            $paidOn = Carbon::now()->format('Y-m-d H:i:s');
             $update_payment_data['transaction_receipt'] = 'fake-bop payment';
         } elseif ($this->payload['status'] == 'failed') {
-            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'failed';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
+            $paymentStatus = 'failed';
+            $localPaymentStatus = 'failed';
         } else {
             companionLogger('invalid cash payment status', $this->payload);
         }
+
+        if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
+            $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
+            $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+            $update_data = $reservationUpdatePayload;
+        }
+
+        if ($processType == 'create') {
+            $update_data['status'] = $status;
+            $update_data['payment_status'] = $paymentStatus;
+            $update_data['local_payment_status'] = $localPaymentStatus;
+            $update_data['paid_on'] = $paidOn;
+        }
+
+        $update_payment_data['payment_status'] = $paymentStatus;
+        $update_payment_data['local_payment_status'] = $localPaymentStatus;
+        $update_payment_data['paid_on'] = $paidOn;
+
+        companionLogger('------update cash data', $update_data, $update_payment_data);
 
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 

@@ -30,6 +30,12 @@ class CcvTicketsWebhook extends BaseWebhook
 
         $device = $this->fetchedReservation->kiosk;
 
+        $localPaymentStatus = 'pending';
+        $status = $this->fetchedReservation->status;
+        $paidOn = null;
+        $processType = $this->fetchedPaymentDetails->process_type ?? '';
+        $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+
         $client = new Client();
         $url = $device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
         $createOrderUrl = config('eatcardCompanion.payment.gateway.ccv.endpoints.fetchOrder');
@@ -54,14 +60,33 @@ class CcvTicketsWebhook extends BaseWebhook
         $update_data = [];
         $update_payment_data = [];
 
-        $update_data['status'] = ($response['status'] == 'success') ? 'paid' : $response['status'];
+        $paymentStatus = ($response['status'] == 'success') ? 'paid' : $response['status'];
         if ($response['status'] == 'success' && $old_status != 'paid') {
-            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
+            $localPaymentStatus = 'paid';
+            $paidOn = Carbon::now()->format('Y-m-d H:i:s');
             $update_payment_data['transaction_receipt'] = isset($response['details']) ? $response['details']['customerReceipt'] : '';
         } elseif ($response['status'] == 'failed' && $old_status != 'failed') {
-            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'failed';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
+            $paymentStatus = 'failed';
+            $status = 'cancelled';
+            $localPaymentStatus = 'failed';
         }
+
+        if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
+            $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
+            $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+            $update_data = $reservationUpdatePayload;
+        }
+
+        if ($processType == 'create') {
+            $update_data['status'] = $status;
+            $update_data['payment_status'] = $paymentStatus;
+            $update_data['local_payment_status'] = $localPaymentStatus;
+            $update_data['paid_on'] = $paidOn;
+        }
+
+        $update_payment_data['payment_status'] = $paymentStatus;
+        $update_payment_data['local_payment_status'] = $localPaymentStatus;
+        $update_payment_data['paid_on'] = $paidOn;
 
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 

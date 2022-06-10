@@ -204,9 +204,11 @@ abstract class BaseReservationUpdate
         $this->allYouEatPrice = getAycePrice($reservationAllYouEatData);
 
         $this->updatePayload = [
-            'dinein_price_id'  => $this->payload['dinein_price_id'] ?? 0,
-            'all_you_eat_data' => $reservationAllYouEatData,
-            'person'           => $person ?? 0,
+            'dinein_price_id'      => $this->payload['dinein_price_id'] ?? 0,
+            'all_you_eat_data'     => $reservationAllYouEatData,
+            'person'               => $person ?? 0,
+            'total_price'          => $this->allYouEatPrice ?? 0,
+            'original_total_price' => $this->allYouEatPrice ?? 0,
         ];
 
         $this->payableAmount = (float) ($this->allYouEatPrice - $this->reservation->total_price);
