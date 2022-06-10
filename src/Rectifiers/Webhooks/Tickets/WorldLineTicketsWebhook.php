@@ -28,7 +28,6 @@ class WorldLineTicketsWebhook extends BaseWebhook
             return;
         }
 
-
         $paymentStatus = 'pending';
         $localPaymentStatus = 'pending';
         $paidOn = null;
@@ -63,7 +62,7 @@ class WorldLineTicketsWebhook extends BaseWebhook
             companionLogger('Worldline status => unknown : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         }
 
-        if ($processType == 'update' && !empty($reservationUpdatePayload)) {
+        if ($processType == 'update' && ! empty($reservationUpdatePayload)) {
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
             $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
             $update_data = $reservationUpdatePayload;
@@ -78,8 +77,6 @@ class WorldLineTicketsWebhook extends BaseWebhook
         $update_payment_data['payment_status'] = $paymentStatus;
         $update_payment_data['local_payment_status'] = $localPaymentStatus;
         $update_payment_data['paid_on'] = $paidOn;
-
-
 
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 

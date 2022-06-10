@@ -39,7 +39,7 @@ trait TicketsWebhookCommonActions
             $desc_title = $this->fetchedStore->store_name.': '.$name;
             $desc = appDutchDate($this->fetchedReservation->getRawOriginal('res_date')).' | '.$this->fetchedReservation->from_time.' | '.$person;
             if ($this->fetchedPaymentDetails->process_type == 'update') {
-                $desc = " | Reservation Updated";
+                $desc = ' | Reservation Updated';
             }
             $notificationData = [
                 'type' => 'StoreBooking',
@@ -234,19 +234,15 @@ trait TicketsWebhookCommonActions
             if ($update_data['local_payment_status'] == 'failed' && $this->fetchedReservation->status == 'cancelled' && $this->fetchedReservation->is_manually_cancelled == 1) {
                 $update_data['is_manually_cancelled'] = 1;
                 companionLogger(' This reservation is already cancelled manually');
-            }
-            elseif ($update_data['local_payment_status'] == 'pending') {
+            } elseif ($update_data['local_payment_status'] == 'pending') {
                 $update_data['is_manually_cancelled'] = 0;
-            }
-            else {
+            } else {
                 $update_data['is_manually_cancelled'] = 2;
             }
         }
 
-
         $this->fetchedReservation->update($update_data);
         $this->fetchedPaymentDetails->update($update_payment_data);
-
 
         if ($this->fetchedPaymentDetails->process_type == 'create') {
             if ($update_data['local_payment_status'] == 'paid') {
@@ -256,8 +252,7 @@ trait TicketsWebhookCommonActions
                 $this->sendNotification();
                 /*Publish new reservation socket*/
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'payment_status_update');
-            }
-            elseif ($update_data['local_payment_status'] == 'failed') {
+            } elseif ($update_data['local_payment_status'] == 'failed') {
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
             }
         }
@@ -271,7 +266,5 @@ trait TicketsWebhookCommonActions
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'booking_orders_update');
             }
         }
-
-
     }
 }
