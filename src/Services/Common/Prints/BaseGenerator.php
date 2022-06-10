@@ -182,6 +182,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->prepareSubOrderData();
         $this->prepareSaveOrderData();
         $this->prepareDeviceId();
+        $this->preparePaymentId();
     }
 
     /**
