@@ -33,7 +33,7 @@ class WorldLineTicketsWebhook extends BaseWebhook
             $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
             $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
             $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_payment_data['transaction_receipt'] = isset($response['ticket']) ? $response['ticket'] : '';
+            $update_payment_data['transaction_receipt'] = $this->payload['ticket'] ?? '';
             companionLogger('Worldline status => final + approved : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($this->payload, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($this->payload['status'] == 'final' && $this->payload['cancelled'] == 1) {
             $update_data['payment_status'] = $update_payment_data['payment_status'] = 'canceled';
