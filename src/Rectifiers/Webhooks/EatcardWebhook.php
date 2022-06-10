@@ -31,6 +31,7 @@ use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MultiSafeTakeawayOrd
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Takeaway\MultiSafeTakeawayOrderWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CcvTicketsWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\WorldLineTicketsGetFinalPaymentStatusAction;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\WorldLineTicketsWebhook;
 
 /**
@@ -244,6 +245,7 @@ class EatcardWebhook
                 break;
 
             case WorldLineTicketsWebhook::class:
+            case WorldLineTicketsGetFinalPaymentStatusAction::class:
             case CcvTicketsWebhook::class:
             case CashTicketsWebhook::class:
                 static::$webhook->setOrderType(static::$orderType)

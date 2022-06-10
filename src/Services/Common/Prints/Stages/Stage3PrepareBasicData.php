@@ -296,4 +296,15 @@ trait Stage3PrepareBasicData
             $this->additionalSettings['current_device_id'] = (int) ($this->payloadRequestDetails['deviceId'] ?? 0);
         }
     }
+
+    /**
+     * @return void
+     * set global payment id from protocol payload
+     */
+    protected function preparePaymentId()
+    {
+        if (! empty($this->payloadRequestDetails)) {
+            $this->paymentId = (int) ($this->payloadRequestDetails['paymentId'] ?? 0);
+        }
+    }
 }

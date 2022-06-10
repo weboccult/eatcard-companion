@@ -7,6 +7,7 @@ use Throwable;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -89,6 +90,9 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected string $reservationOrderItemCartId = '';
 
     protected ?KioskDevice $kiosk;
+
+    protected ?PaymentDetail $paymentDetail = null;
+    protected int $paymentId = 0;
 
     protected $categories = null;
 

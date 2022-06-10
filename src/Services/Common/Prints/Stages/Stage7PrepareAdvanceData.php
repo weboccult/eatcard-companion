@@ -948,6 +948,34 @@ trait Stage7PrepareAdvanceData
             }
         }
 
+        if ($this->systemType == SystemTypes::KIOSKTICKETS && $this->orderType == OrderTypes::RUNNING) {
+            $paymentDetails = $this->paymentDetail;
+            //return if order not found
+            if (empty($paymentDetails)) {
+                return;
+            }
+            if ($paymentDetails['method'] == 'ccv') {
+                $paymentDetails['ccv_customer_receipt_decode'] = json_decode($paymentDetails['transaction_receipt'], true);
+                if ($paymentDetails['ccv_customer_receipt_decode']) {
+                    foreach ($paymentDetails['ccv_customer_receipt_decode'] as $temp) {
+                        $receipt[] = $temp;
+                    }
+                }
+            }
+            if ($paymentDetails['method'] == 'wipay') {
+                $decoded = json_decode($paymentDetails['transaction_receipt'], true);
+                $paymentDetails['worldline_customer_receipt_decode'] = collect($decoded)
+                    ->flatten()
+                    ->reject(function ($value, $key) {
+                        return $value == '0';
+                    })
+                    ->toArray();
+                foreach ($paymentDetails['worldline_customer_receipt_decode'] as $temp) {
+                    $receipt[] = $temp;
+                }
+            }
+        }
+
         $this->jsonReceipt = $receipt;
     }
 
