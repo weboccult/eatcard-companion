@@ -9,6 +9,7 @@ use Weboccult\EatcardCompanion\Exceptions\KDSUserNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\NoKitchenPrintForUntilException;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
+use Weboccult\EatcardCompanion\Exceptions\PaymentDetailsNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationOrderItemEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\SaveOrderEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
@@ -20,6 +21,7 @@ use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -329,5 +331,26 @@ trait Stage4BasicDatabaseInteraction
 
         companionLogger('------Companion Print kiosk user : ', $kdsUser);
         $this->kdsUser = $kdsUser;
+    }
+
+    /**
+     * @return void
+     * Set KDS User data for KDS Kitchen print
+     * throw exception if data not found
+     */
+    protected function setPaymentDetails()
+    {
+        if (empty($this->paymentId)) {
+            return;
+        }
+
+        $paymentDetail = PaymentDetail::query()->where('id', $this->paymentId)->first();
+
+//        if (empty($paymentDetail)) {
+//            throw new PaymentDetailsNotFoundException();
+//        }
+
+        companionLogger('------Companion Print payment details : ', $paymentDetail);
+        $this->paymentDetail = $paymentDetail;
     }
 }

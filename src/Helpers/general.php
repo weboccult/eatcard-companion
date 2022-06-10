@@ -1453,6 +1453,7 @@ if (! function_exists('extractRequestType')) {
     function extractRequestType($requestType)
     {
         $deviceId = 0;
+        $paymentId = 0;
         $generator = '';
         $printType = '';
         $systemPrintType = '';
@@ -1487,6 +1488,9 @@ if (! function_exists('extractRequestType')) {
                 $requestType = isset($checkReservation[1]) ? $checkReservation[1] : 'receipt';
                 $printType = 'saved_order';
                 $systemPrintType = PrintTypes::DEFAULT;
+            } elseif ($checkReservation[0] == 'receipt_kiosk_tickets') {
+                $requestType = 'receipt_kiosk_tickets';
+                $paymentId = (int) ($checkReservation[1] ?? 0);
             } elseif ($requestType == 'receipt_pos_sub') {
                 $printType = 'receipt_pos_sub';
                 $generator = SubOrderGenerator::class;
@@ -1524,6 +1528,7 @@ if (! function_exists('extractRequestType')) {
             'generator' => $generator,
             'requestType' => $requestType,
             'deviceId' => $deviceId,
+            'paymentId' => $paymentId,
             'printType' => $printType,
             'printMethod' => PrintMethod::PROTOCOL,
             'systemPrintType' => $systemPrintType,
@@ -2014,10 +2019,14 @@ if (! function_exists('generateQrCode')) {
                 $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.$format;
             }
 
-            $qrImage = QrCode::format($format)
+            if (empty($mergeImage)) {
+                $qrImage = QrCode::format($format)->size($size)->generate($returnQrData['generated_qr']);
+            } else {
+                $qrImage = QrCode::format($format)
                     ->merge($mergeImage, .2, true)
                     ->size($size)
                     ->generate($returnQrData['generated_qr']);
+            }
 
             if (! Storage::disk('s3')->exists($s3ImagePath)) {
                 Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
