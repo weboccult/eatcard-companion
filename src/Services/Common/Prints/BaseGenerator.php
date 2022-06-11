@@ -200,6 +200,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setStoreData();
         $this->setDeviceData();
         $this->setKDSUserData();
+        $this->setPaymentDetails();
     }
 
     private function stage5_EnableSettings()

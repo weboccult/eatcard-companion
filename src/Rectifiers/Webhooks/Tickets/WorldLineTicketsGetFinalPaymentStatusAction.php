@@ -52,12 +52,16 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $request_data->getHeaderLine('content-type');
         $response = json_decode($request_data->getBody()->getContents(), true);
 
+        $update_data = [];
+        $update_payment_data = [];
+
         $paymentStatus = 'pending';
         $localPaymentStatus = 'pending';
         $status = $this->fetchedReservation->status;
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+        companionLogger('------update reservation payload', $reservationUpdatePayload);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
             $paymentStatus = 'paid';
@@ -72,6 +76,8 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
             companionLogger('Worldline status => canceled : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'final') {
             companionLogger('Worldline status => final : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'error') {
             $paymentStatus = 'failed';
             $status = 'cancelled';
@@ -79,18 +85,27 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
             companionLogger('Worldline status => error : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'busy') {
             companionLogger('Worldline status => busy : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'informal') {
             companionLogger('Worldline status => informal : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'cardrecognition') {
             companionLogger('Worldline status => cardrecognition : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } else {
             companionLogger('Worldline status => unknown : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         }
 
         if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
             $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
             $update_data = $reservationUpdatePayload;
+            $update_payment_data['payload'] = '';
         }
 
         if ($processType == 'create') {

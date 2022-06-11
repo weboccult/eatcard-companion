@@ -30,32 +30,48 @@ class CcvTicketsWebhook extends BaseWebhook
 
         $device = $this->fetchedReservation->kiosk;
 
+        $update_data = [];
+        $update_payment_data = [];
+
         $localPaymentStatus = 'pending';
         $status = $this->fetchedReservation->status;
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+        companionLogger('------update reservation payload', $reservationUpdatePayload);
 
-        $client = new Client();
-        $url = $device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
-        $createOrderUrl = config('eatcardCompanion.payment.gateway.ccv.endpoints.fetchOrder');
+        $response = [];
+        if (isset($this->payload['bop_status']) && ! empty($this->payload['bop_status'])) {
+            $response['status'] = $this->payload['bop_status'] ?? 'success';
+            $response['details']['customerReceipt'] = 'fake webhook bop payment';
+            companionLogger('CCV api BOP response', $response);
+        } else {
+            $client = new Client();
+            $url = $device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
+            $createOrderUrl = config('eatcardCompanion.payment.gateway.ccv.endpoints.fetchOrder');
 
-        $kiosk_api_key = $device->environment == 'test' ? $device->test_api_key : $device->api_key;
-        $api_key = base64_encode($kiosk_api_key.':');
+            $kiosk_api_key = $device->environment == 'test' ? $device->test_api_key : $device->api_key;
+            $api_key = base64_encode($kiosk_api_key.':');
 
-        $request = $client->request('GET', $url.$createOrderUrl.$this->fetchedReservation->id.'-'.$this->fetchedPaymentDetails->id, [
-            'headers' => [
-                'Authorization' => 'Basic '.$api_key,
-                'Content-Type'  => 'application/json;charset=UTF-8',
-            ],
-        ]);
-        $request->getHeaderLine('content-type');
-        $response = json_decode($request->getBody()->getContents(), true);
-        companionLogger('CCV api res', $response);
+            $request = $client->request('GET', $url.$createOrderUrl.$this->fetchedReservation->id.'-'.$this->fetchedPaymentDetails->id, [
+                'headers' => [
+                    'Authorization' => 'Basic '.$api_key,
+                    'Content-Type'  => 'application/json;charset=UTF-8',
+                ],
+            ]);
+            $request->getHeaderLine('content-type');
+            $response = json_decode($request->getBody()->getContents(), true);
+            companionLogger('CCV api res', $response);
+        }
 
-        $old_status = $this->fetchedReservation->payment_status;
+        $old_status = $this->fetchedPaymentDetails->payment_status;
 
         companionLogger('CCV status response', json_encode(['payment_status' => $response['status']], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+        if (! empty($this->fetchedReservation) && ! empty($this->fetchedPaymentDetails->paid_on) && $response['status'] == 'success' && $old_status == 'paid') {
+            companionLogger('CCV already paid');
+
+            return false;
+        }
 
         $update_data = [];
         $update_payment_data = [];
@@ -75,6 +91,7 @@ class CcvTicketsWebhook extends BaseWebhook
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
             $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
             $update_data = $reservationUpdatePayload;
+            $update_payment_data['payload'] = '';
         }
 
         if ($processType == 'create') {

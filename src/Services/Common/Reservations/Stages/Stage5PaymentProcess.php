@@ -3,7 +3,10 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
@@ -87,34 +90,39 @@ trait Stage5PaymentProcess
 
             $kiosk_api_key = $this->device->environment == 'test' ? $this->device->test_api_key : $this->device->api_key;
             $api_key = base64_encode($kiosk_api_key.':');
+            try {
+                $request = $client->request('POST', $url.$createOrderUrl, [
+                    'headers' => [
+                        'Authorization' => 'Basic '.$api_key,
+                        'Content-Type'  => 'application/json;charset=UTF-8',
+                    ],
+                    'body'    => json_encode($inputs, true),
+                ]);
+                $request->getHeaderLine('content-type');
+                $response = json_decode($request->getBody()->getContents(), true);
+                companionLogger('ccv api res', $response);
+                /*update ccv payment for the order*/
+                $paymentDetails->update(['transaction_id' => $response['reference']]);
 
-            $request = $client->request('POST', $url.$createOrderUrl, [
-                'headers' => [
-                    'Authorization' => 'Basic '.$api_key,
-                    'Content-Type'  => 'application/json;charset=UTF-8',
-                ],
-                'body'    => json_encode($inputs, true),
-            ]);
-            $request->getHeaderLine('content-type');
-            $response = json_decode($request->getBody()->getContents(), true);
-            companionLogger('ccv api res', $response);
-            /*update ccv payment for the order*/
-            $paymentDetails->update(['transaction_id' => $response['reference']]);
+                if ($this->system == SystemTypes::POS) {
+                    $this->paymentResponse = [
+                        'pay_url'  => $response['payUrl'],
+                        'reservation_id' => $this->createdReservation->id,
+                        'payment_id' => $paymentDetails->id,
+                    ];
+                }
 
-            if ($this->system == SystemTypes::POS) {
-                $this->paymentResponse = [
-                    'pay_url'  => $response['payUrl'],
-                    'reservation_id' => $this->createdReservation->id,
-                    'payment_id' => $paymentDetails->id,
-                ];
-            }
-            if ($this->system == SystemTypes::KIOSKTICKETS) {
-                $this->paymentResponse = [
-                    'payUrl'  => $response['payUrl'],
-                    'id' => $this->createdReservation->id,
-                    'reservation_id' => $this->createdReservation->reservation_id,
-                    'payment_id' => $paymentDetails->id,
-                ];
+                if ($this->system == SystemTypes::KIOSKTICKETS) {
+                    $this->paymentResponse = [
+                        'payUrl'  => $response['payUrl'],
+                        'id' => $this->createdReservation->id,
+                        'reservation_id' => $this->createdReservation->reservation_id,
+                        'payment_id' => $paymentDetails->id,
+                    ];
+                }
+            } catch (ConnectException | RequestException | ClientException $e) {
+                companionLogger('---------ccv exception ', $e->getMessage(), $e->getLine(), $e->getFile());
+                $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
             }
         }
     }
@@ -167,7 +175,7 @@ trait Stage5PaymentProcess
 
             if ($response['error'] == 1) {
                 companionLogger('Wipay payment initialize error', $response);
-                $this->setDumpDieValue(['error' => $response['errormsg']]);
+                $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
             }
 
             companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));

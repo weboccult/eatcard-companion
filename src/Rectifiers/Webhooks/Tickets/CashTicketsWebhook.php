@@ -25,12 +25,16 @@ class CashTicketsWebhook extends BaseWebhook
         $this->fetchAndSetReservation();
         $this->fetchAndSetPaymentDetails();
 
+        $update_data = [];
+        $update_payment_data = [];
+
         $paymentStatus = 'pending';
         $localPaymentStatus = 'pending';
         $status = $this->fetchedReservation->status;
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+        companionLogger('------update reservation payload', $reservationUpdatePayload);
 
         if ($this->payload['status'] == 'paid') {
             $paymentStatus = 'paid';
@@ -48,6 +52,7 @@ class CashTicketsWebhook extends BaseWebhook
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
             $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
             $update_data = $reservationUpdatePayload;
+            $update_payment_data['payload'] = '';
         }
 
         if ($processType == 'create') {
