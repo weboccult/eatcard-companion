@@ -13,6 +13,6 @@ class DeviceEmptyException extends EatcardException
 {
     public function __construct()
     {
-        parent::__construct('Kiosk Device can\'t be empty.!');
+        parent::__construct('Device can\'t be empty.!');
     }
 }

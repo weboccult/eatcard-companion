@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate;
 
 use Weboccult\EatcardCompanion\Exceptions\ClassNotFoundException;
 use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\KioskTicketsUpdate\KioskTicketsUpdate;
+use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\PosTicketsUpdate\PosTicketsUpdate;
 
 class EatcardReservationUpdate
 {
@@ -84,6 +85,7 @@ class EatcardReservationUpdate
         $class = get_class(static::$action);
         switch ($class) {
             case KioskTicketsUpdate::class:
+            case PosTicketsUpdate::class:
             break;
             default:
         ////                throw new WebhookActionNotSupportedException($class);

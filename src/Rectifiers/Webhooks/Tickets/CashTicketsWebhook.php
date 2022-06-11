@@ -40,7 +40,6 @@ class CashTicketsWebhook extends BaseWebhook
             $paymentStatus = 'paid';
             $localPaymentStatus = 'paid';
             $paidOn = Carbon::now()->format('Y-m-d H:i:s');
-            $update_payment_data['transaction_receipt'] = 'fake-bop payment';
         } elseif ($this->payload['status'] == 'failed') {
             $paymentStatus = 'failed';
             $localPaymentStatus = 'failed';

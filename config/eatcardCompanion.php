@@ -168,7 +168,7 @@ return [
                     'pos'   => [
                         'order'     => '/pos/webhook/<%id%>/<%store_id%>',
                         'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
-                        'reservation' => '/pos/webhook-reservation/<%id%>/<%store_id%>',
+                        'reservation' => '/ccv/webhook-reservation/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
                         'order' => '/kiosk/webhook/<%id%>/<%store_id%>',

@@ -4,6 +4,9 @@ namespace Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate;
 
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
 use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
@@ -118,7 +121,6 @@ abstract class BaseReservationUpdate
 
             return $this->paymentResponse;
         } catch (\Exception $e) {
-            dd($e);
             companionLogger('----Companion slots Exception', $e->getMessage(), $e->getFile(), $e->getLine());
             throw new \Exception($e->getMessage() ?? 'Something went wrong...!');
         }
@@ -129,7 +131,16 @@ abstract class BaseReservationUpdate
         $this->store = Store::query()->find($this->payload['store_id'] ?? 0);
         $this->meal = Meal::query()->find($this->payload['meal_type'] ?? 0);
         $this->reservation = StoreReservation::query()->find($this->payload['reservation_id'] ?? 0);
-        $this->device = KioskDevice::query()->find($this->payload['device_id'] ?? 0);
+
+        if ($this->system == SystemTypes::POS) {
+            $this->device = KioskDevice::query()
+                ->where('store_id', ($this->payload['store_id'] ?? 0))
+                ->where('pos_code', ($this->payload['pos_code'] ?? 0))
+                ->first();
+        } elseif ($this->system == SystemTypes::KIOSKTICKETS) {
+            $this->device = KioskDevice::query()->find($this->payload['device_id'] ?? 0);
+        }
+
         $this->dineInPrice = DineinPrices::withTrashed()->with([
                     'meal',
                     'dineInCategory',
@@ -228,17 +239,29 @@ abstract class BaseReservationUpdate
             return;
         }
 
-        $paymentMethod = 'cash';
-        if ($this->system == SystemTypes::KIOSKTICKETS) {
-            if (! $this->isBOP && $this->payableAmount > 0) {
-                $paymentMethod = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
-            }
+        $method = $this->payload['method'] ?? 'cash';
+        $paymentMethodType = '';
+        $manualPin = $this->payload['manual_pin'] ?? '';
+
+        if ($this->isBOP) {
+            $method = 'cash';
+        } elseif (! empty($manualPin)) {
+            $method = 'manual_pin';
+        } elseif ($method == 'cash') {
+            $method = 'cash';
+        }
+
+        if (! $this->isBOP && $this->payableAmount > 0) {
+            $paymentMethodType = $method = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
+        } elseif ($this->payableAmount == 0) {
+            /*<-- in kiosk device handle ZERO payment for update reservation-->*/
+            $method = 'cash';
         }
 
         $this->paymentDevicePayload = [
             'transaction_type'     => TransactionTypes::CREDIT,
-            'payment_method_type'  => 'cash',
-            'method'               => 'cash',
+            'payment_method_type'  => $paymentMethodType,
+            'method'               => $method,
             'payment_status'       => 'pending',
             'local_payment_status' => 'pending',
             'amount'               => $this->payableAmount,
@@ -247,13 +270,11 @@ abstract class BaseReservationUpdate
             'payload'              => json_encode($this->updatePayload, true),
         ];
 
-        if ($paymentMethod == 'ccv' && $this->system == SystemTypes::KIOSKTICKETS) {
-            $this->paymentDevicePayload['method'] = $this->paymentDevicePayload['payment_method_type'] = 'ccv';
+        if ($paymentMethodType == 'ccv') {
             $this->ccvPayment();
-        } elseif ($paymentMethod == 'wipay' && $this->system == SystemTypes::KIOSKTICKETS) {
-            $this->paymentDevicePayload['method'] = $this->paymentDevicePayload['payment_method_type'] = 'wipay';
+        } elseif ($paymentMethodType == 'wipay') {
             $this->wiPayment();
-        } elseif ($paymentMethod == 'cash' && $this->system == SystemTypes::KIOSKTICKETS) {
+        } elseif ($paymentMethodType == '' && $method == 'cash') {
             $this->cashPayment();
         }
     }
@@ -267,6 +288,9 @@ abstract class BaseReservationUpdate
         }
     }
 
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function ccvPayment()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
@@ -275,14 +299,14 @@ abstract class BaseReservationUpdate
             $order_id = $this->reservation->id.'-'.$paymentDetails->id;
             companionLogger('---ccv-order-id', $order_id, $this->reservation);
 
-//            if ($this->system == SystemTypes::POS) {
-//                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
-//                    'id'       => $order_id,
-//                    'store_id' => $this->store->id,
-//                ], [], SystemTypes::POS);
-//                $meta_data = "{'reservation': '" . $this->reservation->id . "', paymentId : '" . $paymentDetails->id . "'}";
-//                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
-//            }
+            if ($this->system == SystemTypes::POS) {
+                $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [
+                    'id'       => $order_id,
+                    'store_id' => $this->store->id,
+                ], [], SystemTypes::POS);
+                $meta_data = "{'reservation': '".$this->reservation->id."', paymentId : '".$paymentDetails->id."'}";
+                $returnUrl = generalUrlGenerator('payment.gateway.ccv.returnUrl.pos', [], [], SystemTypes::POS);
+            }
 
             if ($this->system == SystemTypes::KIOSKTICKETS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.kiosk-tickets.reservation', [
@@ -318,32 +342,29 @@ abstract class BaseReservationUpdate
             $createOrderUrl = config('eatcardCompanion.payment.gateway.ccv.endpoints.createOrder');
             $kiosk_api_key = $this->device->environment == 'test' ? $this->device->test_api_key : $this->device->api_key;
             $api_key = base64_encode($kiosk_api_key.':');
-            $request = $client->request('POST', $url.$createOrderUrl, [
-                'headers' => [
-                    'Authorization' => 'Basic '.$api_key,
-                    'Content-Type'  => 'application/json;charset=UTF-8',
-                ],
-                'body'    => json_encode($inputs, true),
-            ]);
-            $request->getHeaderLine('content-type');
-            $response = json_decode($request->getBody()->getContents(), true);
-            companionLogger('ccv api res', $response);
-            /*update ccv payment for the order*/
-            $paymentDetails->update(['transaction_id' => $response['reference']]);
-//            if ($this->system == SystemTypes::POS) {
-//                $this->paymentResponse = [
-//                    'pay_url'        => $response['payUrl'],
-//                    'reservation_id' => $this->reservation->id,
-//                    'payment_id'     => $paymentDetails->id,
-//                ];
-//            }
-            if ($this->system == SystemTypes::KIOSKTICKETS) {
+            try {
+                $request = $client->request('POST', $url.$createOrderUrl, [
+                    'headers' => [
+                        'Authorization' => 'Basic '.$api_key,
+                        'Content-Type'  => 'application/json;charset=UTF-8',
+                    ],
+                    'body'    => json_encode($inputs, true),
+                ]);
+                $request->getHeaderLine('content-type');
+                $response = json_decode($request->getBody()->getContents(), true);
+                companionLogger('ccv api res', $response);
+                /*update ccv payment for the order*/
+                $paymentDetails->update(['transaction_id' => $response['reference']]);
+
                 $this->paymentResponse = [
                     'payUrl'         => $response['payUrl'],
                     'id'             => $this->reservation->id,
                     'reservation_id' => $this->reservation->reservation_id,
                     'payment_id'     => $paymentDetails->id,
                 ];
+            } catch (ConnectException | RequestException | ClientException $e) {
+                companionLogger('---------ccv exception ', $e->getMessage(), $e->getLine(), $e->getFile());
+                throw new \Exception('Currently, the payment device has not been found or unable to connect.');
             }
         }
     }
@@ -375,12 +396,12 @@ abstract class BaseReservationUpdate
             $response = json_decode($request_data->getBody()->getContents(), true);
             if ($response['error'] == 1) {
                 companionLogger('Wipay payment initialize error', $response);
-//                $this->setDumpDieValue(['error' => $response['errormsg']]);
-                throw new \Exception($response['errormsg']);
+                throw new \Exception('Currently, the payment device has not been found or unable to connect.');
             }
             companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
             isset($response['ssai']) && $response['ssai'] ? $paymentDetails->update(['transaction_id' => $response['ssai']]) : '';
             $this->paymentResponse = [
+                'ssai'           => $response['ssai'] ?? '',
                 'pay_url'        => null,
                 'id'             => $this->reservation->id,
                 'reservation_id' => $this->reservation->reservation_id,
@@ -391,40 +412,35 @@ abstract class BaseReservationUpdate
 
     private function cashPayment()
     {
-        if ($this->system == SystemTypes::KIOSKTICKETS) {
-            if ($this->isBOP) {
-                $this->paymentDevicePayload['transaction_receipt'] = 'fake-bop payment';
-
-                $this->paymentResponse = [
-                    'ssai'           => 'fake_ssai',
-                    'reference'      => 'fake_response',
-                    'payUrl'         => 'https://www.google.com',
-                    'id'             => $this->reservation->id,
-                    'reservation_id' => $this->reservation->reservation_id,
-                ];
-            } elseif ($this->payableAmount == 0) {
-                $this->paymentDevicePayload['transaction_receipt'] = 'zero amount';
-                $this->paymentResponse = [
-                    'ssai'           => '',
-                    'reference'      => '',
-                    'payUrl'         => '',
-                    'id'             => $this->reservation->id,
-                    'reservation_id' => $this->reservation->reservation_id,
-                ];
-            }
-
-            $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
-            $this->paymentResponse['payment_id'] = $paymentDetails->id;
-
-            EatcardWebhook::action(CashTicketsWebhook::class)
-                    ->setOrderType('reservation')
-                    ->setReservationId($this->reservation->id)
-                    ->setPaymentId($paymentDetails->id)
-                    ->setStoreId($this->store->id)
-                    ->payload([
-                        'status' => $this->payload['bop_status'] ?? 'paid',
-                    ])
-                    ->dispatch();
+        if (! ($this->isBOP || in_array($this->reservation->method, ['manual_pin', 'cash']))) {
+            return;
         }
+
+        $this->paymentResponse = [
+            'ssai'           => $this->isBOP ? 'fake_ssai' : '',
+            'reference'      => $this->isBOP ? 'fake_response' : '',
+            'payUrl'         => $this->isBOP ? 'https://www.google.com' : '',
+            'id'             => $this->reservation->id,
+            'reservation_id' => $this->reservation->reservation_id,
+        ];
+
+        if ($this->isBOP) {
+            $this->paymentDevicePayload['transaction_receipt'] = 'fake-bop payment';
+        } elseif ($this->payableAmount == 0) {
+            $this->paymentDevicePayload['transaction_receipt'] = 'zero amount';
+        }
+
+        $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+        $this->paymentResponse['payment_id'] = $paymentDetails->id;
+
+        EatcardWebhook::action(CashTicketsWebhook::class)
+                ->setOrderType('reservation')
+                ->setReservationId($this->reservation->id)
+                ->setPaymentId($paymentDetails->id)
+                ->setStoreId($this->store->id)
+                ->payload([
+                    'status' => $this->payload['bop_status'] ?? 'paid',
+                ])
+                ->dispatch();
     }
 }

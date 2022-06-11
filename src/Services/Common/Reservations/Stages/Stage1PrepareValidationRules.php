@@ -4,8 +4,8 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
-use Weboccult\EatcardCompanion\Exceptions\KioskDeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\MealEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationDateEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationTypeInvalidException;
@@ -39,7 +39,7 @@ trait Stage1PrepareValidationRules
     protected function overridableSystemSpecificRules()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
-            $this->addRuleToSystemSpecificRules(KioskDeviceEmptyException::class, empty($this->device));
+            $this->addRuleToSystemSpecificRules(DeviceEmptyException::class, empty($this->device));
 
             if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id']) && empty($this->storeReservation)) {
                 $this->addRuleToSystemSpecificRules(StoreReservationEmptyException::class, empty($this->device));
