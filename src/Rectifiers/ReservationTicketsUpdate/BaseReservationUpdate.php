@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
+use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationAmountLessThenZero;
@@ -165,7 +166,6 @@ abstract class BaseReservationUpdate
         $this->addRuleToCommonRules(ReservationNoShow::class, $this->reservation->is_seated == 2);
         $this->addRuleToCommonRules(ReservationIsNotAyce::class, $this->reservation->reservation_type != 'all_you_eat');
         $this->addRuleToCommonRules(ReservationExpired::class, $reservationDate < $currentDate);
-        // TODO : validate this reservation is valid
     }
 
     protected function Stage2ValidateValidationRules()
@@ -178,22 +178,23 @@ abstract class BaseReservationUpdate
 
     protected function stage3PrepareAllYouCanEatDataForUpdate()
     {
-        $reservationAllYouEatData = $this->reservation['all_you_eat_data'] ?? [];
-        $newAllYouEatData = $this->payload['ayceData'] ?? [];
-        $notEmptyNewAndOldAllYouEatData = empty($reservationAllYouEatData) && empty($newAllYouEatData);
+        $reservationAllYouEatData = $this->reservation['all_you_eat_data'] ?? '';
+        $newAllYouEatData = $this->payload['ayceData'] ?? '';
+        $isEmptyNewAndOldAllYouEatData = empty($reservationAllYouEatData) || empty($newAllYouEatData);
 
-        //TODO :: add exception
+        if ($isEmptyNewAndOldAllYouEatData) {
+            throw new AYCEDataEmptyException();
+        }
 
         $dineInPrice = $this->dineInPrice->toArray();
-        if (! $notEmptyNewAndOldAllYouEatData) {
-            $newAllYouEatData = json_decode($newAllYouEatData, true);
-            $reservationAllYouEatData = json_decode($reservationAllYouEatData, true);
 
-            $reservationAllYouEatData['no_of_adults'] = $newAllYouEatData['no_of_adults'] ?? 0;
-            $reservationAllYouEatData['no_of_kids2'] = $newAllYouEatData['no_of_kids2'] ?? 0;
-            $reservationAllYouEatData['no_of_kids'] = $newAllYouEatData['no_of_kids'] ?? 0;
-            $reservationAllYouEatData['kids_age'] = $newAllYouEatData['kids_age'] ?? [];
-        }
+        $newAllYouEatData = json_decode($newAllYouEatData, true);
+        $reservationAllYouEatData = json_decode($reservationAllYouEatData, true);
+
+        $reservationAllYouEatData['no_of_adults'] = $newAllYouEatData['no_of_adults'] ?? 0;
+        $reservationAllYouEatData['no_of_kids2'] = $newAllYouEatData['no_of_kids2'] ?? 0;
+        $reservationAllYouEatData['no_of_kids'] = $newAllYouEatData['no_of_kids'] ?? 0;
+        $reservationAllYouEatData['kids_age'] = $newAllYouEatData['kids_age'] ?? [];
 
         $dynmKids = $newAllYouEatData['dynm_kids'] ?? null;
         if (! empty($dynmKids)) {
@@ -207,7 +208,7 @@ abstract class BaseReservationUpdate
             }
         }
 
-        if ($dineInPrice && $notEmptyNewAndOldAllYouEatData) {
+        if ($dineInPrice) {
             $reservationAllYouEatData['dinein_price'] = $dineInPrice;
         }
 
