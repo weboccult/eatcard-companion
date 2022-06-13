@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use function Weboccult\EatcardCompanion\Helpers\sendKioskOrderMailToOwner;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
