@@ -5,7 +5,6 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Redis as LRedis;
-use function Weboccult\EatcardCompanion\Helpers\sendKioskOrderMailToOwner;
 use Weboccult\EatcardCompanion\Models\Order;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -153,7 +152,7 @@ class WorldLineWebhook extends BaseWebhook
                 }
                 if($this->fetchedOrder->order_type == 'kiosk') {
                 	$status = $this->payload['status'] == 'paid' ? 'paid' : 'failed';
-                	sendKioskOrderMailToOwner($status);
+                	$this->sendKioskOrderMailToOwner($status);
                 }
             }
         }
