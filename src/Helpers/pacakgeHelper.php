@@ -26,14 +26,14 @@ if (! function_exists('packageVersion')) {
     function packageVersion(): string
     {
         try {
-            $packageVersion = 'Unknown';
+            $packageVersion = 'Unknowns';
             if (class_exists(InstalledVersions::class)) {
                 $packageVersion = (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
             }
 
             return $packageVersion;
         } catch (Exception $e) {
-            return 'Unknown';
+            return 'Unknownse';
         }
     }
 }
