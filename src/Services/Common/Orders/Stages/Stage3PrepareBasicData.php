@@ -3,7 +3,6 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Session;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -37,7 +36,7 @@ trait Stage3PrepareBasicData
     protected function prepareDineInType()
     {
         $this->orderData['dine_in_type'] = '';
-        if ($this->system === SystemTypes::POS || $this->system === SystemTypes::DINE_IN) {
+        if ($this->system === SystemTypes::POS || $this->system === SystemTypes::DINE_IN || $this->system === SystemTypes::KIOSK) {
             if (isset($this->payload['dine_in_type']) && ! empty($this->payload['dine_in_type'])) {
                 $this->orderData['dine_in_type'] = $this->payload['dine_in_type'];
             } else {
@@ -64,7 +63,7 @@ trait Stage3PrepareBasicData
             }
         }
 
-        if ($this->system === SystemTypes::WAITRESS || $this->system === SystemTypes::DINE_IN) {
+        if ($this->system === SystemTypes::WAITRESS || $this->system === SystemTypes::DINE_IN || $this->system === SystemTypes::KIOSK) {
             $this->orderData['order_type'] = $this->payload['order_type'] ?? 'dine_in';
         }
 
@@ -91,6 +90,11 @@ trait Stage3PrepareBasicData
 
         if ($this->system === SystemTypes::DINE_IN) {
             $this->orderData['created_from'] = 'dine_in_2';
+        }
+
+        if ($this->system === SystemTypes::KIOSK) {
+            $kioskVersion = $this->payload['kiosk_version'] ?? '';
+            $this->orderData['created_from'] .= ! empty($kioskVersion) ? '_'.$kioskVersion : '';
         }
     }
 
@@ -153,6 +157,9 @@ trait Stage3PrepareBasicData
                 $this->orderData['delivery_postcode'] = '';
                 $this->orderData['delivery_place'] = '';
             }
+
+            $this->orderData['method'] = $this->payload['method'] = $this->orderData['payment_method_type'] = $this->payload['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
+            $this->orderData['checkout_no'] = $this->payload['checkout_no'] ?? null;
         }
 
         if ($this->system === SystemTypes::DINE_IN) {
@@ -160,9 +167,6 @@ trait Stage3PrepareBasicData
             $this->orderData['contact_no'] = isset($this->payload['telephone']) && $this->payload['telephone'] ? $this->payload['telephone'] : $this->payload['name'];
             $this->orderData['method'] = $this->payload['method'] ?? 'ideal';
 
-            //set name and mobile if guest user login and inputs don't have value
-//            $is_guest_login = Session::get('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
-//            if (! empty($is_guest_login) && empty($this->payload['first_name'])) {
             if (! empty($this->table) && empty($this->payload['first_name'])) {
                 $this->orderData['first_name'] = $this->payload['user_name'] = $this->payload['name'];
                 $this->orderData['contact_no'] = $this->payload['telephone'];
@@ -182,17 +186,11 @@ trait Stage3PrepareBasicData
     protected function createReservationForGuestAndResetSession()
     {
         if ($this->system == SystemTypes::DINE_IN && ! empty($this->table)) {
-//            if (isset($this->payload['user_name']) && $this->payload['user_name']) {
-//                Session::put('dine-user-name-'.$this->store->id.'-'.$this->table->id, $this->payload['user_name']);
-//            }
-//            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
             $session_id = $this->payload['reservation_id'] ?? 0;
             if (! $session_id || (! $this->storeReservation)) {
                 companionLogger('start crete order for guest login user');
-                companionLogger('start crete order for guest login user : session_id : ', $session_id);
-                companionLogger('start crete order for guest login user : store_reservation : ', json_encode($this->storeReservation));
                 if (isset($butler_data->dine_in_allow_booking) && $butler_data->dine_in_allow_booking == 0) {
-                    companionLogger('reject guest order because of not allow in butler ');
+                    companionLogger('createReservationForGuestAndResetSession validation error : reject guest order because of not allow in butler ');
                     $this->setDumpDieValue(['something_wrong_create_order' => 'Something went wrong.!']);
                 }
                 $seconds = time();
@@ -225,12 +223,6 @@ trait Stage3PrepareBasicData
                 }
                 sendResWebNotification($this->storeReservation->id, $this->store->id, 'new_booking');
                 sendResWebNotification($this->storeReservation->id, $this->store->id, 'checkin');
-//                Session::put('dine-reservation-id-'.$this->store->id.'-'.$this->table->id, $this->storeReservation->id);
-
-                //reset get user session after his reservation created / exist
-//                Session::forget('dine-guest-user-login-'.$this->store->id.'-'.$this->table->id);
-//                Session::forget('dine-guest-user-name-'.$this->store->id.'-'.$this->table->id);
-//                Session::forget('dine-guest-user-mobile-'.$this->store->id.'-'.$this->table->id);
             }
             $this->orderData['reservation_dine_in'] = isset($this->storeReservation) ? $this->storeReservation->is_dine_in : 1;
         }
@@ -260,7 +252,6 @@ trait Stage3PrepareBasicData
                 if ($this->storeReservation->is_qr_scan != 1 && $this->storeReservation->is_dine_in != 1) {
                     $this->storeReservation->update(['is_qr_scan' => 1]);
                 }
-//                $user_name = Session::get('dine-user-name-'.$this->store->id.'-'.$this->table->id);
                 $user_name = $this->payload['name'] ?? '';
                 $this->orderData['first_name'] = ! empty($user_name) ? $user_name : $this->storeReservation->voornaam;
                 $this->orderData['contact_no'] = $this->storeReservation->gsm_no;

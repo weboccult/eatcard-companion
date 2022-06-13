@@ -214,7 +214,7 @@ class EatcardWebhook
                 break;
             /* Kiosk Webhook */
             case CcvKioskOrderWebhook::class:
-                static::$webhook->setOrderId(static::$orderId);
+                static::$webhook->setOrderId(static::$orderId)->setStoreId(static::$storeId);
                 break;
             /* Reservation Iframe Webhook and Redirects*/
             case MollieReservationWebhook::class:

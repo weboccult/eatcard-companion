@@ -247,6 +247,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     private function stage4_EnabledSettings()
     {
         $this->stageIt([
+            fn () => $this->enableExtraSettings(),
             fn () => $this->enableAdditionalFees(),
             fn () => $this->enableDeliveryFees(),
             fn () => $this->enablePlasticBagFees(),
