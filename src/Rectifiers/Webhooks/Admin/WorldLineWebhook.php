@@ -5,12 +5,12 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Redis as LRedis;
-use function Weboccult\EatcardCompanion\Helpers\sendKioskOrderMailToOwner;
 use Weboccult\EatcardCompanion\Models\Order;
 use GuzzleHttp\Client;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use function Weboccult\EatcardCompanion\Helpers\sendKioskOrderMailToOwner;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\sendAppNotificationHelper;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
@@ -151,9 +151,9 @@ class WorldLineWebhook extends BaseWebhook
                     }
                     $redis->publish('new_order', json_encode($socket_data));
                 }
-                if($this->fetchedOrder->order_type == 'kiosk') {
-                	$status = $this->payload['status'] == 'paid' ? 'paid' : 'failed';
-                	sendKioskOrderMailToOwner($status);
+                if ($this->fetchedOrder->order_type == 'kiosk') {
+                    $status = $this->payload['status'] == 'paid' ? 'paid' : 'failed';
+                    sendKioskOrderMailToOwner($status);
                 }
             }
         }
