@@ -150,9 +150,9 @@ class WorldLineWebhook extends BaseWebhook
                     }
                     $redis->publish('new_order', json_encode($socket_data));
                 }
-                if($this->fetchedOrder->order_type == 'kiosk') {
-                	$status = $this->payload['status'] == 'paid' ? 'paid' : 'failed';
-                	$this->sendKioskOrderMailToOwner($status);
+                if ($this->fetchedOrder->order_type == 'kiosk') {
+                    $status = $this->payload['status'] == 'paid' ? 'paid' : 'failed';
+                    $this->sendKioskOrderMailToOwner($status);
                 }
             }
         }
