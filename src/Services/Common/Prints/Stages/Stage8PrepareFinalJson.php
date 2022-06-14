@@ -8,6 +8,7 @@ use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use function Weboccult\EatcardCompanion\Helpers\carbonFormatParse;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
