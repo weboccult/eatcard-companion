@@ -263,7 +263,7 @@ trait TicketsWebhookCommonActions
                 $this->sendNewReservationEmailToOwner();
                 $this->sendNotification();
                 /*Publish update reservation socket*/
-                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'booking_orders_update');
+                sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'new_booking');
             }
         }
     }
