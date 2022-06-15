@@ -245,6 +245,7 @@ class EatcardWebhook
                 break;
 
             case WorldLineTicketsWebhook::class:
+            case WorldLineTicketsGetFinalPaymentStatusAction::class:
             case CcvTicketsWebhook::class:
             case CashTicketsWebhook::class:
             case WorldLineTicketsGetFinalPaymentStatusAction::class:

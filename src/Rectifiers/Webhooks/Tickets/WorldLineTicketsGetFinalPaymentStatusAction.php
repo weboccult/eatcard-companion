@@ -17,7 +17,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
 
         $this->fetchAndSetStore();
         $this->fetchAndSetReservation();
-        $this->fetchAndSePaymentDetails();
+        $this->fetchAndSetPaymentDetails();
 
         if (! empty($this->fetchedReservation) && ! empty($this->fetchedPaymentDetails->paid_on)) {
             return $this->fetchedReservation;
@@ -55,38 +55,73 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $update_data = [];
         $update_payment_data = [];
 
-        $update_data['payment_status'] = $update_payment_data['payment_status'] = 'pending';
-        $update_data['local_payment_status'] = $update_payment_data['payment_status'] = 'pending';
+        $paymentStatus = 'pending';
+        $localPaymentStatus = 'pending';
+        $status = $this->fetchedReservation->status;
+        $paidOn = null;
+        $processType = $this->fetchedPaymentDetails->process_type ?? '';
+        $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+        companionLogger('------update reservation payload', $reservationUpdatePayload);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
-            $update_data['payment_status'] = $update_payment_data['payment_status'] = 'paid';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'paid';
-            $update_data['paid_on'] = $update_payment_data['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
-            $update_payment_data['transaction_receipt'] = isset($response['ticket']) ? $response['ticket'] : '';
+            $paymentStatus = 'paid';
+            $localPaymentStatus = 'paid';
+            $paidOn = Carbon::now()->format('Y-m-d H:i:s');
+            $update_payment_data['transaction_receipt'] = $this->payload['ticket'] ?? '';
             companionLogger('Worldline status => final + approved : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'final' && $response['cancelled'] == 1) {
-            $update_data['status'] = $update_payment_data['status'] = 'canceled';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
+            $paymentStatus = 'canceled';
+            $status = 'cancelled';
+            $localPaymentStatus = 'failed';
             companionLogger('Worldline status => canceled : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'final') {
             companionLogger('Worldline status => final : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'error') {
-            $update_data['status'] = $update_payment_data['status'] = 'failed';
-            $update_data['local_payment_status'] = $update_payment_data['local_payment_status'] = 'failed';
+            $paymentStatus = 'failed';
+            $status = 'cancelled';
+            $localPaymentStatus = 'failed';
             companionLogger('Worldline status => error : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
         } elseif ($response['status'] == 'busy') {
             companionLogger('Worldline status => busy : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'informal') {
             companionLogger('Worldline status => informal : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } elseif ($response['status'] == 'cardrecognition') {
             companionLogger('Worldline status => cardrecognition : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         } else {
             companionLogger('Worldline status => unknown : '.PHP_EOL.'-------------------------------'.PHP_EOL.json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.'-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+
+            return true;
         }
 
-        if ($this->payload['iteration'] == 1) {
-            $update_data['is_uncertain_status'] = 1;
+        if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
+            $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
+            $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+            $update_data = $reservationUpdatePayload;
+            $update_payment_data['payload'] = '';
         }
+
+        if ($processType == 'create') {
+            $update_data['status'] = $status;
+            $update_data['payment_status'] = $paymentStatus;
+            $update_data['local_payment_status'] = $localPaymentStatus;
+            $update_data['paid_on'] = $paidOn;
+
+            if ($this->payload['iteration'] == 1) {
+                $update_data['is_uncertain_status'] = 1;
+            }
+        }
+
+        $update_payment_data['payment_status'] = $paymentStatus;
+        $update_payment_data['local_payment_status'] = $localPaymentStatus;
+        $update_payment_data['paid_on'] = $paidOn;
 
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 

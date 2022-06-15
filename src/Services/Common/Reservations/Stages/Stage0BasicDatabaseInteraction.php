@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 
 use Illuminate\Support\Facades\Cache;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Meal;
 use Weboccult\EatcardCompanion\Models\Store;
@@ -42,20 +43,34 @@ trait Stage0BasicDatabaseInteraction
     protected function setDeviceData()
     {
         $deviceId = $this->payload['device_id'] ?? 0;
-        if (! empty($deviceId)) {
+        $posCode = $this->payload['pos_code'] ?? 0;
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
             $device = Cache::tags([
                 FLUSH_ALL,
                 FLUSH_POS,
                 FLUSH_STORE_BY_ID.$this->store->id,
                 KIOSK_DEVICES,
             ])
-                ->remember('{eat-card}-companion-kiosk-tickets-device-with-code-'.$this->store->id.$deviceId, CACHING_TIME, function () use ($deviceId) {
+                ->remember('{eat-card}-companion-kiosk-tickets-device-with-kiosk-id-'.$this->store->id.$deviceId, CACHING_TIME, function () use ($deviceId) {
                     return KioskDevice::query()->where('id', $deviceId)->where('store_id', $this->store->id)->first();
                 });
-            if (! empty($device)) {
-                $this->device = $device;
-                $this->reservationData['kiosk_id'] = $device->id;
-            }
+        }
+
+        if ($this->system == SystemTypes::POS) {
+            $device = Cache::tags([
+                FLUSH_ALL,
+                FLUSH_POS,
+                FLUSH_STORE_BY_ID.$this->store->id,
+                KIOSK_DEVICES,
+            ])
+                ->remember('{eat-card}-companion-kiosk-tickets-device-with-pos-code-'.$this->store->id.$posCode, CACHING_TIME, function () use ($posCode) {
+                    return KioskDevice::query()->where('pos_code', $posCode)->where('store_id', $this->store->id)->first();
+                });
+        }
+
+        if (! empty($device)) {
+            $this->device = $device;
+            $this->reservationData['kiosk_id'] = $device->id;
         }
     }
 

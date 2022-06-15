@@ -439,13 +439,14 @@ trait Stage8PrepareFinalJson
                 $typeOrder = 'Dine-in';
             }
 
-            if ($this->systemType == SystemTypes::KIOSKTICKETS) {
-                $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
-            }
-
             if ($this->printType == PrintTypes::PROFORMA && isset($this->total_price)) {
                 $total = $this->total_price;
                 $tableName = '';
+            }
+
+            if ($this->systemType == SystemTypes::KIOSKTICKETS && ! empty($this->paymentDetail)) {
+                $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
+                $total = $this->paymentDetail['amount'] ?? 0;
             }
         }
 
