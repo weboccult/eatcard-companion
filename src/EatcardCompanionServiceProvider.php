@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
@@ -68,6 +69,10 @@ class EatcardCompanionServiceProvider extends ServiceProvider
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'eatcard-companion');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'eatcard-companion');
+
+        Relation::morphMap([
+            'StoreReservation' => 'Weboccult\EatcardCompanion\Models\StoreReservation',
+        ]);
     }
 
     public function register()

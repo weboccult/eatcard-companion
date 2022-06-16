@@ -10,9 +10,9 @@ class EatcardReservationServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        Relation::morphMap([
-            'StoreReservation' => 'Weboccult\EatcardCompanion\Models\StoreReservation',
-        ]);
+//        Relation::morphMap([
+//            'StoreReservation' => 'Weboccult\EatcardCompanion\Models\StoreReservation',
+//        ]);
     }
 
     public function register()
