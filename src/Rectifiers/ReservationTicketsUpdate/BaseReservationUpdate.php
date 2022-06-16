@@ -476,7 +476,7 @@ abstract class BaseReservationUpdate
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
             $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
 
-            $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+            StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
             $this->reservation->refresh();
 
             $order_id = $this->reservation->id.'-'.$paymentDetails->id;
@@ -569,7 +569,7 @@ abstract class BaseReservationUpdate
             $order_type = 'reservation';
             $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
 
-            $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+            StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
             $this->reservation->refresh();
 
             $inputs = [
@@ -619,7 +619,6 @@ abstract class BaseReservationUpdate
 
     private function cashPayment()
     {
-        companionLogger('-------------------cash payment-1', $this->reservation);
         if (! ($this->isBOP || in_array($this->reservation->method, ['manual_pin', 'cash']))) {
             return;
         }
@@ -642,17 +641,12 @@ abstract class BaseReservationUpdate
         } elseif ($this->payableAmount == 0) {
             $this->paymentDevicePayload['transaction_receipt'] = 'zero amount';
         }
-        companionLogger('-------------------cash payment-2', $this->reservation);
+
         $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
-        $paymentDetails->refresh();
-        companionLogger('-------------------cash payment-2.1', $paymentDetails);
         $this->paymentResponse['payment_id'] = $paymentDetails->id;
 
-//        $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
         StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
-        companionLogger('-------------------cash payment-3', $this->reservation);
         $this->reservation->refresh();
-        companionLogger('-------------------cash payment-4', $this->reservation);
 
         EatcardWebhook::action(CashTicketsWebhook::class)
                 ->setOrderType('reservation')
