@@ -648,7 +648,8 @@ abstract class BaseReservationUpdate
         companionLogger('-------------------cash payment-2.1', $paymentDetails);
         $this->paymentResponse['payment_id'] = $paymentDetails->id;
 
-        $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+//        $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+        StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
         companionLogger('-------------------cash payment-3', $this->reservation);
         $this->reservation->refresh();
         companionLogger('-------------------cash payment-4', $this->reservation);
