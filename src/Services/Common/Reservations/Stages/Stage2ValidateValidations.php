@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 
 use Carbon\Carbon;
 use Throwable;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\KioskDeviceEmptyException;
@@ -71,45 +72,51 @@ trait Stage2ValidateValidations
 
     protected function validateSlot()
     {
-        if ($this->slotType == 'StoreSlot') {
-            $storeWeekdaysId = $this->slot->store_weekdays_id ?? null;
-            if (! empty($storeWeekdaysId)) {
-                $storeWeekday = StoreWeekDay::find($storeWeekdaysId);
-                if (! empty($storeWeekday) && ! empty($store_weekday->is_active)) {
-                    companionLogger('store_weekday is not active  : ', $this->slot);
-                    $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            if ($this->slotType == 'StoreSlot') {
+                $storeWeekdaysId = $this->slot->store_weekdays_id ?? null;
+                if (! empty($storeWeekdaysId)) {
+                    $storeWeekday = StoreWeekDay::find($storeWeekdaysId);
+                    if (! empty($storeWeekday) && ! empty($store_weekday->is_active)) {
+                        companionLogger('store_weekday is not active  : ', $this->slot);
+                        $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+                    }
                 }
             }
-        }
 
-        if (empty($this->slot->from_time)) {
-            companionLogger('slot not found or invalid 2 : ', $this->slot);
-            $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            if (empty($this->slot->from_time)) {
+                companionLogger('slot not found or invalid 2 : ', $this->slot);
+                $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            }
         }
     }
 
     protected function validateTime()
     {
-        $current24Time = Carbon::now()->format('H:i');
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            $current24Time = Carbon::now()->format('H:i');
 
-        if ($this->reservationDate < Carbon::now()->format('Y-m-d') || ($this->reservationDate == Carbon::now()->format('Y-m-d') && strtotime($this->slot->from_time) <= strtotime($current24Time))) {
-            companionLogger(' reservation date or time was passed : ', $this->reservationDate, $this->slot);
-            $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
-        }
+            if ($this->reservationDate < Carbon::now()->format('Y-m-d') || ($this->reservationDate == Carbon::now()->format('Y-m-d') && strtotime($this->slot->from_time) <= strtotime($current24Time))) {
+                companionLogger(' reservation date or time was passed : ', $this->reservationDate, $this->slot);
+                $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            }
 
-        // If current day is off.
-        if ($this->reservationDate == Carbon::now()->format('Y-m-d') && $this->store->reservation_off_chkbx == 1) {
-            companionLogger(' reservation day off from admin dashboard');
-            $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            // If current day is off.
+            if ($this->reservationDate == Carbon::now()->format('Y-m-d') && $this->store->reservation_off_chkbx == 1) {
+                companionLogger(' reservation day off from admin dashboard');
+                $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            }
         }
     }
 
     protected function validateSlotLimits()
     {
         $reservationPerson = $this->payload['person'] ?? 0;
-        if ($this->slot->max_entries != 'Unlimited' && $reservationPerson > $this->slot->max_entries) {
-            companionLogger('reservation person > to slot limit.');
-            $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            if ($this->slot->max_entries != 'Unlimited' && $reservationPerson > $this->slot->max_entries) {
+                companionLogger('reservation person > to slot limit.');
+                $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
+            }
         }
 
         // here we not check with current reservation capacity of that slot because we already check while giving

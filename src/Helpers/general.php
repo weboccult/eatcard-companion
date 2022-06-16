@@ -828,6 +828,7 @@ if (! function_exists('sendResWebNotification')) {
                     'system_name'     => env('APP_NAME', 'Package'),
                 ]));
             }
+            companionLogger('-------channel', $channel, $id, $store_id);
 
             return true;
         } catch (\Exception $e) {
@@ -2039,5 +2040,152 @@ if (! function_exists('generateQrCode')) {
         } catch (\Exception $exception) {
             companionLogger('generateQrCode function exception', 'Line - '.$exception->getLine(), 'Error - '.$exception->getMessage());
         }
+    }
+}
+
+if (! function_exists('checkAnotherMeeting')) {
+
+    /**
+     * @param $tableId
+     * @param $reservation
+     *
+     * @return bool
+     */
+    function checkAnotherMeeting($tableId, $reservation): bool
+    {
+        try {
+            $status = ['declined', 'cancelled'];
+            $isSeatedStatus = [2];
+
+            $allReservationIds = StoreReservation::query()
+                ->where('store_id', $reservation->store_id)
+                ->where('res_date', $reservation->reservation_date)
+                ->where('is_checkout', 0)
+                ->whereNotIn('status', $status)
+                ->whereNotIn('is_seated', $isSeatedStatus)
+                ->where('id', '!=', $reservation->id)
+                ->get();
+
+            $particularReservationIds = ReservationTable::query()
+                ->whereIn('reservation_id', $allReservationIds->pluck('id'))
+                ->whereIn('table_id', $tableId)
+                ->where('reservation_id', '!=', $reservation->id)
+                ->pluck('reservation_id');
+
+            $getTablesAllReservation = collect($allReservationIds)->whereIn('id', $particularReservationIds);
+
+            foreach ($getTablesAllReservation as $key => $tableReservation) {
+                $anotherMeeting = getAnotherMeetingByReservation($reservation, $tableReservation);
+                if ($anotherMeeting === true) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            companionLogger('---------getAnotherMeeting error', $e->getMessage(), $e->getLine(), $e->getFile());
+
+            return false;
+        }
+    }
+}
+
+if (! function_exists('getAnotherMeetingByReservation')) {
+    /**
+     * @param $reservation
+     * @param $item
+     *
+     * @return bool
+     */
+    function getAnotherMeetingByReservation($reservation, $item): bool
+    {
+        if (! $reservation->end_time) {
+            $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
+            $reservation->end_time = Carbon::parse($reservation->from_time)->addMinutes($time_limit)->format('H:i');
+        }
+        $time_limit = 120;
+        $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+
+        return ($item->from_time > $reservation->from_time && $item->from_time < $reservation->end_time) || ($reservation->from_time > $item->from_time && $reservation->from_time < $end_time) || ($item->from_time == $reservation->from_time);
+    }
+}
+
+if (! function_exists('assignedReservationTableOrUpdate')) {
+    /**
+     * @param $reservation
+     * @param $reservationNewTables
+     *
+     * @return bool
+     */
+    function assignedReservationTableOrUpdate($reservation, $reservationNewTables): bool
+    {
+        try {
+            $newTable = $reservationNewTables;
+            /*<--- remove old table if not in destination table  ----->*/
+            ReservationTable::query()->where('reservation_id', $reservation->id)->whereNotIn('table_id', $newTable)->delete();
+
+            /*<--- update reservation table---->*/
+            foreach ($newTable as $key=>$table) {
+                $reservation_table = ReservationTable::where('reservation_id', $reservation->id)->where('table_id', $table)->first();
+                if (! $reservation_table) {
+                    ReservationTable::query()->create([
+                        'reservation_id' => $reservation->id,
+                        'table_id'       => $table,
+                    ]);
+                }
+            }
+
+            if ($reservation['group_id'] > 0 && count($newTable) <= 1) {
+                $reservation->update(['group_id' => 0]);
+            } elseif ($reservation['group_id'] == 0 && count($newTable) > 1) {
+                $last_group_id = getLatestGroupId($reservation->reservation_date, $reservation->store_id);
+                $group_id = $last_group_id + 1;
+                $reservation->update(['group_id' => $group_id]);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            companionLogger('----------table-move-error ', $e->getMessage(), $e->getLine());
+
+            return false;
+        }
+    }
+}
+
+if (! function_exists('getLatestGroupId')) {
+    /**
+     * @param $resDate
+     * @param $storeId
+     *
+     * @return int
+     */
+    function getLatestGroupId($resDate, $storeId): int
+    {
+        $groupId = StoreReservation::query()->select('group_id', 'store_id')
+                                ->where('res_date', $resDate)
+                                ->where('store_id', $storeId)
+                                ->orderBy('group_id', 'desc')
+                                ->value('group_id');
+
+        return (int) $groupId ?? 0;
+    }
+}
+
+if (! function_exists('checkTableMinMaxLimitAccordingToPerson')) {
+    function checkTableMinMaxLimitAccordingToPerson($reservation, $payload = []): bool
+    {
+        $person = $payload['person'] ?? 0;
+        $tables = $reservation->tables2()->get();
+        $tableCount = collect($tables)->count();
+        $minSum = collect($tables)->sum('no_of_min_seats');
+        $maxSum = collect($tables)->sum('no_of_seats');
+
+        companionLogger('------checkTableMinMaxLimitAccordingToPerson', range($minSum, ($maxSum + $tableCount)), $tableCount, $minSum, $maxSum, $person);
+        $reAssigned = true;
+        if (in_array($person, range($minSum, ($maxSum + $tableCount)))) {
+            $reAssigned = false;
+        }
+
+        return $reAssigned;
     }
 }

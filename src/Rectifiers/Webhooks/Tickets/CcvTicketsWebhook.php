@@ -105,6 +105,10 @@ class CcvTicketsWebhook extends BaseWebhook
         $update_payment_data['local_payment_status'] = $localPaymentStatus;
         $update_payment_data['paid_on'] = $paidOn;
 
+        if ($update_payment_data['local_payment_status'] == 'failed') {
+            $update_payment_data['cancel_from'] = 'webhook';
+        }
+
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 
         return true;

@@ -5,9 +5,12 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 use Carbon\Carbon;
 use Cmgmyr\Messenger\Models\Participant;
 use Cmgmyr\Messenger\Models\Thread;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\ReservationJob;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use function Weboccult\EatcardCompanion\Helpers\checkAnotherMeeting;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\assignedReservationTableOrUpdate;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 
 /**
@@ -32,9 +35,33 @@ trait Stage4CreateProcess
         $this->createdReservation->refresh();
     }
 
+    protected function tableAvailabilityCheck()
+    {
+        if ($this->system == SystemTypes::POS) {
+            $tables = $this->payload['table_ids'] ?? [];
+            $tableAvailabilityCheck = checkAnotherMeeting($tables, $this->createdReservation);
+            if ($tableAvailabilityCheck) {
+                $this->setDumpDieValue(['error' => 'Currently, this table is available please try another one']);
+            }
+        }
+    }
+
+    protected function assignedTables()
+    {
+        if ($this->system == SystemTypes::POS) {
+            $tables = $this->payload['table_ids'] ?? [];
+            $isTableAssigned = assignedReservationTableOrUpdate($this->createdReservation, $tables);
+
+            /*<--- if reservation table assigned successfully then send notification --->*/
+            if (! empty($this->createdReservation) && $isTableAssigned) {
+                sendResWebNotification($this->createdReservation->id, $this->createdReservation->store_id);
+            }
+        }
+    }
+
     protected function createReservationJob()
     {
-        if (empty($this->createdReservation)) {
+        if (empty($this->createdReservation) && $this->system == SystemTypes::POS) {
             return;
         }
 
@@ -92,6 +119,10 @@ trait Stage4CreateProcess
 
     protected function checkReservationJobForAssignTableStatus()
     {
+        if ($this->system == SystemTypes::POS) {
+            return;
+        }
+
         if ($this->isReservationCronStop) {
             return;
         }
@@ -114,6 +145,10 @@ trait Stage4CreateProcess
 
     protected function checkReservationForAssignTableStatus()
     {
+        if ($this->system == SystemTypes::POS) {
+            return;
+        }
+
         $count = 1;
         do {
             companionLogger('do while start');
@@ -142,6 +177,10 @@ trait Stage4CreateProcess
 
     protected function createChatThread()
     {
+        if ($this->system == SystemTypes::POS) {
+            return;
+        }
+
         $thread = Thread::query()->create([
             'subject' => 'reservation',
         ]);

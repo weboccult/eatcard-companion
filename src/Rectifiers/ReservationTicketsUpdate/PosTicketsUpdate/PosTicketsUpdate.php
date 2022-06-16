@@ -6,4 +6,5 @@ use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\BaseReservati
 
 class PosTicketsUpdate extends BaseReservationUpdate
 {
+    protected string $updatedFrom = 'posTickets';
 }

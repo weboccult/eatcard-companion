@@ -142,6 +142,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->setReservationData(),
             fn () => $this->setMealData(),
             fn () => $this->setSlotData(),
+            fn () => $this->setTableIds(),
         ]);
     }
 
@@ -181,10 +182,12 @@ abstract class BaseProcessor implements BaseProcessorContract
         $this->stageIt([
             fn () => $this->isSimulateEnabled(),
             fn () => $this->createReservation(),
+            fn () => $this->tableAvailabilityCheck(),
             fn () => $this->createReservationJob(),
             fn () => $this->checkReservationJobForAssignTableStatus(),
             fn () => $this->checkReservationForAssignTableStatus(),
             fn () => $this->createChatThread(),
+            fn () => $this->assignedTables(),
         ]);
     }
 

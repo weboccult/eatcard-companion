@@ -12,6 +12,7 @@ use Weboccult\EatcardCompanion\Enums\TransactionTypes;
 use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\ReservationAlreadyExists;
 use Weboccult\EatcardCompanion\Exceptions\ReservationAmountLessThenZero;
 use Weboccult\EatcardCompanion\Exceptions\ReservationCancelled;
 use Weboccult\EatcardCompanion\Exceptions\ReservationCheckIn;
@@ -21,6 +22,7 @@ use Weboccult\EatcardCompanion\Exceptions\ReservationNoShow;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\ReservationJob;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\Meal;
 use Weboccult\EatcardCompanion\Exceptions\MealEmptyException;
@@ -30,11 +32,16 @@ use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\Traits\Attrib
 use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\Traits\MagicAccessors;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
+use function PHPUnit\Framework\throwException;
 use function Weboccult\EatcardCompanion\Helpers\calculateAllYouCanEatPerson;
+use function Weboccult\EatcardCompanion\Helpers\checkAnotherMeeting;
+use function Weboccult\EatcardCompanion\Helpers\checkTableMinMaxLimitAccordingToPerson;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
 use function Weboccult\EatcardCompanion\Helpers\getAycePrice;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
+use function Weboccult\EatcardCompanion\Helpers\assignedReservationTableOrUpdate;
+use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 abstract class BaseReservationUpdate
@@ -57,6 +64,9 @@ abstract class BaseReservationUpdate
     /** @var DineinPrices|null|object */
     protected ?DineinPrices $dineInPrice;
 
+    /** @var ReservationJob|null|object */
+    protected $createdReservationJobs = null;
+
     protected string $system = 'none';
 
     public $payload;
@@ -64,8 +74,6 @@ abstract class BaseReservationUpdate
     public $dineInPriceId;
 
     public $allReservation;
-
-    public $returnResponseData;
 
     public $updatePayload;
 
@@ -79,7 +87,15 @@ abstract class BaseReservationUpdate
 
     protected $paymentResponse = null;
 
+    protected $reservationJobData;
+
+    protected bool $isReservationCronStop = false;
+
     protected float $payableAmount = 0;
+
+    protected string $updatedFrom = '';
+
+    protected bool $skipAssignedTable = false;
 
     /**
      * @param mixed $payload
@@ -117,8 +133,11 @@ abstract class BaseReservationUpdate
             $this->Stage1PrepareValidationRules();
             $this->Stage2ValidateValidationRules();
             $this->stage3PrepareAllYouCanEatDataForUpdate();
-            $this->stage4PaymentForUpdateReservation();
-            $this->Stage5prepareAndSendJsonResponse();
+            $this->stage4UpdateReservation();
+            $this->stage5checkReservationJobForAssignTableStatus();
+            $this->stage6checkReservationForAssignTableStatus();
+            $this->stage7PaymentForUpdateReservation();
+            $this->Stage8prepareAndSendJsonResponse();
 
             return $this->paymentResponse;
         } catch (\Exception $e) {
@@ -132,6 +151,9 @@ abstract class BaseReservationUpdate
         $this->store = Store::query()->find($this->payload['store_id'] ?? 0);
         $this->meal = Meal::query()->find($this->payload['meal_type'] ?? 0);
         $this->reservation = StoreReservation::query()->find($this->payload['reservation_id'] ?? 0);
+        if (empty($this->reservation)) {
+            throw new StoreReservationEmptyException();
+        }
 
         if ($this->system == SystemTypes::POS) {
             $this->device = KioskDevice::query()
@@ -166,6 +188,14 @@ abstract class BaseReservationUpdate
         $this->addRuleToCommonRules(ReservationNoShow::class, $this->reservation->is_seated == 2);
         $this->addRuleToCommonRules(ReservationIsNotAyce::class, $this->reservation->reservation_type != 'all_you_eat');
         $this->addRuleToCommonRules(ReservationExpired::class, $reservationDate < $currentDate);
+
+        if ($this->system == SystemTypes::POS) {
+            /*<--- check for another meeting ---->*/
+            $tables = $this->payload['table_ids'] ?? [];
+            if (! empty($tables)) {
+                $this->addRuleToCommonRules(ReservationAlreadyExists::class, checkAnotherMeeting($tables, $this->reservation));
+            }
+        }
     }
 
     protected function Stage2ValidateValidationRules()
@@ -228,16 +258,154 @@ abstract class BaseReservationUpdate
         companionLogger('----payableAmount | TotalAmount | allYouEatPrice-----', $this->payableAmount, $this->reservation->total_price, $this->allYouEatPrice);
 
         if ($this->payableAmount < 0) {
-            throw new ReservationAmountLessThenZero();
+//            throw new ReservationAmountLessThenZero();
+        }
+
+        $this->skipAssignedTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);
+        companionLogger('-----skip payment', $this->skipAssignedTable);
+    }
+
+    protected function stage4UpdateReservation()
+    {
+        if ($this->system == SystemTypes::KIOSKTICKETS && $this->skipAssignedTable) {
+            $reservationData = $this->reservation->toArray();
+
+            $reservationData['data_model'] = $reservationData['slot_model'];
+            $reservationData['store_slug'] = $this->store->store_slug ?? '';
+            $reservationData['person'] = $this->updatePayload['person'] ?? $this->reservation['person'];
+            $reservationData['created_from'] = $this->updatedFrom;
+
+            $this->reservationJobData['store_id'] = $this->store->id;
+            $this->reservationJobData['reservation_id'] = $this->reservation->id;
+            $this->reservationJobData['attempt'] = 0;
+            $this->reservationJobData['reservation_front_data'] = (json_encode($reservationData, true));
+
+            /*create reservation entry on reservation jobs table*/
+            $this->isReservationCronStop = false;
+            $first_reservation = ReservationJob::query()
+                ->where('attempt', 0)
+                ->where('in_queue', 0)
+                ->where('is_completed', 0)
+                ->where('is_failed', 0)
+                ->first();
+
+            if (! empty($first_reservation)) {
+                $first_reservation = ReservationJob::query()
+                    ->where('attempt', 2)
+                    ->where('in_queue', 0)
+                    ->where('is_completed', 0)
+                    ->where('is_failed', 1)
+                    ->first();
+            }
+
+            $time_difference = 0;
+            if (isset($first_reservation->created_at)) {
+                $current_time = Carbon::now();
+                $end_time = Carbon::parse($first_reservation->created_at);
+                $time_difference = $current_time->diffInSeconds($end_time);
+            }
+
+            if ($time_difference > 90) {
+                ReservationJob::query()->whereNotNull('id')->update([
+                    'is_failed' => 1,
+                    'attempt'   => 2,
+                ]);
+                $this->isReservationCronStop = true;
+                companionLogger('reservation through normal functionality : ', (['reservation_job_first_res' => $first_reservation]));
+            }
+
+            /*<---- for testing manually cron stop using this variable ---->*/
+            if (env('FORCE_STOP_CREATE_RESERVATION_USING_CRON', false)) {
+                $this->isReservationCronStop = true;
+                companionLogger('Manually cron skip for testing if you want to stop this remove env FORCE_STOP_CREAT_RESERVATION_USING_CRON variable or make it FALSE');
+            }
+            $this->createdReservationJobs = ReservationJob::query()->create($this->reservationJobData);
+            $this->createdReservationJobs->refresh();
+            companionLogger('----job entry create', $this->createdReservationJobs);
+        }
+
+        if ($this->system == SystemTypes::POS) {
+            if (! empty($this->payload['table_ids'] ?? [])) {
+                try {
+                    $tables = $this->payload['table_ids'] ?? [];
+                    assignedReservationTableOrUpdate($this->reservation, $tables);
+                } catch (\Exception $exception) {
+                    throwException($exception);
+                }
+            }
         }
     }
 
-    protected function stage4PaymentForUpdateReservation()
+    protected function stage5checkReservationJobForAssignTableStatus()
+    {
+        if ($this->system == SystemTypes::POS || $this->skipAssignedTable) {
+            return;
+        }
+
+        if ($this->isReservationCronStop) {
+            return;
+        }
+
+        if (empty($this->createdReservationJobs)) {
+            return;
+        }
+
+        /*get reservation status*/
+        $check_res_status_array = [1, 2, 3, 4, 5];
+        for ($i = 0; $i < 5; $i++) {
+            $reservation_jobs_count = ReservationJob::query()->where('id', $this->createdReservationJobs->id)->count();
+            if ($reservation_jobs_count > 0) {
+                sleep($check_res_status_array[$i]);
+            } else {
+                break;
+            }
+        }
+    }
+
+    protected function stage6checkReservationForAssignTableStatus()
+    {
+        if ($this->system == SystemTypes::POS || $this->skipAssignedTable) {
+            return;
+        }
+
+        $count = 1;
+        do {
+            companionLogger('do while start');
+
+            $storeReservation = StoreReservation::query()->where('id', $this->reservation->id)->first();
+
+            if ($storeReservation->res_status != null) {
+                $count = 4;
+            } else {
+                sleep(3);
+                $count++;
+            }
+        } while (($storeReservation->res_status == null || $storeReservation->res_status == '') && $count <= 3);
+
+        companionLogger('do while end');
+
+        $this->reservation->refresh();
+        $ayceData = json_decode($this->reservation->all_you_eat_data, true);
+        if (! empty($ayceData)) {
+            $reservationStatus = $ayceData['assignTableStatus'] ?? '';
+            if (! empty($reservationStatus) && $reservationStatus == 'failed') {
+                $ayceData = json_encode($ayceData);
+                StoreReservation::where('id', $this->reservation->reservation_id)->update(['all_you_eat_data' => $ayceData]);
+                companionLogger('res_status is null');
+                throw new \Exception('Sorry selected slot is not available.Please try another time slot');
+            }
+        }
+
+        //if reservation table assigned successfully then send notification
+        sendResWebNotification($this->reservation->id, $this->reservation->store_id);
+    }
+
+    protected function stage7PaymentForUpdateReservation()
     {
         if ($this->payableAmount < 0) {
             companionLogger('price less then zero');
 
-            return;
+//            return;
         }
 
         $method = $this->payload['method'] ?? 'cash';
@@ -269,6 +437,7 @@ abstract class BaseReservationUpdate
             'kiosk_id'             => $this->device->id,
             'process_type'         => 'update',
             'payload'              => json_encode($this->updatePayload, true),
+            'created_from'         => $this->updatedFrom,
         ];
 
         if ($paymentMethodType == 'ccv') {
@@ -280,7 +449,7 @@ abstract class BaseReservationUpdate
         }
     }
 
-    protected function Stage5prepareAndSendJsonResponse()
+    protected function Stage8prepareAndSendJsonResponse()
     {
         if (empty($this->paymentResponse)) {
             companionLogger('Not supported method found.!');
@@ -296,6 +465,9 @@ abstract class BaseReservationUpdate
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
             $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+
+            $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+            $this->reservation->refresh();
 
             $order_id = $this->reservation->id.'-'.$paymentDetails->id;
             companionLogger('---ccv-order-id', $order_id, $this->reservation);
@@ -365,6 +537,16 @@ abstract class BaseReservationUpdate
                 ];
             } catch (ConnectException | RequestException | ClientException $e) {
                 companionLogger('---------ccv exception ', $e->getMessage(), $e->getLine(), $e->getFile());
+
+                /*<--- manual cancel payment ---->*/
+                EatcardWebhook::action(CashTicketsWebhook::class)
+                    ->setOrderType('reservation')
+                    ->setReservationId($this->reservation->id)
+                    ->setPaymentId($paymentDetails->id)
+                    ->setStoreId($this->store->id)
+                    ->payload(['status' => 'failed'])
+                    ->dispatch();
+
                 throw new \Exception('Currently, the payment device has not been found or unable to connect.');
             }
         }
@@ -376,6 +558,10 @@ abstract class BaseReservationUpdate
             $order_price = round($this->payableAmount * 100, 0);
             $order_type = 'reservation';
             $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+
+            $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+            $this->reservation->refresh();
+
             $inputs = [
                 'amount'    => $order_price,
                 'terminal'  => $this->device->terminal_id,
@@ -397,6 +583,16 @@ abstract class BaseReservationUpdate
             $response = json_decode($request_data->getBody()->getContents(), true);
             if ($response['error'] == 1) {
                 companionLogger('Wipay payment initialize error', $response);
+
+                /*<--- manual cancel payment ---->*/
+                EatcardWebhook::action(CashTicketsWebhook::class)
+                    ->setOrderType('reservation')
+                    ->setReservationId($this->reservation->id)
+                    ->setPaymentId($paymentDetails->id)
+                    ->setStoreId($this->store->id)
+                    ->payload(['status' => 'failed'])
+                    ->dispatch();
+
                 throw new \Exception('Currently, the payment device has not been found or unable to connect.');
             }
             companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
@@ -417,6 +613,11 @@ abstract class BaseReservationUpdate
             return;
         }
 
+        $isCashPaid = $this->system == SystemTypes::POS && ! empty($this->payload['cash_paid'] ?? 0);
+        if ($isCashPaid) {
+            $this->paymentDevicePayload['cash_paid'] = $this->payload['cash_paid'] ?? null;
+        }
+
         $this->paymentResponse = [
             'ssai'           => $this->isBOP ? 'fake_ssai' : '',
             'reference'      => $this->isBOP ? 'fake_response' : '',
@@ -433,6 +634,9 @@ abstract class BaseReservationUpdate
 
         $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
         $this->paymentResponse['payment_id'] = $paymentDetails->id;
+
+        $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
+        $this->reservation->refresh();
 
         EatcardWebhook::action(CashTicketsWebhook::class)
                 ->setOrderType('reservation')
