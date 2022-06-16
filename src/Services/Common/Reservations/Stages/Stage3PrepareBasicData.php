@@ -35,7 +35,6 @@ trait Stage3PrepareBasicData
         $this->reservationData['section_id'] = $this->payload['section_id'] ?? 0;
         $this->reservationData['method'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         $this->reservationData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
-        $this->reservationData['user_id'] = $this->payload['user_id'] ?? '';
 
         if ($this->system == SystemTypes::KIOSKTICKETS) {
             $this->reservationData['slot_model'] = $this->slotType;
