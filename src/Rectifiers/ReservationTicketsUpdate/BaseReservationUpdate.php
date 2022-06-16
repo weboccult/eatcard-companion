@@ -645,6 +645,7 @@ abstract class BaseReservationUpdate
         companionLogger('-------------------cash payment-2', $this->reservation);
         $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
         $paymentDetails->refresh();
+        companionLogger('-------------------cash payment-2.1', $paymentDetails);
         $this->paymentResponse['payment_id'] = $paymentDetails->id;
 
         $this->reservation->update(['ref_payment_id' => $paymentDetails->id]);
