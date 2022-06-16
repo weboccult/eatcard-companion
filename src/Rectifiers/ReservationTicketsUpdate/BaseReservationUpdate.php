@@ -184,7 +184,6 @@ abstract class BaseReservationUpdate
         $this->addRuleToCommonRules(DineInPriceEmptyException::class, $this->dineInPrice->count() == 0);
         $this->addRuleToCommonRules(MealIdEmptyException::class, ! empty($this->reservation->is_checkout ?? 0));
         $this->addRuleToCommonRules(ReservationCancelled::class, $this->reservation->status == 'cancelled');
-        $this->addRuleToCommonRules(ReservationCheckIn::class, $this->reservation->is_seated == 1);
         $this->addRuleToCommonRules(ReservationNoShow::class, $this->reservation->is_seated == 2);
         $this->addRuleToCommonRules(ReservationIsNotAyce::class, $this->reservation->reservation_type != 'all_you_eat');
         $this->addRuleToCommonRules(ReservationExpired::class, $reservationDate < $currentDate);
@@ -195,6 +194,9 @@ abstract class BaseReservationUpdate
             if (! empty($tables)) {
                 $this->addRuleToCommonRules(ReservationAlreadyExists::class, checkAnotherMeeting($tables, $this->reservation));
             }
+        }
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            $this->addRuleToCommonRules(ReservationCheckIn::class, $this->reservation->is_seated == 1);
         }
     }
 
