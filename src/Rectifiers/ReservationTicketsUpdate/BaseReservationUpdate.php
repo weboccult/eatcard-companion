@@ -95,7 +95,7 @@ abstract class BaseReservationUpdate
 
     protected string $updatedFrom = '';
 
-    protected bool $skipAssignedTable = false;
+    protected bool $isReAssignTable = false;
 
     /**
      * @param mixed $payload
@@ -191,12 +191,18 @@ abstract class BaseReservationUpdate
         if ($this->system == SystemTypes::POS) {
             /*<--- check for another meeting ---->*/
             $tables = $this->payload['table_ids'] ?? [];
-            if (! empty($tables)) {
-                $this->addRuleToCommonRules(ReservationAlreadyExists::class, checkAnotherMeeting($tables, $this->reservation));
+            if (! empty($tables) && ! empty($this->meal)) {
+                $this->addRuleToCommonRules(ReservationAlreadyExists::class, checkAnotherMeeting($tables, $this->reservation, $this->meal));
             }
         }
         if ($this->system == SystemTypes::KIOSKTICKETS) {
             $this->addRuleToCommonRules(ReservationCheckIn::class, $this->reservation->is_seated == 1);
+
+            /*<--- check for another meeting ---->*/
+            $tables = $this->reservation->tables2->pluck('id')->toArray() ?? [];
+            if (! empty($tables) && ! empty($this->meal)) {
+                $this->addRuleToCommonRules(ReservationAlreadyExists::class, checkAnotherMeeting($tables, $this->reservation, $this->meal));
+            }
         }
     }
 
@@ -263,13 +269,12 @@ abstract class BaseReservationUpdate
 //            throw new ReservationAmountLessThenZero();
         }
 
-        $this->skipAssignedTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);
-        companionLogger('-----skip payment', $this->skipAssignedTable);
+        $this->isReAssignTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);
     }
 
     protected function stage4UpdateReservation()
     {
-        if ($this->system == SystemTypes::KIOSKTICKETS && $this->skipAssignedTable) {
+        if ($this->system == SystemTypes::KIOSKTICKETS && $this->isReAssignTable) {
             $reservationData = $this->reservation->toArray();
 
             $reservationData['data_model'] = $reservationData['slot_model'];
@@ -340,7 +345,7 @@ abstract class BaseReservationUpdate
 
     protected function stage5checkReservationJobForAssignTableStatus()
     {
-        if ($this->system == SystemTypes::POS || $this->skipAssignedTable) {
+        if ($this->system == SystemTypes::POS || ! $this->isReAssignTable) {
             return;
         }
 
@@ -366,34 +371,36 @@ abstract class BaseReservationUpdate
 
     protected function stage6checkReservationForAssignTableStatus()
     {
-        if ($this->system == SystemTypes::POS || $this->skipAssignedTable) {
+        if ($this->system == SystemTypes::POS || ! $this->isReAssignTable) {
             return;
         }
 
+        $ayceData = [];
         $count = 1;
         do {
             companionLogger('do while start');
 
             $storeReservation = StoreReservation::query()->where('id', $this->reservation->id)->first();
+            $ayceData = json_decode($storeReservation->all_you_eat_data, true);
+            $reservationStatus = $ayceData['assignTableStatus'] ?? '';
 
-            if ($storeReservation->res_status != null) {
+            if (! empty($reservationStatus)) {
                 $count = 4;
             } else {
                 sleep(3);
                 $count++;
             }
-        } while (($storeReservation->res_status == null || $storeReservation->res_status == '') && $count <= 3);
+        } while (empty($reservationStatus) && $count <= 3);
 
         companionLogger('do while end');
 
         $this->reservation->refresh();
-        $ayceData = json_decode($this->reservation->all_you_eat_data, true);
         if (! empty($ayceData)) {
             $reservationStatus = $ayceData['assignTableStatus'] ?? '';
             if (! empty($reservationStatus) && $reservationStatus == 'failed') {
+                unset($ayceData['assignTableStatus']);
                 $ayceData = json_encode($ayceData);
-                StoreReservation::where('id', $this->reservation->reservation_id)->update(['all_you_eat_data' => $ayceData]);
-                companionLogger('res_status is null');
+                StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
                 throw new \Exception('Sorry selected slot is not available.Please try another time slot');
             }
         }
@@ -410,7 +417,7 @@ abstract class BaseReservationUpdate
 //            return;
         }
 
-        $method = $this->payload['method'] ?? 'cash';
+        $method = $this->payload['method'] ?? '';
         $paymentMethodType = '';
         $manualPin = $this->payload['manual_pin'] ?? '';
 
@@ -602,7 +609,7 @@ abstract class BaseReservationUpdate
             isset($response['ssai']) && $response['ssai'] ? $paymentDetails->update(['transaction_id' => $response['ssai']]) : '';
             $this->paymentResponse = [
                 'ssai'           => $response['ssai'] ?? '',
-                'pay_url'        => null,
+                'payUrl'        => null,
                 'id'             => $this->reservation->id,
                 'reservation_id' => $this->reservation->reservation_id,
                 'payment_id'     => $paymentDetails->id,

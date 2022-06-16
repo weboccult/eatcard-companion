@@ -1293,10 +1293,10 @@ trait Stage7PrepareAdvanceData
                     'value' => $split_no.'/'.$this->order['payment_split_persons'],
                 ];
             }
-        } elseif ($this->orderType == OrderTypes::RUNNING && ! $this->systemType == SystemTypes::KIOSKTICKETS && ! empty($this->paymentDetail)) {
-            $cash_paid = $this->paymentDetail->cash_paid ?? 0;
-            $method = $this->paymentDetail->method ?? '';
-            $total_price = $this->paymentDetail->amount ?? 0;
+        } elseif ($this->orderType == OrderTypes::RUNNING && $this->systemType == SystemTypes::KIOSKTICKETS && ! empty($this->paymentDetail)) {
+            $cash_paid = $this->paymentDetail['cash_paid'] ?? 0;
+            $method = $this->paymentDetail['method'] ?? '';
+            $total_price = $this->paymentDetail['amount'] ?? 0;
         }
 
         if ($method == 'cash') {

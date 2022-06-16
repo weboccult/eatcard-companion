@@ -2048,10 +2048,11 @@ if (! function_exists('checkAnotherMeeting')) {
     /**
      * @param $tableId
      * @param $reservation
+     * @param null $meal
      *
      * @return bool
      */
-    function checkAnotherMeeting($tableId, $reservation): bool
+    function checkAnotherMeeting($tableId, $reservation, $meal = null): bool
     {
         try {
             $status = ['declined', 'cancelled'];
@@ -2075,7 +2076,7 @@ if (! function_exists('checkAnotherMeeting')) {
             $getTablesAllReservation = collect($allReservationIds)->whereIn('id', $particularReservationIds);
 
             foreach ($getTablesAllReservation as $key => $tableReservation) {
-                $anotherMeeting = getAnotherMeetingByReservation($reservation, $tableReservation);
+                $anotherMeeting = getAnotherMeetingByReservation($reservation, $tableReservation, $meal);
                 if ($anotherMeeting === true) {
                     return true;
                 }
@@ -2094,16 +2095,21 @@ if (! function_exists('getAnotherMeetingByReservation')) {
     /**
      * @param $reservation
      * @param $item
+     * @param $meal
      *
      * @return bool
      */
-    function getAnotherMeetingByReservation($reservation, $item): bool
+    function getAnotherMeetingByReservation($reservation, $item, $meal): bool
     {
-        if (! $reservation->end_time) {
+        if (! empty($meal)) {
+            $reservation->meal = $meal;
+        }
+
+        $time_limit = 120;
+        if ($reservation->end_time) {
             $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
             $reservation->end_time = Carbon::parse($reservation->from_time)->addMinutes($time_limit)->format('H:i');
         }
-        $time_limit = 120;
         $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
 
         return ($item->from_time > $reservation->from_time && $item->from_time < $reservation->end_time) || ($reservation->from_time > $item->from_time && $reservation->from_time < $end_time) || ($item->from_time == $reservation->from_time);
@@ -2176,16 +2182,14 @@ if (! function_exists('checkTableMinMaxLimitAccordingToPerson')) {
     {
         $person = $payload['person'] ?? 0;
         $tables = $reservation->tables2()->get();
-        $tableCount = collect($tables)->count();
         $minSum = collect($tables)->sum('no_of_min_seats');
         $maxSum = collect($tables)->sum('no_of_seats');
 
-        companionLogger('------checkTableMinMaxLimitAccordingToPerson', range($minSum, ($maxSum + $tableCount)), $tableCount, $minSum, $maxSum, $person);
-        $reAssigned = true;
-        if (in_array($person, range($minSum, ($maxSum + $tableCount)))) {
-            $reAssigned = false;
+        $isSkipReAssigned = true;
+        if (in_array($person, range($minSum, $maxSum))) {
+            $isSkipReAssigned = false;
         }
 
-        return $reAssigned;
+        return $isSkipReAssigned;
     }
 }

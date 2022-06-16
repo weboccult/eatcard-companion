@@ -205,7 +205,7 @@ trait Stage5PaymentProcess
 
             $this->paymentResponse = [
                 'ssai' => $response['ssai'] ?? '',
-                'pay_url'  => null,
+                'payUrl'  => null,
                 'id' => $this->createdReservation->id,
                 'reservation_id' => $this->createdReservation->reservation_id,
                 'payment_id' => $paymentDetails->id,
