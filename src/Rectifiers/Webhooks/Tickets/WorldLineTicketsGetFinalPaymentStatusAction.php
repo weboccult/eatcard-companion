@@ -125,9 +125,9 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
             $update_data['local_payment_status'] = $localPaymentStatus;
             $update_data['paid_on'] = $paidOn;
 
-            if ($this->payload['iteration'] == 1) {
-                $update_data['is_uncertain_status'] = 1;
-            }
+//            if ($this->payload['iteration'] == 1) {
+//                $update_data['is_uncertain_status'] = 1;
+//            }
         }
 
         $update_payment_data['payment_status'] = $paymentStatus;
