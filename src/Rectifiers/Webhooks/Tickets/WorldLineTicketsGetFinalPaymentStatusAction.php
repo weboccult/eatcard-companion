@@ -51,10 +51,6 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
 
         $request_data->getHeaderLine('content-type');
         $response = json_decode($request_data->getBody()->getContents(), true);
-//        companionLogger('wipay final payment status started! : '.PHP_EOL.
-//                        '-------------------------------'.PHP_EOL.
-//                        json_encode($response, JSON_PRETTY_PRINT).PHP_EOL.
-//                        '-------------------------------'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
 
         $update_data = [];
         $update_payment_data = [];
@@ -65,14 +61,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
-        companionLogger('------update reservation payload', $response);
-
-//        if (isset($response['errormsg']) && $response['errormsg'] == 1) {
-//                    companionLogger('Wipay payment initialize error', $response);
-//                    $paymentStatus = 'failed';
-//                    $status = 'cancelled';
-//                    $localPaymentStatus = 'failed';
-//                }
+        companionLogger('------update reservation response wipay', $response);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
             $paymentStatus = 'paid';

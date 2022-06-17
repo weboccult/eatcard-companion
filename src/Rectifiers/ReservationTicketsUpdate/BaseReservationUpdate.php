@@ -269,7 +269,7 @@ abstract class BaseReservationUpdate
         companionLogger('----payableAmount | TotalAmount | allYouEatPrice-----', $this->payableAmount, $this->reservation->total_price, $this->allYouEatPrice);
 
         if ($this->payableAmount < 0) {
-//            throw new ReservationAmountLessThenZero();
+            throw new ReservationAmountLessThenZero();
         }
 
         $this->isReAssignTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);
@@ -417,7 +417,7 @@ abstract class BaseReservationUpdate
         if ($this->payableAmount < 0) {
             companionLogger('price less then zero');
 
-//            return;
+            return;
         }
 
         $method = $this->payload['method'] ?? '';
