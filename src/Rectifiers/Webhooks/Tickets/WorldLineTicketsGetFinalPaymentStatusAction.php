@@ -64,7 +64,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
         companionLogger('------update reservation payload', $response);
 
-        if ($response['error'] == 1) {
+        if ($response['errormsg'] == 1) {
             companionLogger('Wipay payment initialize error', $response);
             $paymentStatus = 'failed';
             $status = 'cancelled';

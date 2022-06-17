@@ -2142,11 +2142,11 @@ if (! function_exists('assignedReservationTableOrUpdate')) {
             }
 
             if ($reservation['group_id'] > 0 && count($newTable) <= 1) {
-                $reservation->update(['group_id' => 0]);
+                StoreReservation::query()->where('id', $reservation->id)->update(['group_id' => 0]);
             } elseif ($reservation['group_id'] == 0 && count($newTable) > 1) {
                 $last_group_id = getLatestGroupId($reservation->reservation_date, $reservation->store_id);
                 $group_id = $last_group_id + 1;
-                $reservation->update(['group_id' => $group_id]);
+                StoreReservation::query()->where('id', $reservation->id)->update(['group_id' => $group_id]);
             }
 
             return true;
