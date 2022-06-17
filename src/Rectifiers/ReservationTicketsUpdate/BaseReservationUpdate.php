@@ -435,7 +435,6 @@ abstract class BaseReservationUpdate
         if (! $this->isBOP && $this->payableAmount > 0 && $method != 'cash') {
             $paymentMethodType = $method = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         } elseif ($this->payableAmount == 0) {
-            companionLogger('-------------payableAmount', $this->payableAmount);
             /*<-- in kiosk device handle ZERO payment for update reservation-->*/
             $method = 'cash';
         }
@@ -456,15 +455,11 @@ abstract class BaseReservationUpdate
             'created_from'         => $this->updatedFrom,
         ];
 
-        companionLogger('-----------else if inside cash', $paymentMethodType, $method);
         if ($paymentMethodType == 'ccv') {
-            companionLogger('-----------if - 1');
             $this->ccvPayment();
         } elseif ($paymentMethodType == 'wipay') {
-            companionLogger('-----------if - 2');
             $this->wiPayment();
         } elseif ($paymentMethodType == '' && $method == 'cash') {
-            companionLogger('-----------else if inside cash', $paymentMethodType, $method);
             $this->cashPayment();
         }
     }
@@ -629,10 +624,6 @@ abstract class BaseReservationUpdate
 
     private function cashPayment()
     {
-//        if (! ($this->isBOP || in_array($this->reservation->method, ['manual_pin', 'cash']))) {
-//            return;
-//        }
-
         $isCashPaid = $this->system == SystemTypes::POS && ! empty($this->payload['cash_paid'] ?? 0);
         if ($isCashPaid) {
             $this->paymentDevicePayload['cash_paid'] = $this->payload['cash_paid'] ?? null;
