@@ -432,7 +432,7 @@ abstract class BaseReservationUpdate
             $method = 'cash';
         }
 
-        if (! $this->isBOP && $this->payableAmount > 0 && $method != 'cash') {
+        if (! $this->isBOP && $this->payableAmount > 0 && ! in_array($method, ['cash', 'manual_pin'])) {
             $paymentMethodType = $method = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         } elseif ($this->payableAmount == 0) {
             /*<-- in kiosk device handle ZERO payment for update reservation-->*/
