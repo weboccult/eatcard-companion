@@ -459,7 +459,7 @@ abstract class BaseReservationUpdate
             $this->ccvPayment();
         } elseif ($paymentMethodType == 'wipay') {
             $this->wiPayment();
-        } elseif ($paymentMethodType == '' && $method == 'cash') {
+        } elseif ($paymentMethodType == '' && in_array($method, ['cash', 'manual_pin'])) {
             $this->cashPayment();
         }
     }
