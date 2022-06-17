@@ -456,11 +456,15 @@ abstract class BaseReservationUpdate
             'created_from'         => $this->updatedFrom,
         ];
 
+        companionLogger('-----------else if inside cash', $paymentMethodType, $method);
         if ($paymentMethodType == 'ccv') {
+            companionLogger('-----------if - 1');
             $this->ccvPayment();
         } elseif ($paymentMethodType == 'wipay') {
+            companionLogger('-----------if - 2');
             $this->wiPayment();
         } elseif ($paymentMethodType == '' && $method == 'cash') {
+            companionLogger('-----------else if inside cash', $paymentMethodType, $method);
             $this->cashPayment();
         }
     }
@@ -625,9 +629,9 @@ abstract class BaseReservationUpdate
 
     private function cashPayment()
     {
-        if (! ($this->isBOP || in_array($this->reservation->method, ['manual_pin', 'cash']))) {
-            return;
-        }
+//        if (! ($this->isBOP || in_array($this->reservation->method, ['manual_pin', 'cash']))) {
+//            return;
+//        }
 
         $isCashPaid = $this->system == SystemTypes::POS && ! empty($this->payload['cash_paid'] ?? 0);
         if ($isCashPaid) {
