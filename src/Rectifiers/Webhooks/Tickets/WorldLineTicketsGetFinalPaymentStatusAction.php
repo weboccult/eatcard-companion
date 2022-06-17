@@ -50,6 +50,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         ]);
 
         $request_data->getHeaderLine('content-type');
+        companionLogger('------------------wipay response', $request_data->getBody()->getContents());
         $response = json_decode($request_data->getBody()->getContents(), true);
 
         $update_data = [];
