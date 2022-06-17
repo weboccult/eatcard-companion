@@ -62,7 +62,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
-        companionLogger('------update reservation payload', $reservationUpdatePayload);
+        companionLogger('------update reservation payload', $response);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
             $paymentStatus = 'paid';
