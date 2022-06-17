@@ -22,6 +22,7 @@ use Weboccult\EatcardCompanion\Exceptions\ReservationNoShow;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\ReservationJob;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\Meal;
@@ -39,6 +40,8 @@ use function Weboccult\EatcardCompanion\Helpers\checkTableMinMaxLimitAccordingTo
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
 use function Weboccult\EatcardCompanion\Helpers\getAycePrice;
+use function Weboccult\EatcardCompanion\Helpers\getModelId;
+use function Weboccult\EatcardCompanion\Helpers\getModelName;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
 use function Weboccult\EatcardCompanion\Helpers\assignedReservationTableOrUpdate;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
@@ -438,6 +441,8 @@ abstract class BaseReservationUpdate
 
         $this->paymentDevicePayload = [
             'store_id'             => $this->store->id,
+            'paymentable_type'     => getModelName(StoreReservation::class),
+            'paymentable_id'       => getModelId($this->reservation),
             'transaction_type'     => TransactionTypes::CREDIT,
             'payment_method_type'  => $paymentMethodType,
             'method'               => $method,
@@ -474,7 +479,7 @@ abstract class BaseReservationUpdate
     private function ccvPayment()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
-            $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+            $paymentDetails = PaymentDetail::query()->create($this->paymentDevicePayload);
 
             StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
             $this->reservation->refresh();
@@ -567,7 +572,7 @@ abstract class BaseReservationUpdate
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS])) {
             $order_price = round($this->payableAmount * 100, 0);
             $order_type = 'reservation';
-            $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+            $paymentDetails = PaymentDetail::query()->create($this->paymentDevicePayload);
 
             StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);
             $this->reservation->refresh();
@@ -642,7 +647,7 @@ abstract class BaseReservationUpdate
             $this->paymentDevicePayload['transaction_receipt'] = 'zero amount';
         }
 
-        $paymentDetails = $this->reservation->paymentTable()->create($this->paymentDevicePayload);
+        $paymentDetails = PaymentDetail::query()->create($this->paymentDevicePayload);
         $this->paymentResponse['payment_id'] = $paymentDetails->id;
 
         StoreReservation::query()->where('id', $this->reservation->id)->update(['ref_payment_id' =>$paymentDetails->id]);

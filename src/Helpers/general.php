@@ -2074,9 +2074,11 @@ if (! function_exists('checkAnotherMeeting')) {
                 ->pluck('reservation_id');
 
             $getTablesAllReservation = collect($allReservationIds)->whereIn('id', $particularReservationIds);
+            companionLogger('---------$getTablesAllReservation', $getTablesAllReservation);
 
             foreach ($getTablesAllReservation as $key => $tableReservation) {
                 $anotherMeeting = getAnotherMeetingByReservation($reservation, $tableReservation, $meal);
+                companionLogger('---------$anotherMeeting   ', $tableReservation->id, $anotherMeeting);
                 if ($anotherMeeting === true) {
                     return true;
                 }
@@ -2102,15 +2104,19 @@ if (! function_exists('getAnotherMeetingByReservation')) {
     function getAnotherMeetingByReservation($reservation, $item, $meal): bool
     {
         if (! empty($meal)) {
+            companionLogger('---------getAnotherMeetingByReservation   1.1   ', $meal->id);
             $reservation->meal = $meal;
         }
 
         $time_limit = 120;
+        companionLogger('---------getAnotherMeetingByReservation   1.2   ', $time_limit);
         if ($reservation->end_time) {
+            companionLogger('---------getAnotherMeetingByReservation   1.3   ', $reservation->end_time);
             $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
             $reservation->end_time = Carbon::parse($reservation->from_time)->addMinutes($time_limit)->format('H:i');
         }
         $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+        companionLogger('---------getAnotherMeetingByReservation   1.4   ', $end_time);
 
         return ($item->from_time > $reservation->from_time && $item->from_time < $reservation->end_time) || ($reservation->from_time > $item->from_time && $reservation->from_time < $end_time) || ($item->from_time == $reservation->from_time);
     }
@@ -2191,5 +2197,29 @@ if (! function_exists('checkTableMinMaxLimitAccordingToPerson')) {
         }
 
         return $isSkipReAssigned;
+    }
+}
+
+if (! function_exists('getModelName')) {
+    /**
+     * @param $model
+     *
+     * @return string
+     */
+    function getModelName($model): string
+    {
+        return class_basename($model);
+    }
+}
+
+if (! function_exists('getModelId')) {
+    /**
+     * @param $model
+     *
+     * @return mixed
+     */
+    function getModelId($model)
+    {
+        return $model->getKey();
     }
 }

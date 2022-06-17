@@ -9,11 +9,15 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
+use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
+use function Weboccult\EatcardCompanion\Helpers\getModelId;
+use function Weboccult\EatcardCompanion\Helpers\getModelName;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
@@ -31,8 +35,10 @@ trait Stage5PaymentProcess
     protected function ccvPayment()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS]) && $this->createdReservation->payment_method_type == 'ccv') {
-            $paymentDetails = $this->createdReservation->paymentTable()->create([
+            $paymentDetails = PaymentDetail::query()->create([
                 'store_id'             => $this->store->id,
+                'paymentable_type'     => getModelName(StoreReservation::class),
+                'paymentable_id'       => getModelId($this->createdReservation),
                 'transaction_type'     => TransactionTypes::CREDIT,
                 'payment_method_type'  => $this->createdReservation->payment_method_type,
                 'method'               => $this->createdReservation->method,
@@ -144,8 +150,10 @@ trait Stage5PaymentProcess
             $order_price = round($this->createdReservation->total_price * 100, 0);
             $order_type = 'reservation';
 
-            $paymentDetails = $this->createdReservation->paymentTable()->create([
+            $paymentDetails = PaymentDetail::query()->create([
                 'store_id'             => $this->store->id,
+                'paymentable_type'     => getModelName(StoreReservation::class),
+                'paymentable_id'       => getModelId($this->createdReservation),
                 'transaction_type'     => TransactionTypes::CREDIT,
                 'payment_method_type'  => $this->createdReservation->payment_method_type,
                 'method'               => $this->createdReservation->method,
@@ -221,8 +229,10 @@ trait Stage5PaymentProcess
 
         $isCashPaid = $this->system == SystemTypes::POS && ! empty($this->payload['cash_paid'] ?? 0);
 
-        $paymentDetails = $this->createdReservation->paymentTable()->create([
+        $paymentDetails = PaymentDetail::query()->create([
             'store_id'             => $this->store->id,
+            'paymentable_type'     => getModelName(StoreReservation::class),
+            'paymentable_id'       => getModelId($this->createdReservation),
             'transaction_type'     => TransactionTypes::CREDIT,
             'payment_method_type'  => $this->createdReservation->payment_method_type,
             'method'               => $this->createdReservation->method,
