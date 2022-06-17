@@ -57,7 +57,7 @@ trait Stage3PrepareBasicData
 
             companionLogger('---------pos end time 1st', $this->reservationData['end_time']);
 
-            if (strtotime($this->reservationData['end_time']) >= '24:00') {
+            if (strtotime($this->reservationData['end_time']) >= strtotime('24:00')) {
                 $this->reservationData['end_time'] = '23:59';
             }
 
