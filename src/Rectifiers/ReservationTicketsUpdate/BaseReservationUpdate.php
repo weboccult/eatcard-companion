@@ -184,7 +184,7 @@ abstract class BaseReservationUpdate
         $this->addRuleToCommonRules(StoreReservationEmptyException::class, empty($this->reservation ?? ''));
         $this->addRuleToCommonRules(MealEmptyException::class, empty($this->meal ?? ''));
         $this->addRuleToCommonRules(DeviceEmptyException::class, empty($this->device ?? ''));
-        $this->addRuleToCommonRules(DineInPriceEmptyException::class, $this->dineInPrice->count() == 0);
+        $this->addRuleToCommonRules(DineInPriceEmptyException::class, empty($this->dineInPrice));
         $this->addRuleToCommonRules(MealIdEmptyException::class, ! empty($this->reservation->is_checkout ?? 0));
         $this->addRuleToCommonRules(ReservationCancelled::class, $this->reservation->status == 'cancelled');
         $this->addRuleToCommonRules(ReservationNoShow::class, $this->reservation->is_seated == 2);
