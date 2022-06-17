@@ -435,6 +435,7 @@ abstract class BaseReservationUpdate
         if (! $this->isBOP && $this->payableAmount > 0 && $method != 'cash') {
             $paymentMethodType = $method = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         } elseif ($this->payableAmount == 0) {
+            companionLogger('-------------payableAmount', $this->payableAmount);
             /*<-- in kiosk device handle ZERO payment for update reservation-->*/
             $method = 'cash';
         }
