@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use function Weboccult\EatcardCompanion\Helpers\calculateAllYouCanEatPerson;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generateRandomNumberV2;
 use function Weboccult\EatcardCompanion\Helpers\generateReservationId;
 use function Weboccult\EatcardCompanion\Helpers\getAycePrice;
@@ -54,9 +55,13 @@ trait Stage3PrepareBasicData
             $this->reservationData['from_time'] = $this->reservationData['res_time'] = Carbon::parse($this->payload['from_time'])->format('H:i');
             $this->reservationData['end_time'] = Carbon::parse($this->payload['from_time'])->addMinutes($this->meal->time_limit)->format('H:i');
 
+            companionLogger('---------pos end time 1st', $this->reservationData['end_time']);
+
             if (strtotime($this->reservationData['end_time']) >= '24:00') {
                 $this->reservationData['end_time'] = '23:59';
             }
+
+            companionLogger('---------pos end time 2st', $this->reservationData['end_time']);
         }
 
         $this->isBOP = isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets';
