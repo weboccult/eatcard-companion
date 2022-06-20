@@ -288,12 +288,8 @@ trait TicketsWebhookCommonActions
         $this->fetchedReservation->refresh();
         $this->fetchedPaymentDetails->refresh();
 
-        companionLogger('-------creat', $this->fetchedPaymentDetails->process_type, $update_data['local_payment_status']);
-
         if ($this->fetchedPaymentDetails->process_type == 'create') {
-            companionLogger('------in          1');
             if ($update_data['local_payment_status'] == 'paid') {
-                companionLogger('------in          2');
                 $this->setLimitHoursIntoStoreData();
                 $this->sendReservationStatusChangeEmail();
                 $this->sendNewReservationEmailToOwner();
@@ -301,7 +297,6 @@ trait TicketsWebhookCommonActions
                 /*Publish new reservation socket*/
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'payment_status_update');
             } elseif ($update_data['local_payment_status'] == 'failed') {
-                companionLogger('------else id          1');
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
             }
         }

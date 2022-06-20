@@ -580,7 +580,7 @@ if (! function_exists('sendResWebNotification')) {
 
             /*web notification*/
             $reservation = ReservationTable::whereHas('reservation', function ($q) use ($store_id) {
-                $q/*->whereHas('meal')*/ ->where('status', 'approved');
+                $q/*->whereHas('meal')*/ ->whereIn('status', ['approved', 'pending', 'cancelled', 'declined']);
             })->with([
                 'reservation' => function ($q) use ($store_id) {
                     $q->with([
@@ -602,7 +602,7 @@ if (! function_exists('sendResWebNotification')) {
                 },
             ])->where('reservation_id', $id)->first();
 
-            companionLogger('------res', $reservation);
+            companionLogger('-----reservation found and reservations count', $reservation->count());
             if ($reservation && $reservation->reservation) {
                 $reservation->reservation->end = 120;
                 if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
@@ -829,8 +829,8 @@ if (! function_exists('sendResWebNotification')) {
                     'additional_data' => $additionalData,
                     'system_name'     => env('APP_NAME', 'Package'),
                 ]));
+                companionLogger('-------channel', $channel, $id, $store_id, $additionalData);
             }
-            companionLogger('-------channel', $channel, $id, $store_id, $additionalData);
 
             return true;
         } catch (\Exception $e) {
