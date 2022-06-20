@@ -829,7 +829,7 @@ if (! function_exists('sendResWebNotification')) {
                     'additional_data' => $additionalData,
                     'system_name'     => env('APP_NAME', 'Package'),
                 ]));
-                companionLogger('-------channel', $channel, $id, $store_id, $additionalData);
+                companionLogger('-------channel', $channel, $id, $store_id);
             }
 
             return true;
