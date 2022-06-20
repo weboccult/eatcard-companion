@@ -244,12 +244,9 @@ trait TicketsWebhookCommonActions
 
         if ($this->fetchedPaymentDetails->process_type == 'update' && $update_payment_data['local_payment_status'] == 'paid') {
             $ayceData = json_decode($this->fetchedReservation->all_you_eat_data ?? '', true);
-            companionLogger('aycedata', $ayceData, isset($ayceData['oldAssignTables']));
             if (isset($ayceData['oldAssignTables']) && ! empty($ayceData)) {
                 $oldAssignedTable = $ayceData['oldAssignTables'] ?? [];
                 $newAssignedTable = $ayceData['newAssignTables'] ?? [];
-
-                companionLogger('-----tabledata', $oldAssignedTable, $newAssignedTable);
 
                 if (! empty($newAssignedTable)) {
                     ReservationTable::query()
@@ -262,7 +259,6 @@ trait TicketsWebhookCommonActions
                         $this->fetchedReservation->update(['group_id' => 0]);
                     }
                 }
-                companionLogger('-----remove old assigned tables-----123', $newAssignedTable, $oldAssignedTable, $this->fetchedReservation->id);
                 unset($ayceData['oldAssignTables']);
                 unset($ayceData['newAssignTables']);
                 $this->fetchedReservation->update(['all_you_eat_data' => json_encode($ayceData ?? [])]);
@@ -292,8 +288,12 @@ trait TicketsWebhookCommonActions
         $this->fetchedReservation->refresh();
         $this->fetchedPaymentDetails->refresh();
 
+        companionLogger('-------creat', $this->fetchedPaymentDetails->process_type, $update_data['local_payment_status']);
+
         if ($this->fetchedPaymentDetails->process_type == 'create') {
+            companionLogger('------in          1');
             if ($update_data['local_payment_status'] == 'paid') {
+                companionLogger('------in          2');
                 $this->setLimitHoursIntoStoreData();
                 $this->sendReservationStatusChangeEmail();
                 $this->sendNewReservationEmailToOwner();
@@ -301,6 +301,7 @@ trait TicketsWebhookCommonActions
                 /*Publish new reservation socket*/
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'payment_status_update');
             } elseif ($update_data['local_payment_status'] == 'failed') {
+                companionLogger('------else id          1');
                 sendResWebNotification($this->fetchedReservation->id, $this->fetchedStore->id, 'remove_booking');
             }
         }

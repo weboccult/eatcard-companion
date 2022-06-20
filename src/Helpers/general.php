@@ -602,6 +602,7 @@ if (! function_exists('sendResWebNotification')) {
                 },
             ])->where('reservation_id', $id)->first();
 
+            companionLogger('------res', $reservation);
             if ($reservation && $reservation->reservation) {
                 $reservation->reservation->end = 120;
                 if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
@@ -722,6 +723,7 @@ if (! function_exists('sendResWebNotification')) {
                 $start = Carbon::parse($reservation->from_time)->format('H:i');
                 $end = Carbon::parse($reservation->end_time)->diffInMinutes($start);
                 if ($channel == 'remove_booking') {
+                    companionLogger('--------remove booking');
                     $additionalData = json_encode([
                         'reservation_id'          => $reservation->reservation->id,
                         'status'                  => $reservation->reservation->status,
@@ -828,7 +830,7 @@ if (! function_exists('sendResWebNotification')) {
                     'system_name'     => env('APP_NAME', 'Package'),
                 ]));
             }
-            companionLogger('-------channel', $channel, $id, $store_id);
+            companionLogger('-------channel', $channel, $id, $store_id, $additionalData);
 
             return true;
         } catch (\Exception $e) {

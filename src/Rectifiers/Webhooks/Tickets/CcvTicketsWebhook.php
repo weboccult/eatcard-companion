@@ -38,7 +38,6 @@ class CcvTicketsWebhook extends BaseWebhook
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
-        companionLogger('------update reservation payload', $reservationUpdatePayload);
 
         $response = [];
         if (isset($this->payload['bop_status']) && ! empty($this->payload['bop_status'])) {
@@ -61,7 +60,7 @@ class CcvTicketsWebhook extends BaseWebhook
             ]);
             $request->getHeaderLine('content-type');
             $response = json_decode($request->getBody()->getContents(), true);
-            companionLogger('CCV api res', $response);
+            companionLogger('----------- CCV api response  ', $response);
         }
 
         $old_status = $this->fetchedPaymentDetails->payment_status;

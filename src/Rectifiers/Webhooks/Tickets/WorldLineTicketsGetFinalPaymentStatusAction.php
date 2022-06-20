@@ -62,6 +62,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
         companionLogger('------update reservation response wipay', $response);
+        companionLogger('------update reservation log', $status);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
             $paymentStatus = 'paid';
@@ -100,6 +101,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
 
             return true;
         }
+        companionLogger('------------should come here', $status);
 
         if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
