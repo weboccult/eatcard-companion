@@ -390,7 +390,7 @@ abstract class BaseReservationSlots
 
 //                    companionLogger('-------availableTables', $availableTables);
                     if (! $availableTables) {
-                        companionLogger('5. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                        companionLogger('5. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
                         $this->pickUpSlot[$index]->disable = true;
                         continue;
                     }
@@ -402,14 +402,14 @@ abstract class BaseReservationSlots
                             $personRange = range($singleTable->no_of_min_seats, $singleTable->no_of_seats);
                             if (in_array($person, $personRange)) {
 //                                $tableAvailable = true;
-                                companionLogger('Slot is enable-1 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                companionLogger('Slot is enable-1 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
                                 $this->pickUpSlot[$index]->disable = false;
                                 continue 2;
                             }
 
                             $personRange = range($singleTable->no_of_min_seats, ($singleTable->no_of_seats + 1));
                             if (in_array($person, $personRange)) {
-                                companionLogger('Slot is enable-2 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                companionLogger('Slot is enable-2 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
                                 $this->pickUpSlot[$index]->disable = false;
                                 continue 2;
                             }
@@ -420,7 +420,7 @@ abstract class BaseReservationSlots
 //                            $this->pickUpSlot[$index]->disable = true;
 //                        }
                         if (empty($this->store->allow_auto_group)) {
-                            companionLogger('6. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                            companionLogger('6. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
                             $this->pickUpSlot[$index]->disable = true;
                             continue;
                         }
@@ -456,13 +456,13 @@ abstract class BaseReservationSlots
                                 $match = bestsum($refTable, $person);
                                 if (! empty($match) && (array_sum($match) == $person || array_sum($match) == $person + 1)) {
                                     $this->pickUpSlot[$index]->disable = false;
-                                    companionLogger('Slot is enable-3 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                    companionLogger('Slot is enable-3 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
 //                                    continue 2;
                                 } else {
                                     $match = bestsum($refTable, $person + 1);
                                     if ($match && array_sum($match) == $person + 1) {
                                         $this->pickUpSlot[$index]->disable = false;
-                                        companionLogger('Slot is enable-4 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                        companionLogger('Slot is enable-4 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time, $person);
 //                                        continue 2;
                                     }
                                 }
