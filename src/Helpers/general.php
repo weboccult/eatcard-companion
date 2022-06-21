@@ -2156,6 +2156,7 @@ if (! function_exists('assignedReservationTableOrUpdate')) {
 
             $payload['group_id'] = $groupId;
             $payload['all_you_eat_data'] = json_encode($payload['all_you_eat_data']);
+            unset($payload['total_price'], $payload['original_total_price']);
             StoreReservation::query()->where('id', $reservation->id)->update($payload);
 
             sendResWebNotification($reservation->id, $reservation->store_id, 'new_booking');
