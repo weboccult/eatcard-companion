@@ -127,6 +127,9 @@ abstract class BaseReservationSlots
             $this->Stage8prepareAndSendJsonResponse();
 
             return $this->returnResponseData;
+        } catch (ReservationOffException $e) {
+            $this->returnResponseData['disable_dates'] = $this->offDayAndDate;
+            throw new \Exception($e->getMessage() ?? 'Something went wrong...!');
         } catch (\Exception $e) {
             companionLogger('----Companion slots Exception', $e->getMessage(), $e->getFile(), $e->getLine());
             throw new \Exception($e->getMessage() ?? 'Something went wrong...!');
@@ -209,7 +212,7 @@ abstract class BaseReservationSlots
     {
 //        companionLogger('--------Stage4GetPickUpTimeSlots', $this->offDayAndDate, $this->date, in_array($this->date, $this->offDayAndDate->toArray()));
         if (! empty($this->offDayAndDate) && in_array($this->date, $this->offDayAndDate->toArray())) {
-//            throw new ReservationOffException();
+            throw new ReservationOffException();
         }
 
         $this->pickUpSlot = [];
