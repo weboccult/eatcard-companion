@@ -338,7 +338,7 @@ abstract class BaseReservationUpdate
             if (! empty($this->payload['table_ids'] ?? [])) {
                 try {
                     $tables = $this->payload['table_ids'] ?? [];
-                    assignedReservationTableOrUpdate($this->reservation, $tables);
+                    assignedReservationTableOrUpdate($this->reservation, $tables, $this->updatePayload);
                 } catch (\Exception $exception) {
                     throwException($exception);
                 }

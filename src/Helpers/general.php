@@ -2119,15 +2119,18 @@ if (! function_exists('getAnotherMeetingByReservation')) {
 }
 
 if (! function_exists('assignedReservationTableOrUpdate')) {
+
     /**
      * @param $reservation
      * @param $reservationNewTables
+     * @param array $payload
      *
      * @return bool
      */
-    function assignedReservationTableOrUpdate($reservation, $reservationNewTables): bool
+    function assignedReservationTableOrUpdate($reservation, $reservationNewTables, array $payload = []): bool
     {
         try {
+            $groupId = 0;
             $newTable = $reservationNewTables;
             /*<--- remove old table if not in destination table  ----->*/
             ReservationTable::query()->where('reservation_id', $reservation->id)->whereNotIn('table_id', $newTable)->delete();
@@ -2143,13 +2146,19 @@ if (! function_exists('assignedReservationTableOrUpdate')) {
                 }
             }
 
+            $groupId = $reservation->group_id ?? 0;
             if ($reservation['group_id'] > 0 && count($newTable) <= 1) {
-                StoreReservation::query()->where('id', $reservation->id)->update(['group_id' => 0]);
+                $groupId = 0;
             } elseif ($reservation['group_id'] == 0 && count($newTable) > 1) {
                 $last_group_id = getLatestGroupId($reservation->reservation_date, $reservation->store_id);
-                $group_id = $last_group_id + 1;
-                StoreReservation::query()->where('id', $reservation->id)->update(['group_id' => $group_id]);
+                $groupId = $last_group_id + 1;
             }
+
+            $payload['group_id'] = $groupId;
+            $payload['all_you_eat_data'] = json_encode($payload['all_you_eat_data']);
+            StoreReservation::query()->where('id', $reservation->id)->update($payload);
+
+            sendResWebNotification($reservation->id, $reservation->store_id, 'new_booking');
 
             return true;
         } catch (\Exception $e) {
