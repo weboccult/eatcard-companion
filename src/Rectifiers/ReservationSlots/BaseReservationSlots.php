@@ -279,23 +279,26 @@ abstract class BaseReservationSlots
     {
         if ($this->date == Carbon::now()->format('Y-m-d')) {
             $current24Time = Carbon::now()->format('G:i');
-            collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($current24Time) {
+//            collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($current24Time) {
+            foreach ($this->pickUpSlot as $index => $pickTime) {
                 $this->pickUpSlot[$index]->disable = false;
 
                 // Checking if time has been past for today
                 if (strtotime($pickTime->from_time) <= strtotime($current24Time) && $this->date >= Carbon::now()->format('Y-m-d')) {
-                    companionLogger('1. Slot is disable | stage :- Stage6EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
+                    companionLogger('1. Slot is disable | stage :- Stage5EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
                     $this->pickUpSlot[$index]->disable = true;
+                    continue;
                 }
                 // check if Set time is equal to current time or bigger than SET TIME
                 $bookingOffTime = strtotime($this->store->booking_off_time == '00:00' ? '24:00' : $this->store->booking_off_time);
                 if ($this->store->is_booking_enable == 1 && strtotime($current24Time) >= $bookingOffTime && $this->date >= Carbon::now()->format('Y-m-d')) {
                     if (strtotime($pickTime->from_time) >= strtotime($current24Time)) {
-                        companionLogger('2. Slot is disable | stage :- Stage6EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
+                        companionLogger('2. Slot is disable | stage :- Stage5EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
                         $this->pickUpSlot[$index]->disable = true;
+                        continue;
                     }
                 }
-            });
+            }
         }
     }
 
@@ -316,21 +319,25 @@ abstract class BaseReservationSlots
                     ->where('is_seated', '!=', 2)
                     ->get();
 
-        collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($person) {
+//        collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($person) {
+        foreach ($this->pickUpSlot as $index => $pickTime) {
             if ($pickTime->disable == false) {
                 if ($this->store->reservation_off_chkbx == 1 && $this->date == Carbon::now()->format('Y-m-d')) {
                     companionLogger('Reservation booking setting is off');
                     $this->pickUpSlot[$index]->disable = true;
+                    continue;
                 }
 //                companionLogger('--------slots', $pickTime);
                 if (! empty($pickTime->is_slot_disabled) && ($this->date == Carbon::now()->format('Y-m-d'))) {
                     companionLogger('Slot is off from admin dashboard');
                     $this->pickUpSlot[$index]->disable = true;
+                    continue;
                 }
                 if ($pickTime->max_entries != 'Unlimited') {
                     if ($person > $pickTime->max_entries) {
-                        companionLogger('3. Slot is disable | stage :- Stage5EnableDisablePickUpSlotBySlotCapacity', $pickTime->from_time);
+                        companionLogger('3. Slot is disable | stage :- Stage6EnableDisablePickUpSlotBySlotCapacity', $pickTime->from_time);
                         $this->pickUpSlot[$index]->disable = true;
+                        continue;
                     } else {
                         $endTime = checkSlotAvailability($pickTime->from_time, $index, $this->pickUpSlot);
                         $assignPersons = $this->allReservation->where('from_time', '>=', $pickTime->from_time)
@@ -338,13 +345,14 @@ abstract class BaseReservationSlots
                             ->sum('person');
                         $remainPersons = (int) $pickTime->max_entries - (int) ($assignPersons ?? 0);
                         if ($person > $remainPersons) {
-                            companionLogger('4. Slot is disable | stage :- Stage5EnableDisablePickUpSlotBySlotCapacity', $pickTime->from_time);
+                            companionLogger('4. Slot is disable | stage :- Stage6EnableDisablePickUpSlotBySlotCapacity', $pickTime->from_time);
                             $this->pickUpSlot[$index]->disable = true;
+                            continue;
                         }
                     }
                 }
             }
-        });
+        }
     }
 
     protected function Stage7EnableDisablePickUpSlotByTableAndSmartFit()
@@ -360,7 +368,8 @@ abstract class BaseReservationSlots
                 ->where('tables.online_status', 1)
                 ->get();
 
-            $this->pickUpSlot->map(function ($pickTime, $index) use ($person) {
+//            $this->pickUpSlot->map(function ($pickTime, $index) use ($person) {
+            foreach ($this->pickUpSlot as $index => $pickTime) {
                 if ($pickTime->disable == false) {
                     $tableIds = $this->tables->pluck('id')->toArray();
                     $assignTables = [];
@@ -378,25 +387,42 @@ abstract class BaseReservationSlots
 
 //                    companionLogger('-------availableTables', $availableTables);
                     if (! $availableTables) {
-                        companionLogger('5. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                        companionLogger('5. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
                         $this->pickUpSlot[$index]->disable = true;
+                        continue;
                     }
 
                     if ($this->store->is_smart_fit) {
-                        $tableAvailable = false;
+//                        $tableAvailable = false;
                         foreach ($availableTables as $table) {
                             $singleTable = $this->tables->where('id', $table)->first();
                             $personRange = range($singleTable->no_of_min_seats, $singleTable->no_of_seats);
                             if (in_array($person, $personRange)) {
-                                $tableAvailable = true;
+//                                $tableAvailable = true;
+                                companionLogger('Slot is enable-1 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                $this->pickUpSlot[$index]->disable = false;
+                                continue 2;
+                            }
+
+                            $personRange = range($singleTable->no_of_min_seats, ($singleTable->no_of_seats + 1));
+                            if (in_array($person, $personRange)) {
+                                companionLogger('Slot is enable-2 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+                                $this->pickUpSlot[$index]->disable = false;
+                                continue 2;
                             }
                         }
 
-                        if (! $tableAvailable) {
-                            companionLogger('6. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+//                        if (! $tableAvailable) {
+//                            companionLogger('6. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+//                            $this->pickUpSlot[$index]->disable = true;
+//                        }
+                        if (empty($this->store->allow_auto_group)) {
+                            companionLogger('6. Slot is disable | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
                             $this->pickUpSlot[$index]->disable = true;
+                            continue;
                         }
 
+                        $this->pickUpSlot[$index]->disable = true;
                         /*get available tables section wise*/
                         $sections = DiningArea::with([
                             'tables' => function ($q1) use ($availableTables, $person) {
@@ -425,25 +451,23 @@ abstract class BaseReservationSlots
                                     return $a <=> $b;
                                 });
                                 $match = bestsum($refTable, $person);
-                                if ($match && (array_sum($match) == $person || array_sum($match) == $person + 1)) {
-                                    if ((collect($match)->count() == 1) || ($this->store->allow_auto_group == 1 && collect($match)->count() > 1)) {
-                                        $this->pickUpSlot[$index]->disable = false;
-                                        companionLogger('7. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
-                                    }
+                                if (! empty($match) && (array_sum($match) == $person || array_sum($match) == $person + 1)) {
+                                    $this->pickUpSlot[$index]->disable = false;
+                                    companionLogger('Slot is enable-3 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+//                                    continue 2;
                                 } else {
                                     $match = bestsum($refTable, $person + 1);
                                     if ($match && array_sum($match) == $person + 1) {
-                                        if ((collect($match)->count() == 1) || ($this->store->allow_auto_group == 1 && collect($match)->count() > 1)) {
-                                            $this->pickUpSlot[$index]->disable = false;
-                                            companionLogger('8. Slot is disable | stage :- Stage8EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
-                                        }
+                                        $this->pickUpSlot[$index]->disable = false;
+                                        companionLogger('Slot is enable-4 | stage :- Stage7EnableDisablePickUpSlotByTableAndSmartFit', $pickTime->from_time);
+//                                        continue 2;
                                     }
                                 }
                             }
                         }
                     }
                 }
-            });
+            }
             companionLogger('-------- final slot', $this->pickUpSlot);
         }
     }
