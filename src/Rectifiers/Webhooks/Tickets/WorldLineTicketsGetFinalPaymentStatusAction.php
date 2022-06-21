@@ -129,6 +129,9 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
 
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 
-        return $this->fetchedReservation;
+        return [
+            'payment_status' => $this->fetchedPaymentDetails->payment_status,
+            'reservation_id' => $this->fetchedPaymentDetails->paymentable_id,
+        ];
     }
 }
