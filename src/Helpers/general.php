@@ -605,7 +605,6 @@ if (! function_exists('sendResWebNotification')) {
                 },
             ])->where('reservation_id', $id)->first();
 
-            companionLogger('-----reservation found and reservations count', $reservation->count());
             if ($reservation && $reservation->reservation) {
                 $reservation->reservation->end = 120;
                 if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
