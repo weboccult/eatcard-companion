@@ -18,6 +18,7 @@ use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
+use function Weboccult\EatcardCompanion\Helpers\undoCheckIn;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
 /**
@@ -280,6 +281,11 @@ trait TicketsWebhookCommonActions
                         $this->fetchedReservation->update(['group_id' => 0]);
                     }
                 }
+            }
+
+            if ($this->fetchedReservation->is_seated == 1) {
+                $this->payload['event_from'] = $this->fetchedPaymentDetails->created_from ?? '';
+                undoCheckIn($this->fetchedReservation, $this->payload);
             }
         }
 

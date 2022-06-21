@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Weboccult\EatcardCompanion\Models\AllYouEatCategories;
 use Weboccult\EatcardCompanion\Models\Device;
+use Weboccult\EatcardCompanion\Models\DineinCart;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\EmailCount;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
@@ -22,6 +23,8 @@ use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderDeliveryDetails;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Product;
+use Weboccult\EatcardCompanion\Models\ReservationDineIn;
+use Weboccult\EatcardCompanion\Models\ReservationEvent;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -2227,5 +2230,33 @@ if (! function_exists('getModelId')) {
     function getModelId($model)
     {
         return $model->getKey();
+    }
+}
+
+if (! function_exists('undoCheckIn')) {
+    /**
+     * @param $reservation
+     * @param array $extra
+     */
+    function undoCheckIn($reservation, array $extra = [])
+    {
+        StoreReservation::query()->find($reservation->id)->update([
+            'checked_in_at'      => null,
+            'is_seated'          => 0,
+            'undo_checkin_count' => ($reservation->undo_checkin_count + 1),
+            'is_second_scan'     => 0,
+        ]);
+
+        ReservationEvent::query()->create([
+            'user_id'    => $extra['user_id'] ?? 0,
+            'res_id'     => $reservation->id,
+            'event_from' => $extra['event_from'],
+            'event'      => 'undo_check_in',
+        ]);
+
+        ReservationDineIn::query()->where('reservation_id', $reservation->id)->delete();
+        DineinCart::query()->where('reservation_id', $reservation->id)->delete();
+
+        sendResWebNotification($reservation->id, $reservation->store_id, 'undo_check_in');
     }
 }
