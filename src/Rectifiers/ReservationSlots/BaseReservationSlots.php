@@ -325,6 +325,7 @@ abstract class BaseReservationSlots
 
     protected function Stage5EnableDisablePickUpSlotByPastTimeOff()
     {
+        companionLogger('-----Selected Pickup slot : ', $this->pickUpSlot);
         if ($this->date == Carbon::now()->format('Y-m-d')) {
             $current24Time = Carbon::now()->format('G:i');
 //            collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($current24Time) {
