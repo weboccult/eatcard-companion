@@ -12,6 +12,7 @@ use Weboccult\EatcardCompanion\Enums\TransactionTypes;
 use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\RefundAmountTotalIsGreaterThenOriginalPriceException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationAlreadyExists;
 use Weboccult\EatcardCompanion\Exceptions\ReservationAmountLessThenZero;
 use Weboccult\EatcardCompanion\Exceptions\ReservationCancelled;
@@ -261,7 +262,7 @@ abstract class BaseReservationUpdate
             'all_you_eat_data'     => $reservationAllYouEatData,
             'person'               => $person ?? 0,
             'total_price'          => $this->allYouEatPrice ?? 0,
-            'original_total_price' => $this->allYouEatPrice ?? 0,
+//            'original_total_price' => $this->allYouEatPrice ?? 0,
         ];
 
         $this->payableAmount = (float) ($this->allYouEatPrice - $this->reservation->total_price);
@@ -269,7 +270,50 @@ abstract class BaseReservationUpdate
         companionLogger('----payableAmount | TotalAmount | allYouEatPrice-----', $this->payableAmount, $this->reservation->total_price, $this->allYouEatPrice);
 
         if ($this->payableAmount < 0) {
-            throw new ReservationAmountLessThenZero();
+            if ($this->system == SystemTypes::KIOSKTICKETS) {
+                throw new ReservationAmountLessThenZero();
+            }
+
+            $amountNeedToRefund = abs($this->payableAmount);
+            /*
+             *
+             *  refund entry in payment table
+             *  minus refund amount form total and entry in refund amount entry
+             *  update reservation and do all the stuff whatever is need
+             *  return response with refund success
+             *
+             */
+            if ($this->reservation->original_total_price <= $this->reservation->refund_price && ! empty($this->reservation->is_refunded)) {
+                companionLogger('amount is refunded or amount is greater than original total');
+                throw new RefundAmountTotalIsGreaterThenOriginalPriceException();
+            }
+            $this->paymentDevicePayload = [
+                'store_id'             => $this->store->id,
+                'paymentable_type'     => getModelName(StoreReservation::class),
+                'paymentable_id'       => getModelId($this->reservation),
+                'transaction_type'     => TransactionTypes::DEBIT,
+                'method'               => 'cash',
+                'payment_status'       => 'paid',
+                'local_payment_status' => 'paid',
+                'paid_on'              => Carbon::now()->format('Y-m-d H:i:s'),
+                'amount'               => $amountNeedToRefund,
+                'kiosk_id'             => $this->device->id,
+                'process_type'         => 'create',
+                'created_from'         => $this->updatedFrom,
+            ];
+            $updateReservationData = [
+                'dinein_price_id'  => $this->payload['dinein_price_id'] ?? 0,
+                'all_you_eat_data' => json_encode($reservationAllYouEatData),
+                'person'           => $person ?? 0,
+                'total_price'      => (float) ($this->reservation->total_price - $amountNeedToRefund),
+                'refund_price'     => $this->reservation->refund_price + $amountNeedToRefund,
+                'is_refunded'      => $this->reservation->original_total_price == ($this->reservation->refund_price + $amountNeedToRefund) ? 1 : 0,
+            ];
+            $paymentDetails = PaymentDetail::query()->create($this->paymentDevicePayload);
+            companionLogger('------refund | payment detail ', $paymentDetails);
+            StoreReservation::query()->find($this->reservation->id)->update($updateReservationData);
+        } else {
+            $this->updatePayload['original_total_price'] = $this->reservation->original_total_price + $this->payableAmount;
         }
 
         $this->isReAssignTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);
@@ -466,6 +510,17 @@ abstract class BaseReservationUpdate
 
     protected function Stage8prepareAndSendJsonResponse()
     {
+        if ($this->payableAmount < 0 && ($this->payload['refund'] ?? false)) {
+            companionLogger('refund successfully');
+            $this->paymentResponse = [
+                'id' => $this->reservation->id,
+                'refund_amount' => abs($this->payableAmount),
+                'message' => 'Refund successfully',
+            ];
+
+            return;
+        }
+
         if (empty($this->paymentResponse)) {
             companionLogger('Not supported method found.!');
             $this->paymentResponse = [];
