@@ -22,7 +22,6 @@
     "ext-json": "*",
     "ext-openssl": "*",
     "ext-simplexml": "*",
-    "aws/aws-sdk-php": "^3.171 || ^3.19 || ^3.2",
     "barryvdh/laravel-dompdf": "^0.9.0 || ^1.0.0",
     "cmgmyr/messenger": "^2.22",
     "guzzlehttp/guzzle": "^6.3 || ^7.0",
