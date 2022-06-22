@@ -262,9 +262,9 @@ abstract class BaseReservationSlots
 
         $isDaySlotExist = StoreWeekDay::where('store_id', $this->storeId)
             ->where('name', Carbon::parse($this->date)->format('l'))
-            ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                $q->where('id', $slotId);
-            })
+//            ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+//                $q->where('id', $slotId);
+//            })
             ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q) {
                 $q->where('is_week_day_meal', 1);
             })
