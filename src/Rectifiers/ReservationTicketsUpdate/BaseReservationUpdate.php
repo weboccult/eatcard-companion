@@ -448,7 +448,7 @@ abstract class BaseReservationUpdate
                 unset($ayceData['assignTableStatus']);
                 $ayceData = json_encode($ayceData);
                 StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
-                if($reservationStatus == 'failed') {
+                if ($reservationStatus == 'failed') {
                     throw new \Exception('Sorry selected slot is not available.Please try another time slot');
                 }
             }
