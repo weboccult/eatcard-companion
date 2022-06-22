@@ -444,11 +444,13 @@ abstract class BaseReservationUpdate
         $this->reservation->refresh();
         if (! empty($ayceData)) {
             $reservationStatus = $ayceData['assignTableStatus'] ?? '';
-            if (! empty($reservationStatus) && $reservationStatus == 'failed') {
+            if (! empty($reservationStatus)) {
                 unset($ayceData['assignTableStatus']);
                 $ayceData = json_encode($ayceData);
                 StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
-                throw new \Exception('Sorry selected slot is not available.Please try another time slot');
+                if($reservationStatus == 'failed') {
+                    throw new \Exception('Sorry selected slot is not available.Please try another time slot');
+                }
             }
         }
 
