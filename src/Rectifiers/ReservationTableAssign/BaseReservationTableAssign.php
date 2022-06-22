@@ -170,6 +170,8 @@ abstract class BaseReservationTableAssign
 
         $this->currentReservation = StoreReservation::with('tables2')->where('id', $this->reservationId)->first();
 
+        $this->currentAssignTables = $this->currentReservation->tables2->pluck('id')->toArray() ?? [];
+
         $slotType = $this->payload['data_model'] ?? '';
 
         $slotId = $this->payload['slot_id'] ?? '';
@@ -225,7 +227,6 @@ abstract class BaseReservationTableAssign
           'slot_type' => $this->slotType,
         ];
 
-        $this->currentAssignTables = $this->currentReservation->tables2->pluck('id')->toArray() ?? [];
         $this->reservationCheckAttempt = (int) ($this->payload['reservation_check_attempt'] ?? 0) + 1;
     }
 
