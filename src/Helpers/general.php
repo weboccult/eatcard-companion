@@ -1943,7 +1943,8 @@ if (! function_exists('getAnotherMeeting')) {
         $another_meeting = (strtotime($item->from_time) > strtotime($reservation->from_time) && strtotime($item->from_time) < strtotime($reservation->end_time)) ||
             (strtotime($reservation->from_time) > strtotime($item->from_time) && strtotime($reservation->from_time) < strtotime($end_time)) ||
             (strtotime($item->from_time) == strtotime($reservation->from_time));
-        companionLogger("----Test another meeting---------",
+        companionLogger(
+            '----Test another meeting---------',
             (strtotime($item->from_time) > strtotime($reservation->from_time) && strtotime($item->from_time) < strtotime($reservation->end_time)) ||
                     (strtotime($reservation->from_time) > strtotime($item->from_time) && strtotime($reservation->from_time) < strtotime($end_time)) ||
                     (strtotime($item->from_time) == strtotime($reservation->from_time))
