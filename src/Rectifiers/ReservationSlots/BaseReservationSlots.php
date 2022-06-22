@@ -262,9 +262,6 @@ abstract class BaseReservationSlots
 
         $isDaySlotExist = StoreWeekDay::where('store_id', $this->storeId)
             ->where('name', Carbon::parse($this->date)->format('l'))
-//            ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-//                $q->where('id', $slotId);
-//            })
             ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q) {
                 $q->where('is_week_day_meal', 1);
             })
@@ -284,7 +281,6 @@ abstract class BaseReservationSlots
                 ->orderBy('from_time', 'ASC')
                 ->get();
 
-            companionLogger('-------Test log 1--------------------------', $this->date);
             $this->pickUpSlot = $isSlotModifiedAvailable;
             $this->modelName = 'StoreSlotModified';
         } elseif ($isDaySlotExist) {
@@ -306,20 +302,17 @@ abstract class BaseReservationSlots
             ->where('store_slots.store_weekdays_id', '!=', null)
             ->orderBy('store_slots.from_time', 'ASC')
             ->get();
-            companionLogger('-------Test log 2--------------------------', $this->date);
             $this->pickUpSlot = $daySlot;
             $this->modelName = 'StoreSlot';
         } else {
             $defaultSlot = StoreSlot::where('store_id', $this->storeId)
                 ->where('meal_id', $this->mealId)
                 ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                    companionLogger('-------Test log 3.1--------------------------', $slotId);
                     $q->where('id', $slotId);
                 })
                 ->doesntHave('store_weekday')
                 ->orderBy('from_time', 'ASC')
                 ->get();
-            companionLogger('-------Test log 3--------------------------', $slotId, $this->date);
             $this->pickUpSlot = $defaultSlot;
             $this->modelName = 'StoreSlot';
         }
@@ -327,7 +320,7 @@ abstract class BaseReservationSlots
 
     protected function Stage5EnableDisablePickUpSlotByPastTimeOff()
     {
-        companionLogger('-----Selected Pickup slot : ', $this->pickUpSlot);
+        companionLogger('-----Selected Pickup slot : ', $this->modelName, $this->pickUpSlot);
         if ($this->date == Carbon::now()->format('Y-m-d')) {
             $current24Time = Carbon::now()->format('G:i');
 //            collect($this->pickUpSlot)->map(function ($pickTime, $index) use ($current24Time) {
