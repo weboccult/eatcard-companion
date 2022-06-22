@@ -241,11 +241,11 @@ abstract class BaseReservationTableAssign
             $slotsWithTable['error_messages'] = $e->getMessage();
         }
 
-        if (! empty($slotsWithTable['error_messages'])) {
-            companionLogger('Fail to assign 2. Store weekday off : ', ($this->currentReservation->id ?? ''), $slotsWithTable);
-            $this->FailReservationTableAssign();
-            $this->setDumpDieValue(['error' => 'Slot not available or full']);
-        }
+//        if (! empty($slotsWithTable['error_messages'])) {
+//            companionLogger('Fail to assign 2. Store weekday off : ', ($this->currentReservation->id ?? ''), $slotsWithTable);
+//            $this->FailReservationTableAssign();
+//            $this->setDumpDieValue(['error' => 'Slot not available or full']);
+//        }
 
         $this->assignedTables = $slotsWithTable['assigned_tables'][$this->slot->id] ?? [];
 
