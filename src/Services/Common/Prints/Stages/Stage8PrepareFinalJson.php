@@ -368,7 +368,6 @@ trait Stage8PrepareFinalJson
         if ($this->systemType != SystemTypes::KIOSKTICKETS) {
             return;
         }
-        $this->jsonFormatFullReceipt['starPrintfullreceipt'] = 1;
 
         $qrImage = generateQrCode($this->store, $this->reservation->reservation_id, 'RT', true);
 
