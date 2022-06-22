@@ -38,7 +38,7 @@
     "simplesoftwareio/simple-qrcode": "~4",
     "spatie/laravel-newsletter": "^4.9 || ^4.11",
     "twilio/sdk": "^6.15 || ^6.33",
-    "aws/aws-sdk-php": "^3.17 || ^3.19 || ^3.2"
+    "aws/aws-sdk-php": "^3.173 || ^3.19 || ^3.2"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
