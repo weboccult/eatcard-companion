@@ -313,12 +313,13 @@ abstract class BaseReservationSlots
             $defaultSlot = StoreSlot::where('store_id', $this->storeId)
                 ->where('meal_id', $this->mealId)
                 ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+                    companionLogger('-------Test log 3.1--------------------------', $slotId);
                     $q->where('id', $slotId);
                 })
                 ->doesntHave('store_weekday')
                 ->orderBy('from_time', 'ASC')
                 ->get();
-            companionLogger('-------Test log 3--------------------------');
+            companionLogger('-------Test log 3--------------------------', $slotId);
             $this->pickUpSlot = $defaultSlot;
             $this->modelName = 'StoreSlot';
         }
