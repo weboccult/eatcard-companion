@@ -292,6 +292,7 @@ abstract class BaseReservationTableAssign
             if (! empty($ayceData)) {
                 $ayceData['oldAssignTables'] = $this->currentAssignTables;
                 $ayceData['newAssignTables'] = $this->assignedTables;
+                $ayceData['assignTableStatus'] = 'success';
                 $ayceData = json_encode($ayceData);
                 $updateReservationData['all_you_eat_data'] = $ayceData;
 

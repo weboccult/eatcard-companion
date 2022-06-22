@@ -449,8 +449,15 @@ abstract class BaseReservationUpdate
                 unset($ayceData['assignTableStatus']);
                 $ayceData = json_encode($ayceData);
                 StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
-                companionLogger('-------assignTableStatus unset done: ', $reservationStatus);
+                companionLogger('-------assignTableStatus failed unset done: ', $reservationStatus);
                 throw new \Exception('Sorry selected slot is not available.Please try another time slot');
+            }
+
+            if (! empty($reservationStatus) && $reservationStatus == 'success') {
+                unset($ayceData['assignTableStatus']);
+                $ayceData = json_encode($ayceData);
+                StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
+                companionLogger('-------assignTableStatus success unset done: ', $reservationStatus);
             }
         }
 
