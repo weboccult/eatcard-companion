@@ -151,20 +151,15 @@ abstract class BaseReservationTableAssign
      */
     public function dispatch()
     {
-        try {
-            return $this->stageIt([
-                fn () => $this->Stage0SetDefaultData(),
-                fn () => $this->Stage1PrepareValidationRules(),
-                fn () => $this->Stage2ValidateValidationRules(),
-                fn () => $this->Stage3PrepareBasicData(),
-                fn () => $this->Stage4FindAndAssignedTables(),
-                fn () => $this->Stage5ExtraOperations(),
-                fn () => $this->Stage6UpdateReservationDetails(),
-            ], true);
-        } catch (\Exception $e) {
-            companionLogger('error from table assign ', 'error : '.$e->getMessage(), 'file : '.$e->getFile(), 'line : '.$e->getLine());
-            $this->FailReservationTableAssign();
-        }
+        return $this->stageIt([
+            fn () => $this->Stage0SetDefaultData(),
+            fn () => $this->Stage1PrepareValidationRules(),
+            fn () => $this->Stage2ValidateValidationRules(),
+            fn () => $this->Stage3PrepareBasicData(),
+            fn () => $this->Stage4FindAndAssignedTables(),
+            fn () => $this->Stage5ExtraOperations(),
+            fn () => $this->Stage6UpdateReservationDetails(),
+        ], true);
     }
 
     protected function Stage0SetDefaultData()
@@ -210,7 +205,12 @@ abstract class BaseReservationTableAssign
     {
         companionLogger('----Table assign common rule  : ', $this->getCommonRules());
         foreach ($this->getCommonRules() as $ex => $condition) {
-            throw_if($condition, new $ex());
+//            throw_if($condition, new $ex());
+            if ($condition) {
+                companionLogger('---Validation error', $ex);
+                $this->FailReservationTableAssign();
+                $this->setDumpDieValue(['error' => 'something wen wrong !']);
+            }
         }
     }
 
