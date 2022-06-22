@@ -278,7 +278,7 @@ abstract class BaseReservationTableAssign
             }
         }
 
-        if (! empty($this->assignedTables) && ! empty($currentAssignTables)) {
+        if (! empty($this->assignedTables) && ! empty($this->currentAssignTables)) {
 
             //store data in json , user for remove or keep tables base on payment status paid or failed
             $ayceData = json_decode($this->currentReservation->all_you_eat_data, true);
@@ -290,7 +290,7 @@ abstract class BaseReservationTableAssign
                 $updateReservationData['all_you_eat_data'] = $ayceData;
 
                 $this->assignedTables = array_diff($this->assignedTables, $this->currentAssignTables);
-                companionLogger('----new assigned table', $this->assignedTables);
+                companionLogger('----new assigned table 2', $this->assignedTables);
             }
         }
 
