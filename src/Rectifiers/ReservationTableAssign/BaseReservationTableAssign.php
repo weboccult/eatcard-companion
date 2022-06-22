@@ -288,7 +288,6 @@ abstract class BaseReservationTableAssign
                 $ayceData['newAssignTables'] = $this->assignedTables;
                 $ayceData = json_encode($ayceData);
                 $updateReservationData['all_you_eat_data'] = $ayceData;
-                $updateReservationData['assignTableStatus'] = 'success';
 
                 $this->assignedTables = array_diff($this->assignedTables, $this->currentAssignTables);
                 companionLogger('----new assigned table 2', $this->assignedTables);
