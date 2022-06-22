@@ -284,7 +284,7 @@ abstract class BaseReservationSlots
                 ->orderBy('from_time', 'ASC')
                 ->get();
 
-            companionLogger('-------Test log 1--------------------------');
+            companionLogger('-------Test log 1--------------------------', $this->date);
             $this->pickUpSlot = $isSlotModifiedAvailable;
             $this->modelName = 'StoreSlotModified';
         } elseif ($isDaySlotExist) {
@@ -306,7 +306,7 @@ abstract class BaseReservationSlots
             ->where('store_slots.store_weekdays_id', '!=', null)
             ->orderBy('store_slots.from_time', 'ASC')
             ->get();
-            companionLogger('-------Test log 2--------------------------');
+            companionLogger('-------Test log 2--------------------------', $this->date);
             $this->pickUpSlot = $daySlot;
             $this->modelName = 'StoreSlot';
         } else {
@@ -319,7 +319,7 @@ abstract class BaseReservationSlots
                 ->doesntHave('store_weekday')
                 ->orderBy('from_time', 'ASC')
                 ->get();
-            companionLogger('-------Test log 3--------------------------', $slotId);
+            companionLogger('-------Test log 3--------------------------', $slotId, $this->date);
             $this->pickUpSlot = $defaultSlot;
             $this->modelName = 'StoreSlot';
         }
