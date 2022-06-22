@@ -184,6 +184,7 @@ abstract class BaseProcessor implements BaseProcessorContract
             fn () => $this->createReservation(),
             fn () => $this->tableAvailabilityCheck(),
             fn () => $this->createReservationJob(),
+            fn () => $this->assignTableIfCronStop(),
             fn () => $this->checkReservationJobForAssignTableStatus(),
             fn () => $this->checkReservationForAssignTableStatus(),
             fn () => $this->createChatThread(),

@@ -1926,11 +1926,19 @@ if (! function_exists('getAnotherMeeting')) {
             $reservation->end_time = Carbon::parse($reservation->from_time)
                 ->addMinutes($time_limit)
                 ->format('H:i');
+
+            if (strtotime('24:00') <= strtotime($reservation->end_time)) {
+                $reservation->end_time = '23:59';
+            }
         }
         if (! isset($time_limit)) {
             $time_limit = ($meal->time_limit) ? $meal->time_limit : 120;
         }
         $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+
+        if (strtotime('24:00') <= strtotime($end_time)) {
+            $end_time = '23:59';
+        }
 
         $another_meeting = (strtotime($item->from_time) > strtotime($reservation->from_time) && strtotime($item->from_time) < strtotime($reservation->end_time)) ||
             (strtotime($reservation->from_time) > strtotime($item->from_time) && strtotime($reservation->from_time) < strtotime($end_time)) ||

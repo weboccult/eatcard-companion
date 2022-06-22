@@ -6,8 +6,11 @@ use Carbon\Carbon;
 use Cmgmyr\Messenger\Models\Participant;
 use Cmgmyr\Messenger\Models\Thread;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use Weboccult\EatcardCompanion\Models\CancelReservation;
 use Weboccult\EatcardCompanion\Models\ReservationJob;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Rectifiers\ReservationTableAssign\EatcardReservationTableAssign;
+use Weboccult\EatcardCompanion\Rectifiers\ReservationTableAssign\KioskTickets\KioskTickets;
 use function Weboccult\EatcardCompanion\Helpers\checkAnotherMeeting;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\assignedReservationTableOrUpdate;
@@ -110,20 +113,44 @@ trait Stage4CreateProcess
 
     protected function assignTableIfCronStop()
     {
-        if (! $this->isReservationCronStop) {
+        if (! $this->isReservationCronStop || empty($this->createdReservationJobs)) {
             return;
         }
+        try {
+            companionLogger('Manual table assign start --------');
+            EatcardReservationTableAssign::action(KioskTickets::class)
+                        ->setStoreId($this->store->id)
+                        ->setReservationId($this->createdReservation->id)
+                        ->setMealId($this->meal->id)
+                        ->setDate($this->reservationDate)
+                        ->setPayload([
+                            'slot_id' => $this->createdReservation->slot_id,
+                            'data_model' => $this->createdReservation->slot_model,
+                            'person' => $this->createdReservation->person,
+                            'reservation_job_id' => $this->createdReservationJobs->id,
+                            'reservation_check_attempt' => $this->createdReservationJobs->attempt,
+                            'reservation_front_data' => $this->createdReservationJobs->reservation_front_data,
+                        ])
+                        ->dispatch();
 
-        // TODO : add manual cron assign table code here
+            // TODO : add loop for handel 3 attempt
+        } catch (\Exception $e) {
+            companionLogger('Tickets Create reservation manual table assign error :', 'Error : '.$e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+
+            ReservationJob::where('id', $this->createdReservationJobs->id)->delete();
+
+            CancelReservation::create([
+                'reservation_id'         => $this->createdReservation->id,
+                'store_id'               => $this->store->id,
+                'reservation_front_data' => $this->createdReservationJobs->reservation_front_data,
+                'reason'                 => 'Failed',
+            ]);
+        }
     }
 
     protected function checkReservationJobForAssignTableStatus()
     {
         if ($this->system == SystemTypes::POS) {
-            return;
-        }
-
-        if ($this->isReservationCronStop) {
             return;
         }
 
