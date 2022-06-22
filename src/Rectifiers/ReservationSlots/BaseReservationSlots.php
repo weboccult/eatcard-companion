@@ -298,7 +298,7 @@ abstract class BaseReservationSlots
                 });
             })->where('store_slots.store_id', $this->storeId)
             ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                $q->where('id', $slotId);
+                $q->where('store_slots.id', $slotId);
             })
             ->where('store_weekdays.id', $isDaySlotExist->id)
             ->select('store_slots.*')
