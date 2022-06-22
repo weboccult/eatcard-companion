@@ -307,6 +307,7 @@ abstract class BaseReservationTableAssign
 
         $updateReservationData['res_status'] = 'success';
 
+        companionLogger('----Update reservation data : ', $updateReservationData);
         StoreReservation::where('id', $this->currentReservation->id)->update($updateReservationData);
 
         $reservationJobId = $this->payload['reservation_job_id'] ?? 0;
