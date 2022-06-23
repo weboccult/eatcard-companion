@@ -277,8 +277,8 @@ return [
     */
 
     'generate_qr' => [
-        'size' => env('QR_SIZE', 300),
-        'merge_image' => env('QR_MERGE_IMAGE', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png'),
+        'size' => env('QR_SIZE', 200),
+        'merge_image' => env('QR_MERGE_IMAGE', ''),
         'format' => env('QR_FORMAT', 'png'),
         'destination_folder' => env('QR_DESTINATION_FOLDER', 'assets'),
     ],
