@@ -237,7 +237,7 @@ abstract class BaseReservationSlots
     {
 //        companionLogger('--------Stage4GetPickUpTimeSlots', $this->offDayAndDate, $this->date, in_array($this->date, $this->offDayAndDate->toArray()));
         if (! empty($this->offDayAndDate) && in_array($this->date, $this->offDayAndDate->toArray())) {
-            throw new ReservationOffException();
+//            throw new ReservationOffException();
         }
 
         $this->pickUpSlot = [];
@@ -551,6 +551,7 @@ abstract class BaseReservationSlots
     {
         $closeDayAndDates = [];
         if (count($slotModifiedData) > 0) {
+            $slotModifiedData = collect($slotModifiedData)->where('is_available', '=', 0);
             companionLogger('--------slot date wise');
 //            $currentDate = $this->date;
             $currentDate = Carbon::now()->format('Y-m-d');
