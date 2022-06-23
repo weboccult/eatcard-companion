@@ -9,11 +9,15 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Enums\TransactionTypes;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
+use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
+use function Weboccult\EatcardCompanion\Helpers\getModelId;
+use function Weboccult\EatcardCompanion\Helpers\getModelName;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
@@ -31,16 +35,23 @@ trait Stage5PaymentProcess
     protected function ccvPayment()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSKTICKETS]) && $this->createdReservation->payment_method_type == 'ccv') {
-            $paymentDetails = $this->createdReservation->paymentTable()->create([
-                            'transaction_type' => TransactionTypes::CREDIT,
-                            'payment_method_type' => $this->createdReservation->payment_method_type,
-                            'method' => $this->createdReservation->method,
-                            'payment_status' => $this->createdReservation->payment_status,
-                            'local_payment_status' => $this->createdReservation->local_payment_status,
-                            'amount' => $this->createdReservation->total_price,
-                            'kiosk_id' => $this->createdReservation->kiosk_id,
-                            'process_type' => 'create',
-                        ]);
+            $paymentDetails = PaymentDetail::query()->create([
+                'store_id'             => $this->store->id,
+                'paymentable_type'     => getModelName(StoreReservation::class),
+                'paymentable_id'       => getModelId($this->createdReservation),
+                'transaction_type'     => TransactionTypes::CREDIT,
+                'payment_method_type'  => $this->createdReservation->payment_method_type,
+                'method'               => $this->createdReservation->method,
+                'payment_status'       => $this->createdReservation->payment_status,
+                'local_payment_status' => $this->createdReservation->local_payment_status,
+                'amount'               => $this->createdReservation->total_price,
+                'kiosk_id'             => $this->createdReservation->kiosk_id,
+                'process_type'         => 'create',
+                'created_from'         => $this->createdFrom,
+            ]);
+
+            $this->createdReservation->update(['ref_payment_id' => $paymentDetails->id]);
+            $this->createdReservation->refresh();
 
             $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
             companionLogger('---ccv-order-id', $order_id, $this->createdReservation);
@@ -111,6 +122,18 @@ trait Stage5PaymentProcess
                 ];
             } catch (ConnectException | RequestException | ClientException $e) {
                 companionLogger('---------ccv exception ', $e->getMessage(), $e->getLine(), $e->getFile());
+
+                /*<--- manual cancel payment ---->*/
+                EatcardWebhook::action(CashTicketsWebhook::class)
+                          ->setOrderType('reservation')
+                          ->setReservationId($this->createdReservation->id)
+                          ->setPaymentId($paymentDetails->id)
+                          ->setStoreId($this->store->id)
+                          ->payload([
+                              'status' => 'failed',
+                          ])
+                          ->dispatch();
+
                 $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
             }
         }
@@ -127,16 +150,23 @@ trait Stage5PaymentProcess
             $order_price = round($this->createdReservation->total_price * 100, 0);
             $order_type = 'reservation';
 
-            $paymentDetails = $this->createdReservation->paymentTable()->create([
-                'transaction_type' => TransactionTypes::CREDIT,
-                'payment_method_type' => $this->createdReservation->payment_method_type,
-                'method' => $this->createdReservation->method,
-                'payment_status' => $this->createdReservation->payment_status,
+            $paymentDetails = PaymentDetail::query()->create([
+                'store_id'             => $this->store->id,
+                'paymentable_type'     => getModelName(StoreReservation::class),
+                'paymentable_id'       => getModelId($this->createdReservation),
+                'transaction_type'     => TransactionTypes::CREDIT,
+                'payment_method_type'  => $this->createdReservation->payment_method_type,
+                'method'               => $this->createdReservation->method,
+                'payment_status'       => $this->createdReservation->payment_status,
                 'local_payment_status' => $this->createdReservation->local_payment_status,
-                'amount' => $this->createdReservation->total_price,
-                'kiosk_id' => $this->createdReservation->kiosk_id,
-                'process_type' => 'create',
+                'amount'               => $this->createdReservation->total_price,
+                'kiosk_id'             => $this->createdReservation->kiosk_id,
+                'process_type'         => 'create',
+                'created_from'         => $this->createdFrom,
             ]);
+
+            $this->createdReservation->update(['ref_payment_id' => $paymentDetails->id]);
+            $this->createdReservation->refresh();
 
             $inputs = [
                 'amount'    => $order_price,
@@ -164,6 +194,16 @@ trait Stage5PaymentProcess
 
             if ($response['error'] == 1) {
                 companionLogger('Wipay payment initialize error', $response);
+                /*<--- manual cancel payment ---->*/
+                EatcardWebhook::action(CashTicketsWebhook::class)
+                         ->setOrderType('reservation')
+                         ->setReservationId($this->createdReservation->id)
+                         ->setPaymentId($paymentDetails->id)
+                         ->setStoreId($this->store->id)
+                         ->payload([
+                             'status' => 'failed',
+                         ])
+                         ->dispatch();
                 $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
             }
 
@@ -173,7 +213,7 @@ trait Stage5PaymentProcess
 
             $this->paymentResponse = [
                 'ssai' => $response['ssai'] ?? '',
-                'pay_url'  => null,
+                'payUrl'  => null,
                 'id' => $this->createdReservation->id,
                 'reservation_id' => $this->createdReservation->reservation_id,
                 'payment_id' => $paymentDetails->id,
@@ -187,7 +227,12 @@ trait Stage5PaymentProcess
             return;
         }
 
-        $paymentDetails = $this->createdReservation->paymentTable()->create([
+        $isCashPaid = $this->system == SystemTypes::POS && ! empty($this->payload['cash_paid'] ?? 0);
+
+        $paymentDetails = PaymentDetail::query()->create([
+            'store_id'             => $this->store->id,
+            'paymentable_type'     => getModelName(StoreReservation::class),
+            'paymentable_id'       => getModelId($this->createdReservation),
             'transaction_type'     => TransactionTypes::CREDIT,
             'payment_method_type'  => $this->createdReservation->payment_method_type,
             'method'               => $this->createdReservation->method,
@@ -197,7 +242,12 @@ trait Stage5PaymentProcess
             'kiosk_id'             => $this->createdReservation->kiosk_id,
             'transaction_receipt'  => $this->isBOP ? 'fake-bop payment' : '',
             'process_type'         => 'create',
+            'cash_paid'            => $isCashPaid ? $this->payload['cash_paid'] : null,
+            'created_from'         => $this->createdFrom,
         ]);
+
+        $this->createdReservation->update(['ref_payment_id' => $paymentDetails->id]);
+        $this->createdReservation->refresh();
 
         $this->paymentResponse = [
             'ssai'           => $this->isBOP ? 'fake_ssai' : '',

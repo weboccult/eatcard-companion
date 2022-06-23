@@ -10,6 +10,7 @@ use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\StoreSlot;
 use Weboccult\EatcardCompanion\Models\StoreSlotModified;
+use Weboccult\EatcardCompanion\Models\Table;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 
 /**
@@ -128,6 +129,14 @@ trait Stage0BasicDatabaseInteraction
 
         if (! empty($reservation)) {
             $this->storeReservation = $reservation;
+        }
+    }
+
+    protected function setTableIds()
+    {
+        $tableIds = $this->payload['table_ids'] ?? [];
+        if (! empty($tableIds)) {
+            $this->table = Table::query()->whereIn('id', $tableIds);
         }
     }
 }

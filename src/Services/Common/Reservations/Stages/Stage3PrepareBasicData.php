@@ -3,8 +3,10 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 
 use Carbon\Carbon;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use function Weboccult\EatcardCompanion\Helpers\calculateAllYouCanEatPerson;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generateRandomNumberV2;
 use function Weboccult\EatcardCompanion\Helpers\generateReservationId;
 use function Weboccult\EatcardCompanion\Helpers\getAycePrice;
@@ -21,23 +23,9 @@ trait Stage3PrepareBasicData
         $this->reservationData['user_id'] = $this->payload['user_id'] ?? null;
         $this->reservationData['status'] = 'approved';
         $this->reservationData['reservation_sent'] = 0;
-
-        $this->reservationData['from_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
-        $this->reservationData['res_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
-        $this->reservationData['user_id'] = null;
-
-        $this->reservationData['reservation_id'] = generateReservationId();
-
-        $time_limit = ($this->meal->time_limit) ? (int) $this->meal->time_limit : 120;
-        $this->reservationData['end_time'] = Carbon::parse($this->slot->from_time)->addMinutes($time_limit)->format('H:i');
-
-        if (strtotime($this->slot->from_time) > strtotime($this->reservationData['end_time'])) {
-            $this->reservationData['end_time'] = '23:59';
-        }
-
         $this->reservationData['created_from'] = $this->createdFrom;
+        $this->reservationData['reservation_id'] = generateReservationId();
         $this->reservationData['gastpin'] = generateRandomNumberV2();
-
         $this->reservationData['voornaam'] = $this->payload['voornaam'] ?? 'Guest';
         $this->reservationData['achternaam'] = $this->payload['achternaam'] ?? '';
         $this->reservationData['email'] = $this->payload['email'] ?? '';
@@ -46,10 +34,35 @@ trait Stage3PrepareBasicData
         $this->reservationData['gastnaam'] = $this->payload['gastnaam'] ?? '';
         $this->reservationData['comments'] = $this->payload['comments'] ?? '';
         $this->reservationData['section_id'] = $this->payload['section_id'] ?? 0;
-        $this->reservationData['is_household_check'] = $this->payload['is_household_check'] ?? 0;
-        $this->reservationData['household_person'] = $this->payload['household_person'] ?? 2;
         $this->reservationData['method'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
         $this->reservationData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
+
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            $this->reservationData['slot_model'] = $this->slotType;
+            $this->reservationData['from_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
+            $this->reservationData['res_time'] = Carbon::parse($this->slot->from_time)->format('H:i');
+
+            $time_limit = ($this->meal->time_limit) ? (int) $this->meal->time_limit : 120;
+            $this->reservationData['end_time'] = Carbon::parse($this->slot->from_time)->addMinutes($time_limit)->format('H:i');
+
+            if (strtotime($this->slot->from_time) > strtotime($this->reservationData['end_time'])) {
+                $this->reservationData['end_time'] = '23:59';
+            }
+        }
+
+        if ($this->system == SystemTypes::POS) {
+            $this->reservationData['status'] = 'approved';
+            $this->reservationData['from_time'] = $this->reservationData['res_time'] = Carbon::parse($this->payload['from_time'])->format('H:i');
+            $this->reservationData['end_time'] = Carbon::parse($this->payload['from_time'])->addMinutes($this->meal->time_limit)->format('H:i');
+
+            companionLogger('---------pos end time 1st', $this->reservationData['end_time']);
+
+            if (strtotime($this->reservationData['end_time']) >= strtotime('24:00')) {
+                $this->reservationData['end_time'] = '23:59';
+            }
+
+            companionLogger('---------pos end time 2st', $this->reservationData['end_time']);
+        }
 
         $this->isBOP = isset($this->payload['bop']) && $this->payload['bop'] == 'wot@tickets';
         $method = $this->payload['method'] ?? '';

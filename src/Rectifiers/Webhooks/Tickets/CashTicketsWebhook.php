@@ -42,6 +42,7 @@ class CashTicketsWebhook extends BaseWebhook
             $paidOn = Carbon::now()->format('Y-m-d H:i:s');
         } elseif ($this->payload['status'] == 'failed') {
             $paymentStatus = 'failed';
+            $status = 'cancelled';
             $localPaymentStatus = 'failed';
         } else {
             companionLogger('invalid cash payment status', $this->payload);
@@ -64,6 +65,10 @@ class CashTicketsWebhook extends BaseWebhook
         $update_payment_data['payment_status'] = $paymentStatus;
         $update_payment_data['local_payment_status'] = $localPaymentStatus;
         $update_payment_data['paid_on'] = $paidOn;
+
+        if ($update_payment_data['local_payment_status'] == 'failed') {
+            $update_payment_data['cancel_from'] = 'manual';
+        }
 
         companionLogger('------update cash data', $update_data, $update_payment_data);
 

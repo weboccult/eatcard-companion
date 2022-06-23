@@ -6,12 +6,15 @@ use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\AYCEDataEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DeviceEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\DineInPriceEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\FromTimeEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\MealEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationDateEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationTypeInvalidException;
 use Weboccult\EatcardCompanion\Exceptions\SlotEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\TableEmptyException;
+use Weboccult\EatcardCompanion\Exceptions\UserEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\WorldLineSecretsNotFoundException;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
 
@@ -28,7 +31,16 @@ trait Stage1PrepareValidationRules
         // Add condition here... If you want to exclude store_id validation
         $this->addRuleToCommonRules(StoreEmptyException::class, (empty($this->store)));
         $this->addRuleToCommonRules(MealEmptyException::class, (empty($this->meal)));
-        $this->addRuleToCommonRules(SlotEmptyException::class, (empty($this->slot)));
+        if ($this->system == SystemTypes::KIOSKTICKETS) {
+            $this->addRuleToCommonRules(SlotEmptyException::class, (empty($this->slot)));
+        }
+
+        if ($this->system == SystemTypes::POS) {
+            $this->addRuleToCommonRules(TableEmptyException::class, (empty($this->table)));
+            $this->addRuleToCommonRules(UserEmptyException::class, (empty($this->payload['user_id'] ?? 0)));
+            $this->addRuleToCommonRules(FromTimeEmptyException::class, (empty($this->payload['from_time'] ?? 0)));
+        }
+
         $this->addRuleToCommonRules(ReservationDateEmptyException::class, (empty($this->reservationDate)));
 
         if (! empty($this->device) && $this->device->payment_type == 'worldline') {

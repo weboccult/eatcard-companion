@@ -61,7 +61,7 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
         $paidOn = null;
         $processType = $this->fetchedPaymentDetails->process_type ?? '';
         $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
-        companionLogger('------update reservation payload', $reservationUpdatePayload);
+        companionLogger('------update reservation response wipay', $response);
 
         if ($response['status'] == 'final' && $response['approved'] == 1) {
             $paymentStatus = 'paid';
@@ -114,17 +114,24 @@ class WorldLineTicketsGetFinalPaymentStatusAction extends BaseWebhook
             $update_data['local_payment_status'] = $localPaymentStatus;
             $update_data['paid_on'] = $paidOn;
 
-            if ($this->payload['iteration'] == 1) {
-                $update_data['is_uncertain_status'] = 1;
-            }
+//            if ($this->payload['iteration'] == 1) {
+//                $update_data['is_uncertain_status'] = 1;
+//            }
         }
 
         $update_payment_data['payment_status'] = $paymentStatus;
         $update_payment_data['local_payment_status'] = $localPaymentStatus;
         $update_payment_data['paid_on'] = $paidOn;
 
+        if ($update_payment_data['local_payment_status'] == 'failed') {
+            $update_payment_data['cancel_from'] = 'webhook';
+        }
+
         $this->afterStatusGetProcess($update_data, $update_payment_data);
 
-        return $this->fetchedReservation;
+        return [
+            'payment_status' => $this->fetchedPaymentDetails->payment_status,
+            'reservation_id' => $this->fetchedPaymentDetails->paymentable_id,
+        ];
     }
 }

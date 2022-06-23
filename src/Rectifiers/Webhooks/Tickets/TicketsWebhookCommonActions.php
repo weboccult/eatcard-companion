@@ -7,6 +7,7 @@ use Throwable;
 use Weboccult\EatcardCompanion\Models\Device;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
 use Weboccult\EatcardCompanion\Models\Message;
+use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreManager;
 use Weboccult\EatcardCompanion\Models\StoreOwner;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
@@ -17,6 +18,7 @@ use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
+use function Weboccult\EatcardCompanion\Helpers\undoCheckIn;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
 /**
@@ -241,8 +243,58 @@ trait TicketsWebhookCommonActions
             }
         }
 
+        if ($this->fetchedPaymentDetails->process_type == 'update' && $update_payment_data['local_payment_status'] == 'paid') {
+            $ayceData = json_decode($this->fetchedReservation->all_you_eat_data ?? '', true);
+            if (isset($ayceData['oldAssignTables']) && ! empty($ayceData)) {
+                $oldAssignedTable = $ayceData['oldAssignTables'] ?? [];
+                $newAssignedTable = $ayceData['newAssignTables'] ?? [];
+
+                companionLogger('-----Old New Assign Tables', $oldAssignedTable, $newAssignedTable);
+
+                if (! empty($newAssignedTable)) {
+                    ReservationTable::query()
+                        ->where('reservation_id', $this->fetchedReservation->id)
+                        ->whereNotIn('table_id', $newAssignedTable)
+                        ->delete();
+
+                    $assignTables = $this->fetchedReservation->tables2->pluck('id')->count();
+                    if ($assignTables == 1) {
+                        $this->fetchedReservation->update(['group_id' => 0]);
+                    }
+                }
+                unset($ayceData['oldAssignTables']);
+                unset($ayceData['newAssignTables']);
+                $this->fetchedReservation->update(['all_you_eat_data' => json_encode($ayceData ?? [])]);
+            }
+        } elseif ($this->fetchedPaymentDetails->process_type == 'update' && $update_payment_data['local_payment_status'] == 'failed') {
+            $tableIds = [];
+            $ayceData = json_decode($this->fetchedReservation->all_you_eat_data ?? '', true);
+            $oldAssignedTable = $ayceData['oldAssignTables'] ?? [];
+
+            if (! empty($oldAssignedTable)) {
+                ReservationTable::query()
+                    ->where('reservation_id', $this->fetchedReservation->id)
+                    ->whereNotIn('table_id', $oldAssignedTable)
+                    ->delete();
+
+                if (! empty($this->fetchedReservation)) {
+                    $assignTables = $this->fetchedReservation->tables2->pluck('id')->count();
+                    if ($assignTables == 1) {
+                        $this->fetchedReservation->update(['group_id' => 0]);
+                    }
+                }
+            }
+
+            if ($this->fetchedReservation->is_seated == 1) {
+                $this->payload['event_from'] = $this->fetchedPaymentDetails->created_from ?? '';
+                undoCheckIn($this->fetchedReservation, $this->payload);
+            }
+        }
+
         $this->fetchedReservation->update($update_data);
         $this->fetchedPaymentDetails->update($update_payment_data);
+        $this->fetchedReservation->refresh();
+        $this->fetchedPaymentDetails->refresh();
 
         if ($this->fetchedPaymentDetails->process_type == 'create') {
             if ($update_data['local_payment_status'] == 'paid') {
