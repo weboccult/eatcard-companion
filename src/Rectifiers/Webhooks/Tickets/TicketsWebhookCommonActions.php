@@ -249,6 +249,8 @@ trait TicketsWebhookCommonActions
                 $oldAssignedTable = $ayceData['oldAssignTables'] ?? [];
                 $newAssignedTable = $ayceData['newAssignTables'] ?? [];
 
+                companionLogger('-----Old New Assign Tables', $oldAssignedTable, $newAssignedTable);
+
                 if (! empty($newAssignedTable)) {
                     ReservationTable::query()
                         ->where('reservation_id', $this->fetchedReservation->id)
