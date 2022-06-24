@@ -272,6 +272,27 @@ trait Stage4BasicDatabaseInteraction
 
     /**
      * @return void
+     * Set KDS User data for KDS Kitchen print
+     * throw exception if data not found
+     */
+    protected function setPaymentDetails()
+    {
+        if (empty($this->paymentId)) {
+            return;
+        }
+
+        $paymentDetail = PaymentDetail::query()->where('id', $this->paymentId)->first();
+
+//        if (empty($paymentDetail)) {
+//            throw new PaymentDetailsNotFoundException();
+//        }
+
+        companionLogger('------Companion Print payment details : ', $paymentDetail);
+        $this->paymentDetail = $paymentDetail;
+    }
+
+    /**
+     * @return void
      * set POS/Kiosk Device setting data
      * set POS/Kiosk device id, From Protocol OR Based on order details
      * For suborder, It's depend on device settings, so if suborder print is skipped then throw exception.
@@ -283,6 +304,8 @@ trait Stage4BasicDatabaseInteraction
         // is device id is specified then need to replace it.
         if (! empty($this->additionalSettings['current_device_id']) && (int) $this->additionalSettings['current_device_id'] > 0) {
             $deviceId = (int) $this->additionalSettings['current_device_id'];
+        } elseif (! empty($this->paymentDetail)) {
+            $deviceId = $this->paymentDetail['kiosk_id'];
         } elseif ($this->orderType == OrderTypes::PAID) {
             $deviceId = $this->order['kiosk_id'];
         //        } elseif ($this->order == OrderTypes::RUNNING) {
@@ -331,26 +354,5 @@ trait Stage4BasicDatabaseInteraction
 
         companionLogger('------Companion Print kiosk user : ', $kdsUser);
         $this->kdsUser = $kdsUser;
-    }
-
-    /**
-     * @return void
-     * Set KDS User data for KDS Kitchen print
-     * throw exception if data not found
-     */
-    protected function setPaymentDetails()
-    {
-        if (empty($this->paymentId)) {
-            return;
-        }
-
-        $paymentDetail = PaymentDetail::query()->where('id', $this->paymentId)->first();
-
-//        if (empty($paymentDetail)) {
-//            throw new PaymentDetailsNotFoundException();
-//        }
-
-        companionLogger('------Companion Print payment details : ', $paymentDetail);
-        $this->paymentDetail = $paymentDetail;
     }
 }
