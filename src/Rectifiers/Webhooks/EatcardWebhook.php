@@ -248,7 +248,6 @@ class EatcardWebhook
             case WorldLineTicketsGetFinalPaymentStatusAction::class:
             case CcvTicketsWebhook::class:
             case CashTicketsWebhook::class:
-            case WorldLineTicketsGetFinalPaymentStatusAction::class:
                 static::$webhook->setOrderType(static::$orderType)
                                 ->setReservationId(static::$reservationId)
                                 ->setPaymentId(static::$paymentId)
