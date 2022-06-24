@@ -1927,7 +1927,7 @@ if (! function_exists('getAnotherMeeting')) {
                 ->addMinutes($time_limit)
                 ->format('H:i');
 
-            if (strtotime('24:00') <= strtotime($reservation->end_time)) {
+            if (strtotime($reservation->from_time) > strtotime($reservation->end_time)) {
                 $reservation->end_time = '23:59';
             }
         }
@@ -1936,7 +1936,7 @@ if (! function_exists('getAnotherMeeting')) {
         }
         $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
 
-        if (strtotime('24:00') <= strtotime($end_time)) {
+        if (strtotime($item->from_time) > strtotime($end_time)) {
             $end_time = '23:59';
         }
 
