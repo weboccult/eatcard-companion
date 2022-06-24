@@ -96,7 +96,7 @@ trait Stage5EnableSettings
     protected function enableDeviceSettings()
     {
         //return if kiosk setting is not set
-        if (! isset($this->kiosk->settings)) {
+        if (! isset($this->kiosk)) {
             return;
         }
 
