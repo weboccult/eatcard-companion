@@ -1473,6 +1473,7 @@ if (! function_exists('extractRequestType')) {
             'receipt_kiosk', // Print default for kiosk
             'receipt_kitchen', // Reprint only kitchen and label from admin for paid orders
             'receipt_kiosk_tickets', // Print proforma with QR for tickets
+            'receipt_pos_tickets', // Print proforma with QR for tickets
         ];
 
         if (strpos($requestType, '@') !== false) {
@@ -1495,6 +1496,9 @@ if (! function_exists('extractRequestType')) {
                 $systemPrintType = PrintTypes::DEFAULT;
             } elseif ($checkReservation[0] == 'receipt_kiosk_tickets') {
                 $requestType = 'receipt_kiosk_tickets';
+                $paymentId = (int) ($checkReservation[1] ?? 0);
+            } elseif ($checkReservation[0] == 'receipt_pos_tickets') {
+                $requestType = 'receipt_pos_tickets';
                 $paymentId = (int) ($checkReservation[1] ?? 0);
             } elseif ($requestType == 'receipt_pos_sub') {
                 $printType = 'receipt_pos_sub';
@@ -1526,6 +1530,11 @@ if (! function_exists('extractRequestType')) {
             $generator = RunningOrderGenerator::class;
             $printType = 'reservation';
             $systemType = SystemTypes::KIOSKTICKETS;
+            $systemPrintType = PrintTypes::PROFORMA;
+        } elseif ($requestType == 'receipt_pos_tickets') {
+            $generator = RunningOrderGenerator::class;
+            $printType = 'reservation';
+            $systemType = SystemTypes::POSTICKETS;
             $systemPrintType = PrintTypes::PROFORMA;
         }
 

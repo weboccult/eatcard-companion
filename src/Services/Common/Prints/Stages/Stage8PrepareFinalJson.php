@@ -180,7 +180,7 @@ trait Stage8PrepareFinalJson
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $titleTime = '';
 
-                if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+                if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
                     $title1 = 'Tickets';
                     $title2 = $this->reservation['voornaam'] ?? '';
                     $title3 = $this->reservation['gsm_no'] ?? '';
@@ -365,7 +365,7 @@ trait Stage8PrepareFinalJson
 
     protected function setTicketsQR()
     {
-        if ($this->systemType != SystemTypes::KIOSKTICKETS) {
+        if (! in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
             return;
         }
 
@@ -444,7 +444,7 @@ trait Stage8PrepareFinalJson
                 $tableName = '';
             }
 
-            if ($this->systemType == SystemTypes::KIOSKTICKETS && ! empty($this->paymentDetail)) {
+            if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
                 $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
                 $total = $this->paymentDetail['amount'] ?? 0;
             }

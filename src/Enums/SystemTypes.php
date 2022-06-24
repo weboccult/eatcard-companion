@@ -22,4 +22,5 @@ class SystemTypes extends BaseEnum
     public const THUSIBEZORGD = 'THUSIBEZORGD';
     public const DELIVEROO = 'DELIVEROO';
     public const KIOSKTICKETS = 'KIOSKTICKETS';
+    public const POSTICKETS = 'POSTICKETS';
 }

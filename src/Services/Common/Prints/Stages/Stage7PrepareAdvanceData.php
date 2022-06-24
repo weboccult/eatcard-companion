@@ -948,7 +948,7 @@ trait Stage7PrepareAdvanceData
             }
         }
 
-        if ($this->systemType == SystemTypes::KIOSKTICKETS && $this->orderType == OrderTypes::RUNNING) {
+        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && $this->orderType == OrderTypes::RUNNING) {
             $paymentDetails = $this->paymentDetail;
             //return if order not found
             if (empty($paymentDetails)) {
@@ -1293,7 +1293,7 @@ trait Stage7PrepareAdvanceData
                     'value' => $split_no.'/'.$this->order['payment_split_persons'],
                 ];
             }
-        } elseif ($this->orderType == OrderTypes::RUNNING && $this->systemType == SystemTypes::KIOSKTICKETS && ! empty($this->paymentDetail)) {
+        } elseif ($this->orderType == OrderTypes::RUNNING && in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
             $cash_paid = $this->paymentDetail['cash_paid'] ?? 0;
             $method = $this->paymentDetail['method'] ?? '';
             $total_price = $this->paymentDetail['amount'] ?? 0;

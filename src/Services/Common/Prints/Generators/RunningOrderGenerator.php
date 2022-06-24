@@ -489,7 +489,7 @@ class RunningOrderGenerator extends BaseGenerator
             return;
         }
 
-        if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
             return;
         }
 
