@@ -42,6 +42,8 @@ trait Stage8PrepareFinalJson
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
         } elseif ($this->systemType == SystemTypes::POS && ! empty($this->additionalSettings['kiosk_printer_name'])) {
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
+        } elseif ($this->systemType == SystemTypes::POSTICKETS && ! empty($this->additionalSettings['kiosk_printer_name'])) {
+            $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
         } elseif ($this->printType == PrintTypes::MAIN && ! empty($this->additionalSettings['kiosk_printer_name'])) {
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
         }
