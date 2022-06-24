@@ -441,7 +441,7 @@ abstract class BaseReservationSlots
                         foreach ($availableTables as $table) {
                             $singleTable = $this->tables->where('id', $table)
                                 ->first(function ($value, $key) use ($person) {
-                                    return $value->no_of_min_seats <= $person && ($value->no_of_seats) >= $person + 1;
+                                    return $value->no_of_min_seats <= $person && ($value->no_of_seats) >= $person;
                                 });
 
                             if (! empty($singleTable)) {
