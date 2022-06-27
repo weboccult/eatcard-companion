@@ -489,11 +489,20 @@ class RunningOrderGenerator extends BaseGenerator
             return;
         }
 
+        $summary = [];
+
         if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
+            if (! empty($this->paymentDetail) && $this->paymentDetail['transaction_type'] == 'DEBIT') {
+                $summary[] = [
+                    'key'   => __companionPrintTrans('print.refund'),
+                    'value' => changePriceFormat(($this->paymentDetail['amount'] ?? 0)),
+                ];
+            }
+
+            $this->jsonSummary = $summary;
+
             return;
         }
-
-        $summary = [];
 
         if (($this->reservation['total_price'] ?? 0) > 0) {
             $summary[] = [

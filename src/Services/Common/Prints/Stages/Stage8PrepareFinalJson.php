@@ -451,6 +451,10 @@ trait Stage8PrepareFinalJson
             if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
                 $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
                 $total = $this->paymentDetail['amount'] ?? 0;
+
+                if ($this->paymentDetail['transaction_type'] == 'DEBIT') {
+                    $total = $this->reservation->total_price ?? 0;
+                }
             }
         }
 
