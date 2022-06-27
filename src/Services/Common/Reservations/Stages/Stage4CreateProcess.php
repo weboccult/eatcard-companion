@@ -178,10 +178,7 @@ trait Stage4CreateProcess
 
         $count = 1;
         do {
-            companionLogger('do while start');
-
             $storeReservation = StoreReservation::query()->where('id', $this->createdReservation->id)->first();
-
             if ($storeReservation->res_status != null) {
                 $count = 4;
             } else {
@@ -190,10 +187,8 @@ trait Stage4CreateProcess
             }
         } while (($storeReservation->res_status == null || $storeReservation->res_status == '') && $count <= 3);
 
-        companionLogger('do while end');
-
         if (empty($storeReservation->res_status) || $storeReservation->res_status == 'failed') {
-            companionLogger('res_status is null');
+            companionLogger('res_status is null', $storeReservation->res_status);
             StoreReservation::where('id', $storeReservation->id)->update(['status'=> 'declined', 'is_manually_cancelled' => 2]);
             $this->setDumpDieValue(['error' =>'Sorry selected slot is not available.Please try another time slot']);
         }

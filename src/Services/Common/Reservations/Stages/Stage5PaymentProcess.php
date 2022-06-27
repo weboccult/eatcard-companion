@@ -54,7 +54,7 @@ trait Stage5PaymentProcess
             $this->createdReservation->refresh();
 
             $order_id = $this->createdReservation->id.'-'.$paymentDetails->id;
-            companionLogger('---ccv-order-id', $order_id, $this->createdReservation);
+            companionLogger('---ccv-order-id', $order_id);
 
             if ($this->system == SystemTypes::POS) {
                 $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.reservation', [

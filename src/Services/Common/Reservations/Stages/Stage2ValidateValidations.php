@@ -61,7 +61,6 @@ trait Stage2ValidateValidations
         } catch (AYCEDataEmptyException $e) {
             $this->setDumpDieValue(['error' => 'reservation AYCE data not found or invalid']);
         } catch (SlotEmptyException $e) {
-            companionLogger('slot not found or invalid 1 : ', $this->slot);
             $this->setDumpDieValue(['error' => 'slot not found or invalid']);
         }
     }

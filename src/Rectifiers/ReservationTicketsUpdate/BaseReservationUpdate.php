@@ -21,6 +21,7 @@ use Weboccult\EatcardCompanion\Exceptions\ReservationExpired;
 use Weboccult\EatcardCompanion\Exceptions\ReservationIsNotAyce;
 use Weboccult\EatcardCompanion\Exceptions\ReservationNoShow;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
+use Weboccult\EatcardCompanion\Models\CancelReservation;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\PaymentDetail;
@@ -30,6 +31,8 @@ use Weboccult\EatcardCompanion\Models\Meal;
 use Weboccult\EatcardCompanion\Exceptions\MealEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\MealIdEmptyException;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Rectifiers\ReservationTableAssign\EatcardReservationTableAssign;
+use Weboccult\EatcardCompanion\Rectifiers\ReservationTableAssign\KioskTickets\KioskTickets;
 use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\Traits\AttributeHelpers;
 use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\Traits\MagicAccessors;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
@@ -376,6 +379,37 @@ abstract class BaseReservationUpdate
             $this->createdReservationJobs = ReservationJob::query()->create($this->reservationJobData);
             $this->createdReservationJobs->refresh();
             companionLogger('----job entry create', $this->createdReservationJobs);
+
+            //Manual assign table if cron is close
+            if ($this->isReservationCronStop && ! empty($this->createdReservationJobs)) {
+                try {
+                    companionLogger('Manual table assign start --------');
+                    EatcardReservationTableAssign::action(KioskTickets::class)
+                        ->setStoreId($this->store->id)
+                        ->setReservationId($this->reservation->id)
+                        ->setMealId($this->meal->id)
+                        ->setDate($this->reservation->reservation_date)
+                        ->setPayload([
+                            'slot_id'                   => $this->reservation->slot_id,
+                            'data_model'                => $this->reservation->slot_model,
+                            'person'                    => $this->updatePayload['person'] ?? $this->reservation->person,
+                            'reservation_job_id'        => $this->createdReservationJobs->id,
+                            'reservation_check_attempt' => $this->createdReservationJobs->attempt,
+                            'reservation_front_data'    => $this->createdReservationJobs->reservation_front_data,
+                        ])
+                        ->dispatch();
+                    // TODO : add loop for handel 3 attempt
+                } catch (\Exception $e) {
+                    companionLogger('Tickets Create reservation manual table assign error :', 'Error : '.$e->getMessage(), 'Line : '.$e->getLine(), 'File : '.$e->getFile(), 'IP address : '.request()->ip(), 'Browser : '.request()->header('User-Agent'));
+                    ReservationJob::where('id', $this->createdReservationJobs->id)->delete();
+                    CancelReservation::create([
+                        'reservation_id'         => $this->reservation->id,
+                        'store_id'               => $this->store->id,
+                        'reservation_front_data' => $this->createdReservationJobs->reservation_front_data,
+                        'reason'                 => 'Failed',
+                    ]);
+                }
+            }
         }
 
         if ($this->system == SystemTypes::POS) {
@@ -445,7 +479,7 @@ abstract class BaseReservationUpdate
         $this->reservation->refresh();
         if (! empty($ayceData)) {
             $reservationStatus = $ayceData['assignTableStatus'] ?? '';
-            if (! empty($reservationStatus) && $reservationStatus == 'failed') {
+            if ((! empty($reservationStatus) && $reservationStatus == 'failed') || empty($reservationStatus)) {
                 unset($ayceData['assignTableStatus']);
                 $ayceData = json_encode($ayceData);
                 StoreReservation::where('id', $this->reservation->id)->update(['all_you_eat_data' => $ayceData]);
