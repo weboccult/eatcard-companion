@@ -95,21 +95,24 @@ trait Stage5EnableSettings
      */
     protected function enableDeviceSettings()
     {
-        //return if kiosk setting is not set
-        if (! isset($this->kiosk->settings)) {
+        if (empty($this->kiosk)) {
             return;
         }
 
         $kiosk = $this->kiosk;
-        $this->additionalSettings['cash_drawer_available'] = (int) ($kiosk->settings->cash_drawer_available ?? 0);
+
         $this->additionalSettings['kioskname'] = $kiosk->kioskname ?? '';
         $this->additionalSettings['is_star_printer'] = $kiosk->is_star_printer ?? 0;
         $this->additionalSettings['kiosk_printer_name'] = $kiosk->printer_name ?? '';
-        $this->additionalSettings['is_print_cart_add'] = $kiosk->settings->is_print_cart_add ?? 0;
 
-        if ($this->systemType == SystemTypes::POS) {
-            $this->additionalSettings['addon_print_categories'] = isset($kiosk->settings->add_print_categories) && ! empty($kiosk->settings->add_print_categories) ? json_decode($kiosk->settings->add_print_categories, true) : [];
-            $this->additionalSettings['is_print_split'] = $kiosk->settings->add_print_categories ?? 0;
+        //return if kiosk setting is not set
+        if (isset($this->kiosk->settings) && empty($this->kiosk->settings)) {
+            $this->additionalSettings['cash_drawer_available'] = (int) ($kiosk->settings->cash_drawer_available ?? 0);
+            $this->additionalSettings['is_print_cart_add'] = $kiosk->settings->is_print_cart_add ?? 0;
+            if ($this->systemType == SystemTypes::POS) {
+                $this->additionalSettings['addon_print_categories'] = isset($kiosk->settings->add_print_categories) && ! empty($kiosk->settings->add_print_categories) ? json_decode($kiosk->settings->add_print_categories, true) : [];
+                $this->additionalSettings['is_print_split'] = $kiosk->settings->add_print_categories ?? 0;
+            }
         }
     }
 
