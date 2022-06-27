@@ -65,7 +65,7 @@ trait Stage7PrepareAdvanceData
 
         if (! empty($this->reservation)) {
             if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 1) {
-                $tables = $this->reservation['tables2']->pluck('name')->toArray();
+                $tables = $this->reservation['tables2']->pluck('name')->unique()->toArray();
                 $tableName = implode(',', $tables);
             } elseif (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() == 1) {
                 $tables = $this->reservation['tables2']->pluck('name')->toArray();

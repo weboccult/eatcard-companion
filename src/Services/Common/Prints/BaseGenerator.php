@@ -245,6 +245,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
     private function stage8_PrepareFinalJson()
     {
         $this->setMainPrinter();
+        $this->setStarPrinter();
         $this->setKitchenRelatedFields();
         $this->setOpenCashDrawer();
         $this->setPrintTitles();

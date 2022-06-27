@@ -103,6 +103,7 @@ trait Stage5EnableSettings
         $kiosk = $this->kiosk;
         $this->additionalSettings['cash_drawer_available'] = (int) ($kiosk->settings->cash_drawer_available ?? 0);
         $this->additionalSettings['kioskname'] = $kiosk->kioskname ?? '';
+        $this->additionalSettings['is_star_printer'] = $kiosk->is_star_printer ?? 0;
         $this->additionalSettings['kiosk_printer_name'] = $kiosk->printer_name ?? '';
         $this->additionalSettings['is_print_cart_add'] = $kiosk->settings->is_print_cart_add ?? 0;
 

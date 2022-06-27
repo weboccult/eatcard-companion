@@ -70,6 +70,13 @@ trait Stage8PrepareFinalJson
 //        companionLogger('----Companion Print printername', $printer_name);
     }
 
+    private function setStarPrinter()
+    {
+        if (! empty($this->additionalSettings['is_star_printer'])) {
+            $this->jsonFormatFullReceipt['starPrintfullreceipt'] = 1;
+        }
+    }
+
     /**
      * @return void
      * set kitchen print related data in final print json
@@ -375,11 +382,6 @@ trait Stage8PrepareFinalJson
 
         $this->jsonFormatFullReceipt['qrtext'] = $this->reservation->reservation_id;
         $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
-
-        //need to set start printer flag because all kiosk tickets device have start printer
-        if (! empty($this->additionalSettings['main_print_logo_hide'])) {
-            $this->jsonFormatFullReceipt['starPrintfullreceipt'] = 1;
-        }
     }
 
     /**
