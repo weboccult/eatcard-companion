@@ -380,9 +380,10 @@ trait Stage8PrepareFinalJson
 
             $total = $this->order['total_price'] ?? '0';
 
+            $dineInType = $this->order['dine_in_type'] ?? '';
             //skip for dine-in guest orders
             if (! in_array($this->systemType, [SystemTypes::POS]) && ! $this->additionalSettings['dinein_guest_order']) {
-                $orderType = ($this->order['dine_in_type'] == 'dine-in' ? 'Eat-in' : $this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
+                $orderType = ($dineInType == 'dine-in' ? 'Eat-in' : (! empty($dineInType) ? __companionPrintTrans('general.'.$dineInType) : $dineInType));
             }
 
             if ($this->systemType == SystemTypes::KDS) {
@@ -441,7 +442,10 @@ trait Stage8PrepareFinalJson
             $customerComments = $this->order['comment'] ?? '';
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
             $total = $this->subOrder['total_price'] ?? '0';
-            $orderType = ($this->order['dine_in_type'] == 'dine-in' ? 'Eat-in' : $this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
+
+            $dineInType = $this->order['dine_in_type'] ?? '';
+            $orderType = ($dineInType == 'dine-in' ? 'Eat-in' : (! empty($dineInType) ? __companionPrintTrans('general.'.$dineInType) : $dineInType));
+
             $tableName = '';
         }
 
