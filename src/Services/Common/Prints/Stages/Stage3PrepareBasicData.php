@@ -89,6 +89,7 @@ trait Stage3PrepareBasicData
                 'checkoutno'             => '',
                 'ordertype'              => '',
                 'typeorder'              => '',
+                'kitchenPrintOrderType'  => '',
                 'datetime'               => '',
                 'headertag'              => [],
                 'customercomments'       => '',

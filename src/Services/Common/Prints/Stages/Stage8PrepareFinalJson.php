@@ -356,6 +356,12 @@ trait Stage8PrepareFinalJson
         $total = '0';
         $itemTitle = '';
         $tableName = '';
+        $kitchenPrintOrderType = '';
+
+        $kitchenKioskEatInTitle = 'Kiosk - Eat-In';
+        $kitchenKioskTakeoutTitle = 'Kiosk - Take-out';
+        $kitchenDineInEatInTitle = 'QR Order - Eat-in';
+        $kitchenDineInTakeoutTitle = 'QR Order - Take-out';
 
         $tableName = $this->advanceData['tableName'];
 
@@ -374,9 +380,10 @@ trait Stage8PrepareFinalJson
 
             $total = $this->order['total_price'] ?? '0';
 
+            $dineInType = $this->order['dine_in_type'] ?? '';
             //skip for dine-in guest orders
             if (! in_array($this->systemType, [SystemTypes::POS]) && ! $this->additionalSettings['dinein_guest_order']) {
-                $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
+                $orderType = ($dineInType == 'dine-in' ? 'Eat-in' : (! empty($dineInType) ? __companionPrintTrans('general.'.$dineInType) : $dineInType));
             }
 
             if ($this->systemType == SystemTypes::KDS) {
@@ -388,6 +395,15 @@ trait Stage8PrepareFinalJson
             //not for dine-in guest order
             if ($tableName != '' && $this->additionalSettings['show_main_order_number_in_print'] == 0 && ! $this->additionalSettings['dinein_guest_order']) {
                 $tableName .= ! empty($this->advanceData['dynamicOrderNo']) ? (' #'.$this->advanceData['dynamicOrderNo']) : '';
+            }
+
+            //set kitchen order type
+            if ($this->order['order_type'] === 'kiosk' && (isset($this->order['dine_in_type']))) {
+                $kitchenPrintOrderType = ($this->order['dine_in_type'] == 'dine_in') ? $kitchenKioskEatInTitle : $kitchenKioskTakeoutTitle;
+            } elseif ($this->order['order_type'] === 'dine_in' && isset($this->order['dine_in_type']) && empty($this->order['table_name'])) {
+                $kitchenPrintOrderType = $this->order['dine_in_type'] == 'dine_in' ? $kitchenDineInEatInTitle : $kitchenDineInTakeoutTitle;
+            } else {
+                $kitchenPrintOrderType = (empty($this->order['parent_id']) ? (($this->order['order_type']) ? $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.$this->order['order_type']) : '') : '').($this->advanceData['is_paylater_order'] == 1 ? ' (Paylater)' : '');
             }
         }
 
@@ -426,7 +442,10 @@ trait Stage8PrepareFinalJson
             $customerComments = $this->order['comment'] ?? '';
             $dateTime = ($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
             $total = $this->subOrder['total_price'] ?? '0';
-            $orderType = ($this->order['dine_in_type']) ? __companionPrintTrans('general.'.$this->order['dine_in_type']) : '';
+
+            $dineInType = $this->order['dine_in_type'] ?? '';
+            $orderType = ($dineInType == 'dine-in' ? 'Eat-in' : (! empty($dineInType) ? __companionPrintTrans('general.'.$dineInType) : $dineInType));
+
             $tableName = '';
         }
 
@@ -441,6 +460,7 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['tablename'] = $tableName;
         $this->jsonFormatFullReceipt['checkoutno'] = $checkoutNo;
         $this->jsonFormatFullReceipt['ordertype'] = $orderType;
+        $this->jsonFormatFullReceipt['kitchenPrintOrderType'] = $kitchenPrintOrderType;
         $this->jsonFormatFullReceipt['datetime'] = $dateTime;
         $this->jsonFormatFullReceipt['headertag'] = []; //not in use
         $this->jsonFormatFullReceipt['footertag'] = []; //not in use
