@@ -104,11 +104,6 @@ trait Stage7PrepareAdvanceData
                 $this->order['delivery_address'] = implode(', ', $delivery_address);
 //                $this->order['delivery_postcode'] = $delivery_postcode;
             }
-
-            //update order type for Dine-in store-qr orders
-            if (empty($this->reservation) && isset($this->order['order_type']) && $this->order['order_type'] == 'dine_in') {
-                $this->order['order_type'] = 'qr_code_type';
-            }
         }
 
         if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservation)) {

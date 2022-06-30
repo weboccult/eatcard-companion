@@ -368,7 +368,12 @@ trait Stage8PrepareFinalJson
         if ($this->orderType == OrderTypes::PAID) {
             $checkoutNo = $this->order['checkout_no'] ?? '';
 
-            $typeOrder = $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.($this->order['order_type'] ?? ''));
+            //update order type for Dine-in store-qr orders
+            if (empty($this->reservation) && isset($this->order['order_type']) && $this->order['order_type'] == 'dine_in') {
+                $typeOrder = $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.qr_code_type');
+            } else {
+                $typeOrder = $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.($this->order['order_type'] ?? ''));
+            }
 
             if ($this->advanceData['is_paylater_order'] == 1) {
                 $typeOrder .= ' (Paylater)';
@@ -383,7 +388,7 @@ trait Stage8PrepareFinalJson
             $dineInType = $this->order['dine_in_type'] ?? '';
             //skip for dine-in guest orders
             if (! in_array($this->systemType, [SystemTypes::POS]) && ! $this->additionalSettings['dinein_guest_order']) {
-                $orderType = ($dineInType == 'dine-in' ? 'Eat-in' : (! empty($dineInType) ? __companionPrintTrans('general.'.$dineInType) : $dineInType));
+                $orderType = $dineInType == 'dine_in' ? 'Eat-in' : 'Take-out';
             }
 
             if ($this->systemType == SystemTypes::KDS) {
