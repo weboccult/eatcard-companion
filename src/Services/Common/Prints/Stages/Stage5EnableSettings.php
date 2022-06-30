@@ -101,7 +101,7 @@ trait Stage5EnableSettings
 
         $kiosk = $this->kiosk;
 
-        $this->additionalSettings['kioskname'] = $kiosk->kioskname ?? '';
+        $this->additionalSettings['kioskname'] = $kiosk->name ?? '';
         $this->additionalSettings['is_star_printer'] = $kiosk->is_star_printer ?? 0;
         $this->additionalSettings['kiosk_printer_name'] = $kiosk->printer_name ?? '';
 
