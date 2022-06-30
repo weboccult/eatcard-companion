@@ -145,9 +145,11 @@
                     @endif
                     <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
                     <div style="padding: 4px 0;text-align: center">
-                        <p style="font-weight: 600">
-                            {{$data['typeorder']}} op {{$data['datetime']}}
-                        <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
+                        @if(isset($data['typeorder']) && !empty($data['typeorder']))
+                            <p style="font-weight: 600">
+                                {{$data['typeorder']}} op {{$data['datetime']}}
+                            <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
+                        @endif
                         @if($data['customercomments'])
                             {{--                            <div class="comment-status">--}}
                             <p style="font-size: 14px; font-weight: 600;line-height: 25px">Opmerking</p>
@@ -302,6 +304,23 @@
                            <div style="border-bottom: 1px solid #000; margin-top: 10px"></div>
                          @endif
                        @endforeach
+
+                        @if(isset($data['qrimage']) && !empty($data['qrimage']))
+
+                            <div>
+                                <div style="padding: 10px 0px 3px 0px" >
+                                    <h4 style="font-weight: 200;"> {{$data['qrtext']}} </h4>
+                                </div>
+                                <div style="padding-bottom: 10px">
+                                    <img src="{!! $data['qrimage'] !!}"
+                                     style="display:block;" width="100" height="100" border="0"
+                                     alt="reservation-qr"/>
+                                </div>
+                            </div>
+
+                            <div style="border-bottom: 1px solid #000; "></div>
+
+                       @endif
 
                         @if($data['receipt'])
                             <p>

@@ -219,7 +219,7 @@ trait Stage3PrepareBasicData
         }
 
         //set print type main print for PDF and HTML
-        if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
+        if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML]) && ! in_array($this->printType, [PrintTypes::MAIN, PrintTypes::PROFORMA])) {
             $this->printType = PrintTypes::MAIN;
         }
 

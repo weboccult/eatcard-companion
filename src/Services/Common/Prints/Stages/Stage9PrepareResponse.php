@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
+use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use function Weboccult\EatcardCompanion\Helpers\__companionPDF;
 use function Weboccult\EatcardCompanion\Helpers\__companionViews;
@@ -30,8 +31,17 @@ trait Stage9PrepareResponse
      */
     protected function htmlResponse()
     {
+        $orderDetails = [];
+        if ($this->orderType == OrderTypes::RUNNING) {
+            $orderDetails = $this->reservation;
+        }
+
+        if ($this->orderType == OrderTypes::PAID) {
+            $orderDetails = $this->order;
+        }
+
         if ($this->printMethod == PrintMethod::HTML && ! empty($this->jsonFormatFullReceipt)) {
-            $this->returnResponseData = __companionViews($this->advanceData['viewPath'], ['data'=>$this->jsonFormatFullReceipt, 'order' => $this->order, 'store'=> $this->store, 'kiosk'=>$this->kiosk]);
+            $this->returnResponseData = __companionViews($this->advanceData['viewPath'], ['data'=>$this->jsonFormatFullReceipt, 'order' => $orderDetails, 'store'=> $this->store, 'kiosk'=>$this->kiosk]);
         }
     }
 
@@ -40,8 +50,16 @@ trait Stage9PrepareResponse
      */
     protected function pdfResponse()
     {
+        $orderDetails = [];
+        if ($this->orderType == OrderTypes::RUNNING) {
+            $orderDetails = $this->reservation;
+        }
+
+        if ($this->orderType == OrderTypes::PAID) {
+            $orderDetails = $this->order;
+        }
         if ($this->printMethod == PrintMethod::PDF && ! empty($this->jsonFormatFullReceipt)) {
-            $this->returnResponseData = __companionPDF($this->advanceData['viewPath'], ['data'=>$this->jsonFormatFullReceipt, 'order' => $this->order, 'store'=> $this->store, 'kiosk'=>$this->kiosk])
+            $this->returnResponseData = __companionPDF($this->advanceData['viewPath'], ['data'=>$this->jsonFormatFullReceipt, 'order' => $orderDetails, 'store'=> $this->store, 'kiosk'=>$this->kiosk])
                    ->download('orderno-'.$this->globalOrderId.'.pdf');
         }
     }
