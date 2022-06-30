@@ -177,47 +177,63 @@ trait Stage5PaymentProcess
 
             companionLogger('Wipay payment details', $inputs);
             companionLogger('Wipay started!', 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            try {
+                $client = new Client();
+                $url = $this->device->environment == 'live' ? config('eatcardCompanion.payment.gateway.wipay.production') : config('eatcardCompanion.payment.gateway.wipay.staging');
+                $createOrderUrl = config('eatcardCompanion.payment.gateway.wipay.endpoints.createOrder');
 
-            $client = new Client();
-            $url = $this->device->environment == 'live' ? config('eatcardCompanion.payment.gateway.wipay.production') : config('eatcardCompanion.payment.gateway.wipay.staging');
-            $createOrderUrl = config('eatcardCompanion.payment.gateway.wipay.endpoints.createOrder');
+                $request_data = $client->request('POST', $url.$createOrderUrl, [
+                    'headers' => ['Content-Type' => 'application/json;charset=UTF-8'],
+                    'cert'    => public_path('worldline/eatcard.nl.pem'),
+                    'ssl_key' => public_path('worldline/eatcard.nl.key'),
+                    'body'    => json_encode($inputs, true),
+                ]);
 
-            $request_data = $client->request('POST', $url.$createOrderUrl, [
-                'headers' => ['Content-Type' => 'application/json;charset=UTF-8'],
-                'cert'    => public_path('worldline/eatcard.nl.pem'),
-                'ssl_key' => public_path('worldline/eatcard.nl.key'),
-                'body'    => json_encode($inputs, true),
-            ]);
+                $request_data->getHeaderLine('content-type');
+                $response = json_decode($request_data->getBody()->getContents(), true);
 
-            $request_data->getHeaderLine('content-type');
-            $response = json_decode($request_data->getBody()->getContents(), true);
+                if ($response['error'] == 1) {
+                    companionLogger('Wipay payment initialize error', $response);
+                    /*<--- manual cancel payment ---->*/
+                    EatcardWebhook::action(CashTicketsWebhook::class)
+                             ->setOrderType('reservation')
+                             ->setReservationId($this->createdReservation->id)
+                             ->setPaymentId($paymentDetails->id)
+                             ->setStoreId($this->store->id)
+                             ->payload([
+                                 'status' => 'failed',
+                             ])
+                             ->dispatch();
+                    $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
+                }
 
-            if ($response['error'] == 1) {
-                companionLogger('Wipay payment initialize error', $response);
+                companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
+
+                isset($response['ssai']) && $response['ssai'] ? $paymentDetails->update(['transaction_id' => $response['ssai']]) : '';
+
+                $this->paymentResponse = [
+                    'ssai' => $response['ssai'] ?? '',
+                    'payUrl'  => null,
+                    'id' => $this->createdReservation->id,
+                    'reservation_id' => $this->createdReservation->reservation_id,
+                    'payment_id' => $paymentDetails->id,
+                ];
+            } catch (ConnectException | RequestException | ClientException $e) {
+                companionLogger('---------wipay exception ', $e->getMessage(), $e->getLine(), $e->getFile());
+
                 /*<--- manual cancel payment ---->*/
                 EatcardWebhook::action(CashTicketsWebhook::class)
-                         ->setOrderType('reservation')
-                         ->setReservationId($this->createdReservation->id)
-                         ->setPaymentId($paymentDetails->id)
-                         ->setStoreId($this->store->id)
-                         ->payload([
-                             'status' => 'failed',
-                         ])
-                         ->dispatch();
+                          ->setOrderType('reservation')
+                          ->setReservationId($this->createdReservation->id)
+                          ->setPaymentId($paymentDetails->id)
+                          ->setStoreId($this->store->id)
+                          ->payload([
+                              'status' => 'failed',
+                          ])
+                          ->dispatch();
+
                 $this->setDumpDieValue(['error' => 'Currently, the payment device has not been found or unable to connect.']);
             }
-
-            companionLogger('Wipay payment Response', $response, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
-
-            isset($response['ssai']) && $response['ssai'] ? $paymentDetails->update(['transaction_id' => $response['ssai']]) : '';
-
-            $this->paymentResponse = [
-                'ssai' => $response['ssai'] ?? '',
-                'payUrl'  => null,
-                'id' => $this->createdReservation->id,
-                'reservation_id' => $this->createdReservation->reservation_id,
-                'payment_id' => $paymentDetails->id,
-            ];
         }
     }
 
