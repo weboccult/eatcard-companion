@@ -2146,7 +2146,7 @@ if (! function_exists('assignedReservationTableOrUpdate')) {
      *
      * @return bool
      */
-    function assignedReservationTableOrUpdate($reservation, $reservationNewTables, array $payload = []): bool
+    function assignedReservationTableOrUpdate($reservation, $reservationNewTables): bool
     {
         try {
             $groupId = 0;
@@ -2174,15 +2174,11 @@ if (! function_exists('assignedReservationTableOrUpdate')) {
             }
 
             $payload['group_id'] = $groupId;
-            $payload['all_you_eat_data'] = json_encode($payload['all_you_eat_data']);
-            unset($payload['total_price'], $payload['original_total_price']);
             StoreReservation::query()->where('id', $reservation->id)->update($payload);
-
-            sendResWebNotification($reservation->id, $reservation->store_id, 'new_booking');
 
             return true;
         } catch (\Exception $e) {
-            companionLogger('----------table-move-error ', $e->getMessage(), $e->getLine());
+            companionLogger('----------table-assign-error ', $e->getMessage(), $e->getLine());
 
             return false;
         }

@@ -416,7 +416,25 @@ abstract class BaseReservationUpdate
             if (! empty($this->payload['table_ids'] ?? [])) {
                 try {
                     $tables = $this->payload['table_ids'] ?? [];
-                    assignedReservationTableOrUpdate($this->reservation, $tables, $this->updatePayload);
+                    assignedReservationTableOrUpdate($this->reservation, $tables);
+
+                    //for manual assign tale we need to update reservation data here
+                    if (! empty($this->updatePayload)) {
+                        $totalPrice = $this->updatePayload['total_price'] ?? 0;
+                        $originalTotalPrice = $this->updatePayload['original_total_price'] ?? 0;
+
+                        $this->updatePayload['all_you_eat_data'] = json_encode($this->updatePayload['all_you_eat_data']);
+                        unset($this->updatePayload['total_price'], $this->updatePayload['original_total_price']);
+
+                        StoreReservation::query()->where('id', $this->reservation->id)->update($this->updatePayload);
+                        // for pos no need to send all payload on payment details because now it's update from here  we need to update only pending amount at payment susses time
+                        $this->updatePayload = [
+                            'total_price' => $totalPrice,
+                            'original_total_price' => $originalTotalPrice,
+                        ];
+                        $this->reservation->refresh();
+                        sendResWebNotification($this->reservation->id, $this->reservation->store_id, 'new_booking');
+                    }
                 } catch (\Exception $exception) {
                     throwException($exception);
                 }
