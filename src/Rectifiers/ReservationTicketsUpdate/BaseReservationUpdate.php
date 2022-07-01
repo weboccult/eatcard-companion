@@ -560,6 +560,9 @@ abstract class BaseReservationUpdate
             'created_from'         => $this->updatedFrom,
         ];
 
+        //move reservation iframe payment details in payment table
+        $this->moveReservationEntryInPaymentDetails();
+
         if ($paymentMethodType == 'ccv') {
             $this->ccvPayment();
         } elseif ($paymentMethodType == 'wipay') {
@@ -774,5 +777,63 @@ abstract class BaseReservationUpdate
                     'status' => $this->payload['bop_status'] ?? 'paid',
                 ])
                 ->dispatch();
+    }
+
+    private function moveReservationEntryInPaymentDetails()
+    {
+        $createdFrom = $this->reservation->created_from ?? '';
+        $originalTotalPrice = $this->reservation->original_total_price ?? 0;
+        $multisafePaymentId = $this->reservation->multisafe_payment_id ?? 0;
+        $molliePaymentId = $this->reservation->mollie_payment_id ?? 0;
+        $refPaymentId = $this->reservation->ref_payment_id ?? 0;
+        $paymentMethodType = '';
+
+        //only transfer create from reservation payment entry
+        if ($createdFrom != 'reservation') {
+            return;
+        }
+
+        //only transfer first time
+        if (! empty($refPaymentId)) {
+            return;
+        }
+
+        //only transfer if amount > 0
+        if (empty($originalTotalPrice)) {
+            return;
+        }
+
+        //only transfer if payment done form online
+        if (! empty($molliePaymentId)) {
+            $paymentMethodType = 'mollie';
+        }
+
+        //only transfer if payment done form online
+        if (! empty($multisafePaymentId)) {
+            $paymentMethodType = 'multisafepay';
+        }
+
+        //only transfer if payment form mollie and multisafepay
+        if (empty($paymentMethodType)) {
+            return;
+        }
+
+        $paymentDevicePayload = [
+            'store_id'             => $this->store->id,
+            'paymentable_type'     => getModelName(StoreReservation::class),
+            'paymentable_id'       => getModelId($this->reservation),
+            'transaction_type'     => TransactionTypes::CREDIT,
+            'payment_method_type'  => $paymentMethodType,
+            'method'               => $paymentMethodType,
+            'payment_status'       => 'paid',
+            'local_payment_status' => 'paid',
+            'paid_on'              => $this->reservation->created_at,
+            'amount'               => $originalTotalPrice,
+            'process_type'         => 'create',
+            'created_from'         => 'reservation',
+            'created_at'           => $this->reservation->created_at,
+        ];
+
+        $paymentDetails = PaymentDetail::query()->create($paymentDevicePayload);
     }
 }
