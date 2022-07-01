@@ -50,7 +50,11 @@ class CashTicketsWebhook extends BaseWebhook
 
         if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
             $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
-            $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+
+            if (isset($reservationUpdatePayload['all_you_eat_data']) && ! empty($reservationUpdatePayload['all_you_eat_data'])) {
+                $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+            }
+
             $update_data = $reservationUpdatePayload;
             $update_payment_data['payload'] = '';
         }
