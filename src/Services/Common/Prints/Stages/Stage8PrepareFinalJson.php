@@ -163,7 +163,7 @@ trait Stage8PrepareFinalJson
                 $title6 = __companionPrintTrans('general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-                $titleTime = carbonFormatParse('d-m-Y H:i', ($this->order['paid_on'] ?? ''));
+                $titleTime = Carbon::parse($this->order['paid_on'])->format('d-m-Y H:i') ?? '';
                 $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
             }
 
