@@ -233,6 +233,8 @@ trait Stage7PrepareAdvanceData
             return;
         }
 
+        $ayceDiscountData = $this->additionalSettings['ayce_data']['discount']['ayce_data'] ?? [];
+
         if (isset($all_you_eat_data['no_of_adults']) && ! empty($all_you_eat_data['no_of_adults'])) {
             $item = $this->itemFormat;
 
@@ -249,6 +251,15 @@ trait Stage7PrepareAdvanceData
             $item['category'] = '';
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
+
+            if (! empty($ayceDiscountData)) {
+                $itemDiscount = (float) ($ayceDiscountData['no_of_adults']['discount'] ?? 0);
+                $itemDiscountType = ($ayceDiscountData['no_of_adults']['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                $item['discount_count'] = $ayceDiscountData['no_of_adults']['count'] ?? 0;
+                $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                $item['discount'] = (float) ($ayceDiscountData['no_of_adults']['total_discount'] ?? 0);
+                $item['is_euro_discount'] = 1;
+            }
 
             $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
@@ -270,6 +281,15 @@ trait Stage7PrepareAdvanceData
             $item['category'] = '';
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
+
+            if (! empty($ayceDiscountData)) {
+                $itemDiscount = (float) ($ayceDiscountData['no_of_kids2']['discount'] ?? 0);
+                $itemDiscountType = ($ayceDiscountData['no_of_kids2']['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                $item['discount_count'] = $ayceDiscountData['no_of_kids2']['count'] ?? 0;
+                $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                $item['discount'] = (float) ($ayceDiscountData['no_of_kids2']['total_discount'] ?? 0);
+                $item['is_euro_discount'] = 1;
+            }
 
             $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
@@ -299,6 +319,25 @@ trait Stage7PrepareAdvanceData
                             $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * ($kid - $all_you_eat_data['dinein_price']['min_age'] + 1);
                         }
 
+                        if (! empty($ayceDiscountData)) {
+                            foreach ($ayceDiscountData['no_of_kids'] as $key_kid => $currentKidDiscount) {
+                                if (isset($currentKidDiscount['printed'])) {
+                                    continue;
+                                }
+
+                                if (isset($currentKidDiscount['age']) && $currentKidDiscount['age'] == $kid) {
+                                    $itemDiscount = (float) ($currentKidDiscount['discount'] ?? 0);
+                                    $itemDiscountType = ($currentKidDiscount['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                                    $item['discount_count'] = $currentKidDiscount['count'] ?? 0;
+                                    $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount);
+                                    $item['discount'] = (float) ($currentKidDiscount['total_discount'] ?? 0);
+                                    $item['is_euro_discount'] = 1;
+                                    $ayceDiscountData['no_of_kids'][$key_kid]['printed'] = 1;
+                                    break;
+                                }
+                            }
+                        }
+
                         $this->itemPricesCalculate($item, true);
                         $this->jsonItems[$this->jsonItemsIndex] = $item;
                         $this->jsonItemsIndex += 1;
@@ -319,6 +358,15 @@ trait Stage7PrepareAdvanceData
                 $item['void_id'] = 0;
                 $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids']);
                 $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids'];
+
+                if (! empty($ayceDiscountData)) {
+                    $itemDiscount = (float) ($ayceDiscountData['no_of_kids']['discount'] ?? 0);
+                    $itemDiscountType = ($ayceDiscountData['no_of_kids']['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                    $item['discount_count'] = $ayceDiscountData['no_of_kids']['count'] ?? 0;
+                    $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                    $item['discount'] = (float) ($ayceDiscountData['no_of_kids']['total_discount'] ?? 0);
+                    $item['is_euro_discount'] = 1;
+                }
 
                 $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
@@ -343,6 +391,16 @@ trait Stage7PrepareAdvanceData
                     $item['category'] = '';
                     $item['on_the_house'] = 0;
                     $item['void_id'] = 0;
+
+                    if (! empty($ayceDiscountData)) {
+                        $currentKidDiscount = collect($ayceDiscountData['dynm_kids'] ?? [])->where('id', ($dynamic_price_person['id'] ?? 0))->first();
+                        $itemDiscount = (float) ($currentKidDiscount['discount'] ?? 0);
+                        $itemDiscountType = ($currentKidDiscount['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                        $item['discount_count'] = $currentKidDiscount['count'] ?? 0;
+                        $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                        $item['discount'] = (float) ($currentKidDiscount['total_discount'] ?? 0);
+                        $item['is_euro_discount'] = 1;
+                    }
 
                     $this->itemPricesCalculate($item, true);
                     $this->jsonItems[$this->jsonItemsIndex] = $item;

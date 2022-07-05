@@ -490,24 +490,22 @@ class RunningOrderGenerator extends BaseGenerator
         }
 
         $summary = [];
+        $totalPrice = 0;
+        $refund = 0;
 
-        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
-            if (! empty($this->paymentDetail) && $this->paymentDetail['transaction_type'] == 'DEBIT') {
-                $summary[] = [
-                    'key'   => __companionPrintTrans('print.refund'),
-                    'value' => changePriceFormat(($this->paymentDetail['amount'] ?? 0)),
-                ];
+        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
+            if ($this->paymentDetail['transaction_type'] == 'DEBIT') {
+                $refund = $this->paymentDetail['amount'] ?? 0;
+                $totalPrice = $totalPrice + ($this->paymentDetail['amount'] ?? 0);
+            } else {
+                $totalPrice = $this->paymentDetail['amount'] ?? 0;
             }
-
-            $this->jsonSummary = $summary;
-
-            return;
         }
 
-        if (($this->reservation['total_price'] ?? 0) > 0) {
+        if ($totalPrice > 0) {
             $summary[] = [
-                'key'   =>  __companionPrintTrans('print.reservation_deposit'),
-                'value' => '-'.changePriceFormat(($this->reservation['total_price'] ?? 0)),
+                'key'   => __companionPrintTrans('print.reservation_deposit'),
+                'value' => '-'.changePriceFormat($totalPrice),
             ];
         }
 
@@ -516,6 +514,13 @@ class RunningOrderGenerator extends BaseGenerator
                    'key'   => __companionPrintTrans('print.discount_amount').$this->order_discount_amount_with_prefix,
                    'value' => '-'.changePriceFormat($this->total_dis_inc_tax),
                ];
+        }
+
+        if ($refund > 0) {
+            $summary[] = [
+                'key'   => __companionPrintTrans('print.refund'),
+                'value' => changePriceFormat($refund),
+            ];
         }
 
         if (isset($this->reservation['coupon_price']) && $this->reservation['coupon_price'] > 0) {

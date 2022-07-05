@@ -1464,17 +1464,20 @@ if (! function_exists('set_discount_with_prifix')) {
      *
      * @return string
      */
-    function set_discount_with_prifix($discount_type, $discount, int $only_return_sign = 0)
+    function set_discount_with_prifix($discount_type, $discount, int $quantity = 0)
     {
         $discount_with_prifix = '';
         $discount_prifix = $discount_type == 1 ? 'eur' : '%';
-        if ($only_return_sign == 1) {
+        if ($quantity == -1) {
             $discount_with_prifix = ' ('.$discount_prifix.')';
 
             return $discount_with_prifix;
         }
-        if ($discount > 0) {
+        if ($discount > 0 && $quantity == 0) {
             $discount_with_prifix = ' ('.changePriceFormat($discount).' '.$discount_prifix.')';
+        }
+        if ($discount > 0 && $quantity > 0) {
+            $discount_with_prifix = ' ('.changePriceFormat($discount).' '.$discount_prifix.' x '.$quantity.' )';
         }
 
         return $discount_with_prifix;
