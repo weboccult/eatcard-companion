@@ -38,6 +38,7 @@ use Weboccult\EatcardCompanion\Rectifiers\ReservationTicketsUpdate\Traits\MagicA
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\EatcardWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets\CashTicketsWebhook;
 use function PHPUnit\Framework\throwException;
+use function Weboccult\EatcardCompanion\Helpers\aycePersonDiscountCalculate;
 use function Weboccult\EatcardCompanion\Helpers\calculateAllYouCanEatPerson;
 use function Weboccult\EatcardCompanion\Helpers\checkAnotherMeeting;
 use function Weboccult\EatcardCompanion\Helpers\checkTableMinMaxLimitAccordingToPerson;
@@ -240,6 +241,9 @@ abstract class BaseReservationUpdate
         $reservationAllYouEatData['no_of_kids2'] = $newAllYouEatData['no_of_kids2'] ?? 0;
         $reservationAllYouEatData['no_of_kids'] = $newAllYouEatData['no_of_kids'] ?? 0;
         $reservationAllYouEatData['kids_age'] = $newAllYouEatData['kids_age'] ?? [];
+        if (empty($newAllYouEatData['discount'] ?? null) && ! empty($reservationAllYouEatData['discount'] ?? null)) {
+            unset($reservationAllYouEatData['discount']);
+        }
 
         $dynmKids = $newAllYouEatData['dynm_kids'] ?? null;
         if (! empty($dynmKids)) {
@@ -259,13 +263,14 @@ abstract class BaseReservationUpdate
 
         $person = calculateAllYouCanEatPerson($reservationAllYouEatData);
         $this->allYouEatPrice = getAycePrice($reservationAllYouEatData);
+        $ayceDiscount = aycePersonDiscountCalculate($reservationAllYouEatData);
 
         $this->updatePayload = [
             'dinein_price_id'      => $this->payload['dinein_price_id'] ?? 0,
             'all_you_eat_data'     => $reservationAllYouEatData,
             'person'               => $person ?? 0,
-            'total_price'          => $this->allYouEatPrice ?? 0,
-//            'original_total_price' => $this->allYouEatPrice ?? 0,
+            'total_price'          => $this->allYouEatPrice - $ayceDiscount,
+            'ayce_discount'        => $ayceDiscount,
         ];
 
         $this->payableAmount = (float) ($this->allYouEatPrice - $this->reservation->total_price);
@@ -422,15 +427,17 @@ abstract class BaseReservationUpdate
                     if (! empty($this->updatePayload)) {
                         $totalPrice = $this->updatePayload['total_price'] ?? 0;
                         $originalTotalPrice = $this->updatePayload['original_total_price'] ?? 0;
+                        $ayceDiscount = $this->updatePayload['ayce_discount'] ?? 0;
+                        unset($this->updatePayload['total_price'], $this->updatePayload['original_total_price'], $this->updatePayload['ayce_discount']);
 
                         $this->updatePayload['all_you_eat_data'] = json_encode($this->updatePayload['all_you_eat_data']);
-                        unset($this->updatePayload['total_price'], $this->updatePayload['original_total_price']);
 
                         StoreReservation::query()->where('id', $this->reservation->id)->update($this->updatePayload);
                         // for pos no need to send all payload on payment details because now it's update from here  we need to update only pending amount at payment susses time
                         $this->updatePayload = [
                             'total_price' => $totalPrice,
                             'original_total_price' => $originalTotalPrice,
+                            'ayce_discount' => $ayceDiscount,
                         ];
                         $this->reservation->refresh();
                         sendResWebNotification($this->reservation->id, $this->reservation->store_id, 'new_booking');

@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Reservations\Stages;
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
+use function Weboccult\EatcardCompanion\Helpers\aycePersonDiscountCalculate;
 use function Weboccult\EatcardCompanion\Helpers\calculateAllYouCanEatPerson;
 use function Weboccult\EatcardCompanion\Helpers\generateRandomNumberV2;
 use function Weboccult\EatcardCompanion\Helpers\generateReservationId;
@@ -102,6 +103,7 @@ trait Stage3PrepareBasicData
                     $dineInPrice['dynamic_prices'][$dy_price_key]['person'] = isset($ayce_person['person']) && ! empty($ayce_person['person']) ? (int) $ayce_person['person'] : 0;
                 }
             }
+            unset($ayceData['dynm_kids']);
         }
         if ($dineInPrice && $ayceData) {
             $ayceData['dinein_price'] = $dineInPrice;
@@ -125,9 +127,11 @@ trait Stage3PrepareBasicData
         $this->reservationData['person'] = calculateAllYouCanEatPerson($this->reservationData['all_you_eat_data']);
 
         $aycePrice = getAycePrice($this->reservationData['all_you_eat_data']);
+        $ayceDiscount = aycePersonDiscountCalculate($this->reservationData['all_you_eat_data']);
 
-        $this->reservationData['total_price'] = $aycePrice;
+        $this->reservationData['total_price'] = $aycePrice - $ayceDiscount;
         $this->reservationData['original_total_price'] = $aycePrice;
+        $this->reservationData['ayce_discount'] = $ayceDiscount;
         $this->reservationData['payment_type'] = 'full_payment';
         $this->reservationData['is_manually_cancelled'] = 0;
         $this->reservationData['payment_status'] = 'pending';

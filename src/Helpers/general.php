@@ -383,6 +383,101 @@ if (! function_exists('getAycePrice')) {
     }
 }
 
+if (! function_exists('aycePersonDiscountCalculate')) {
+    /**
+     * @param $aycedata
+     *
+     * @return float|int|mixed
+     */
+    function aycePersonDiscountCalculate($aycedata)
+    {
+        $discount = 0;
+        $discountData = $aycedata['discount']['ayce_data'] ?? null;
+
+        /*<--- not set any type of discount --->*/
+        if (empty($discountData)) {
+            return $discount;
+        }
+
+        $dineInPrice = $aycedata['dinein_price'] ?? null;
+        $ayce_no_of_adults = $aycedata['no_of_adults'] ?? null;
+        $ayce_no_of_kids2 = $aycedata['no_of_kids2'] ?? null;
+        $ayce_no_of_kids = $aycedata['no_of_kids'] ?? null;
+        $ayce_is_per_year = $dineInPrice['is_per_year'] ?? null;
+
+        $discount_no_of_adults = $discountData['no_of_adults'] ?? null;
+        $discount_no_of_kids2 = $discountData['no_of_kids2'] ?? null;
+        $discount_no_of_kids = $discountData['no_of_kids'] ?? null;
+        $discount_dynm_kids = $discountData['dynm_kids'] ?? null;
+
+        if (! empty($dineInPrice)) {
+            if (! empty($ayce_no_of_adults) && ! empty($discount_no_of_adults)) {
+                /*<--- adult discount --->*/
+                $discount += calculateOfDiscount($discountData['no_of_adults'], $dineInPrice['price']);
+            }
+
+            if (! empty($ayce_no_of_kids2) && ! empty($discount_no_of_kids2)) {
+                /*<--- kids2 discount --->*/
+                $discount += calculateOfDiscount($discountData['no_of_kids2'], $dineInPrice['child_price_2']);
+            }
+
+            /*<--- kids per year discount --->*/
+            if (! empty($ayce_no_of_kids) && ! empty($discount_no_of_kids)) {
+                if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
+                    $min_age = (int) $dineInPrice['min_age'];
+                    $kid_price = (float) $dineInPrice['child_price'];
+                    foreach ($discount_no_of_kids as $kids_age) {
+                        $discount += calculateOfDiscount($kids_age, ($kid_price + ((int) $kids_age['age']) - $min_age));
+                    }
+                } else {
+                    /*<--- kids discount --->*/
+                    $discount += calculateOfDiscount($discount_no_of_kids, $dineInPrice['child_price']);
+                }
+            }
+
+            /*<--- Dynamic kids discount --->*/
+            if (! empty($dineInPrice['dynamic_prices'] ?? null) && ! empty($discount_dynm_kids)) {
+                foreach ($discount_dynm_kids as $dynamic_prices) {
+                    $dynamicPriceData = collect($dineInPrice['dynamic_prices'])->where('id', $dynamic_prices['id'])->first();
+                    if ($dynamicPriceData) {
+                        $discount += calculateOfDiscount($dynamic_prices, $dynamicPriceData['price']);
+                    }
+                }
+            }
+        }
+
+        return $discount;
+    }
+}
+
+if (! function_exists('calculateOfDiscount')) {
+
+    /**
+     * @param $data
+     * @param $aycePrice
+     *
+     * @return float|int|mixed
+     */
+    function calculateOfDiscount($data, $aycePrice)
+    {
+        $discountAmount = 0;
+        $discountType = $data['discount_type'] ?? null;
+        if (empty($discountType)) {
+            return $discountAmount;
+        }
+
+        $price = (float) ($aycePrice ?? 0);
+        $person = (int) ($data['count'] ?? 0);
+        $discount = $discountAmount = $data['discount'] ?? 0;
+
+        if ($discountType == 'percentage') {
+            $discountAmount = round(($person * $price * $discount) / 100, 5);
+        }
+
+        return $discountAmount;
+    }
+}
+
 if (! function_exists('discountCalc')) {
     /**
      * @param $total_value

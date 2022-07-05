@@ -18,7 +18,7 @@
             font-size: 10px;
         }
 
-        * {
+        .container * {
             margin: 0 auto;
             padding: 0;
             -webkit-box-sizing: border-box;
