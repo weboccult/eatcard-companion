@@ -319,7 +319,9 @@ abstract class BaseReservationUpdate
             ];
             $paymentDetails = PaymentDetail::query()->create($this->paymentDevicePayload);
             companionLogger('------refund | payment detail ', $paymentDetails);
+            $updateReservationData['ref_payment_id'] = $paymentDetails->id ?? $this->reservation->ref_payment_id;
             StoreReservation::query()->find($this->reservation->id)->update($updateReservationData);
+            $this->reservation->refresh();
         } else {
             $this->updatePayload['original_total_price'] = $this->reservation->original_total_price + $this->payableAmount;
         }
@@ -585,7 +587,9 @@ abstract class BaseReservationUpdate
             companionLogger('refund successfully');
             $this->paymentResponse = [
                 'id' => $this->reservation->id,
+                'reservation_id' => $this->reservation->reservation_id,
                 'refund_amount' => abs($this->payableAmount),
+                'payment_id'     => $this->reservation->ref_payment_id,
                 'message' => 'Refund successfully',
             ];
 
