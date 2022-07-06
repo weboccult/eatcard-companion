@@ -423,15 +423,17 @@ if (! function_exists('aycePersonDiscountCalculate')) {
 
             /*<--- kids per year discount --->*/
             if (! empty($ayce_no_of_kids) && ! empty($discount_no_of_kids)) {
-                if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
-                    $min_age = (int) $dineInPrice['min_age'];
-                    $kid_price = (float) $dineInPrice['child_price'];
-                    foreach ($discount_no_of_kids as $kids_age) {
-                        $discount += calculateOfDiscount($kids_age, ($kid_price + ((int) $kids_age['age']) - $min_age));
+                $price = $dineInPrice['child_price'];
+                $min_age = (int) ($dineInPrice['min_age'] ?? 0);
+                $kid_price = (float) ($dineInPrice['child_price'] ?? 0);
+
+                foreach ($discount_no_of_kids as $kids_age) {
+                    if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
+//                        $price = ($kid_price * ((int) $kids_age['age']) - $min_age);
+                        $price = ((((int) $kids_age['age']) - $min_age) + 1) * $kid_price;
                     }
-                } else {
-                    /*<--- kids discount --->*/
-                    $discount += calculateOfDiscount($discount_no_of_kids, $dineInPrice['child_price']);
+
+                    $discount += calculateOfDiscount($kids_age, $price);
                 }
             }
 
@@ -468,9 +470,11 @@ if (! function_exists('calculateOfDiscount')) {
 
         $price = (float) ($aycePrice ?? 0);
         $person = (int) ($data['count'] ?? 0);
-        $discount = $discountAmount = $data['discount'] ?? 0;
+        $discount = $data['discount'] ?? 0;
 
-        if ($discountType == 'percentage') {
+        if ($discountType == 'euro') {
+            $discountAmount = round(($person * $discount), 5);
+        } else {
             $discountAmount = round(($person * $price * $discount) / 100, 5);
         }
 
