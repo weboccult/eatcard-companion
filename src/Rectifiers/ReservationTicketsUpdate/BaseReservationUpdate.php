@@ -245,6 +245,10 @@ abstract class BaseReservationUpdate
             unset($reservationAllYouEatData['discount']);
         }
 
+        if (! empty($newAllYouEatData['discount'] ?? null)) {
+            $reservationAllYouEatData['discount'] =  $newAllYouEatData['discount'];
+        }
+
         $dynmKids = $newAllYouEatData['dynm_kids'] ?? null;
         if (! empty($dynmKids)) {
             $ayceDynamicChildeList = collect($dynmKids);
