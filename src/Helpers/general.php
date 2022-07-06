@@ -429,7 +429,8 @@ if (! function_exists('aycePersonDiscountCalculate')) {
 
                 foreach ($discount_no_of_kids as $kids_age) {
                     if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
-                        $price = ($kid_price + ((int) $kids_age['age']) - $min_age);
+//                        $price = ($kid_price * ((int) $kids_age['age']) - $min_age);
+                        $price = ((((int) $kids_age['age']) - $min_age) + 1) * $kid_price;
                     }
 
                     $discount += calculateOfDiscount($kids_age, $price);
