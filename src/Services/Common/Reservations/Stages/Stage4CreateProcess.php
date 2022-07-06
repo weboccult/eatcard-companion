@@ -64,7 +64,11 @@ trait Stage4CreateProcess
 
     protected function createReservationJob()
     {
-        if (empty($this->createdReservation) && $this->system == SystemTypes::POS) {
+        if ($this->system == SystemTypes::POS) {
+            return;
+        }
+
+        if (empty($this->createdReservation)) {
             return;
         }
 
