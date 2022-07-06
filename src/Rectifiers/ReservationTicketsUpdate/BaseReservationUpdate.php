@@ -246,7 +246,7 @@ abstract class BaseReservationUpdate
         }
 
         if (! empty($newAllYouEatData['discount'] ?? null)) {
-            $reservationAllYouEatData['discount'] =  $newAllYouEatData['discount'];
+            $reservationAllYouEatData['discount'] = $newAllYouEatData['discount'];
         }
 
         $dynmKids = $newAllYouEatData['dynm_kids'] ?? null;
