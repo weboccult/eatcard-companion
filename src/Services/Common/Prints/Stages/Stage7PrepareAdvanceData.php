@@ -234,7 +234,6 @@ trait Stage7PrepareAdvanceData
         }
 
         $ayceDiscountData = $this->additionalSettings['ayce_data']['discount']['ayce_data'] ?? [];
-        companionLogger('-----ayce discount print test 1 : ', $ayceDiscountData);
 
         if (isset($all_you_eat_data['no_of_adults']) && ! empty($all_you_eat_data['no_of_adults'])) {
             $item = $this->itemFormat;
@@ -254,17 +253,14 @@ trait Stage7PrepareAdvanceData
             $item['void_id'] = 0;
 
             if (! empty($ayceDiscountData)) {
-                companionLogger('-----ayce discount print test 12: ', $ayceDiscountData);
                 $itemDiscount = (float) ($ayceDiscountData['no_of_adults']['discount'] ?? 0);
                 $itemDiscountType = ($ayceDiscountData['no_of_adults']['discount_type'] ?? '') == 'euro' ? 1 : 0;
                 $item['discount_count'] = $ayceDiscountData['no_of_adults']['count'] ?? 0;
                 $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
                 $item['discount'] = (float) ($ayceDiscountData['no_of_adults']['total_discount'] ?? 0);
                 $item['is_euro_discount'] = 1;
-                companionLogger('-----ayce discount print test 3 : ', $item);
             }
 
-            companionLogger('-----ayce discount print test 4 : ', $item);
             $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
             $this->jsonItemsIndex += 1;
@@ -363,18 +359,14 @@ trait Stage7PrepareAdvanceData
                 $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids']);
                 $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids'];
 
-                companionLogger('-----ayce discount print test 5 : ', $ayceDiscountData);
                 if (! empty($ayceDiscountData)) {
-                    companionLogger('-----ayce discount print test 6 : ', $item);
                     $itemDiscount = (float) ($ayceDiscountData['no_of_kids'][0]['discount'] ?? 0);
                     $itemDiscountType = ($ayceDiscountData['no_of_kids'][0]['discount_type'] ?? '') == 'euro' ? 1 : 0;
                     $item['discount_count'] = $ayceDiscountData['no_of_kids'][0]['count'] ?? 0;
                     $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
                     $item['discount'] = (float) ($ayceDiscountData['no_of_kids'][0]['total_discount'] ?? 0);
                     $item['is_euro_discount'] = 1;
-                    companionLogger('-----ayce discount print test 7 : ', $item);
                 }
-                companionLogger('-----ayce discount print test 8 : ', $item);
                 $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
                 $this->jsonItemsIndex += 1;
