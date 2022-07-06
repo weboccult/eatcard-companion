@@ -273,7 +273,7 @@ abstract class BaseReservationUpdate
             'ayce_discount'        => $ayceDiscount,
         ];
 
-        $this->payableAmount = (float) ($this->allYouEatPrice - $this->reservation->total_price);
+        $this->payableAmount = (float) (($this->allYouEatPrice - $ayceDiscount) - $this->reservation->total_price);
 
         companionLogger('----payableAmount | TotalAmount | allYouEatPrice-----', $this->payableAmount, $this->reservation->total_price, $this->allYouEatPrice);
 
