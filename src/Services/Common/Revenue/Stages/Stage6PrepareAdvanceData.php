@@ -252,8 +252,8 @@ trait Stage6PrepareAdvanceData
                 $qDate->whereDate('created_at', $this->date);
             })
             ->when($this->revenueType == RevenueTypes::MONTHLY, function ($qDateMonth) {
-                $qDateMonth->whereMonth('paid_on', $this->month);
-                $qDateMonth->whereYear('paid_on', $this->year);
+                $qDateMonth->whereMonth('created_at', $this->month);
+                $qDateMonth->whereYear('created_at', $this->year);
             })
             ->sum('count');
     }
