@@ -397,6 +397,10 @@ trait Stage8PrepareFinalJson
                 $orderType = '';
             }
 
+            if ($this->systemType == SystemTypes::TAKEAWAY) {
+                $orderType = '';
+            }
+
             //not for dine-in guest order
             if ($tableName != '' && $this->additionalSettings['show_main_order_number_in_print'] == 0 && ! $this->additionalSettings['dinein_guest_order']) {
                 $tableName .= ! empty($this->advanceData['dynamicOrderNo']) ? (' #'.$this->advanceData['dynamicOrderNo']) : '';
