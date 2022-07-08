@@ -490,23 +490,32 @@ class RunningOrderGenerator extends BaseGenerator
         }
 
         $summary = [];
-        $totalPrice = 0;
+        $totalPrice = $this->reservation['total_price'] ?? 0;
         $refund = 0;
 
         if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
             if ($this->paymentDetail['transaction_type'] == 'DEBIT') {
                 $refund = $this->paymentDetail['amount'] ?? 0;
                 $totalPrice = $totalPrice + ($this->paymentDetail['amount'] ?? 0);
-            } else {
-                $totalPrice = $this->paymentDetail['amount'] ?? 0;
+            } elseif ($this->paymentDetail['process_type'] == 'create') {
+                $totalPrice = 0;
+            } elseif ($this->paymentDetail['process_type'] == 'update') {
+                $totalPrice = $totalPrice - $this->paymentDetail['amount'];
             }
-        }
 
-        if ($totalPrice > 0) {
-            $summary[] = [
-                'key'   => __companionPrintTrans('print.reservation_deposit'),
-                'value' => '-'.changePriceFormat($totalPrice),
-            ];
+            if ($totalPrice > 0) {
+                $summary[] = [
+                    'key'   => __companionPrintTrans('print.reservation_deposit'),
+                    'value' => changePriceFormat($totalPrice),
+                ];
+            }
+        } else {
+            if ($totalPrice > 0) {
+                $summary[] = [
+                    'key'   => __companionPrintTrans('print.reservation_deposit'),
+                    'value' => '-'.changePriceFormat($totalPrice),
+                ];
+            }
         }
 
         if ($this->total_dis_inc_tax > 0) {
@@ -519,7 +528,7 @@ class RunningOrderGenerator extends BaseGenerator
         if ($refund > 0) {
             $summary[] = [
                 'key'   => __companionPrintTrans('print.refund'),
-                'value' => changePriceFormat($refund),
+                'value' => '-'.changePriceFormat($refund),
             ];
         }
 
