@@ -235,9 +235,9 @@ trait Stage7PrepareFinalData
             $detailJson['value'] = ''.$this->finalData['ubereats_orders'];
             $summaryTop['details'][] = $detailJson;
 
-	        $detailJson['key'] = 'Deliveroo';
-	        $detailJson['value'] = ''.$this->finalData['deliveroo_orders'];
-	        $summaryTop['details'][] = $detailJson;
+            $detailJson['key'] = 'Deliveroo';
+            $detailJson['value'] = ''.$this->finalData['deliveroo_orders'];
+            $summaryTop['details'][] = $detailJson;
         }
 
         $detailJson['key'] = __companionPrintTrans('general.total_products');
@@ -365,9 +365,9 @@ trait Stage7PrepareFinalData
             $detailJson['value'] = '€'.$this->finalData['ubereats_amount'];
             $summaryBottom['details'][] = $detailJson;
 
-	        $detailJson['key'] = 'Deliveroo';
-	        $detailJson['value'] = '€'.$this->finalData['deliveroo_orders_amount'];
-	        $summaryBottom['details'][] = $detailJson;
+            $detailJson['key'] = 'Deliveroo';
+            $detailJson['value'] = '€'.$this->finalData['deliveroo_orders_amount'];
+            $summaryBottom['details'][] = $detailJson;
         }
 
         $detailJson['key'] = 'line';
