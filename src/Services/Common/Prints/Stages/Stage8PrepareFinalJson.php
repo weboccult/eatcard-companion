@@ -409,8 +409,12 @@ trait Stage8PrepareFinalJson
             //set kitchen order type
             if ($this->order['order_type'] === 'kiosk' && (isset($this->order['dine_in_type']))) {
                 $kitchenPrintOrderType = ($this->order['dine_in_type'] == 'dine_in') ? $kitchenKioskEatInTitle : $kitchenKioskTakeoutTitle;
-            } elseif ($this->order['order_type'] === 'dine_in' && isset($this->order['dine_in_type']) && empty($this->order['table_name'])) {
-                $kitchenPrintOrderType = $this->order['dine_in_type'] == 'dine_in' ? $kitchenDineInEatInTitle : $kitchenDineInTakeoutTitle;
+            } elseif ($this->order['order_type'] === 'dine_in' && isset($this->order['dine_in_type'])) {
+                if (empty($this->order['table_name'])) {
+                    $kitchenPrintOrderType = $this->order['dine_in_type'] == 'dine_in' ? $kitchenDineInEatInTitle : $kitchenDineInTakeoutTitle;
+                } else {
+                    $kitchenPrintOrderType = 'Dine-in';
+                }
             } else {
                 $kitchenPrintOrderType = (empty($this->order['parent_id']) ? (($this->order['order_type']) ? $this->additionalSettings['thirdPartyName'].__companionPrintTrans('general.'.$this->order['order_type']) : '') : '').($this->advanceData['is_paylater_order'] == 1 ? ' (Paylater)' : '');
             }
