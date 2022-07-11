@@ -212,3 +212,17 @@ if (! defined('FLUSH_REVIEW')) {
 if (! defined('FLUSH_POS')) {
     define('FLUSH_POS', 'flush-pos');
 }
+
+/* sold products*/
+if (! defined('EP_STATISTIC_SLOTS')) {
+    define('EP_STATISTIC_SLOTS', 'ep-statistic-slots');
+}
+if (! defined('FLUSH_EATSTAT')) {
+    define('FLUSH_EATSTAT', 'flush-eatstat');
+}
+if (! defined('STORE_RESERVATION')) {
+    define('STORE_RESERVATION', 'store-reservation');
+}
+if (! defined('ORDER_ITEM')) {
+    define('ORDER_ITEM', 'order-item-');
+}
