@@ -6,6 +6,7 @@ use App\Models\OrderHistoryView;
 use App\Models\OrderView;
 use App\Models\ReservationRevenueView;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Enums\RevenueTypes;
 use Weboccult\EatcardCompanion\Models\DrawerCount;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
@@ -143,7 +144,7 @@ trait Stage6PrepareAdvanceData
     {
 
         //get data from order
-        Order::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type',
+        Order::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'tip_amount',
 	        'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
             ->with([
                 'orderItems' => function ($q1) {
@@ -183,7 +184,7 @@ trait Stage6PrepareAdvanceData
                 $this->calculateOrderCreateDateRelatedData($orders);
             });
         //get data from order
-        OrderHistory::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type',
+        OrderHistory::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'tip_amount',
 	        'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
             ->with([
                 'orderItems' => function ($q1) {
