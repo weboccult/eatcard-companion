@@ -309,7 +309,7 @@ trait Stage6PrepareAdvanceData
 
             //set third party flag
             $isThirdPartyOrder = false;
-            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id) || !empty ($order->deliveroo_order_id)) {
+            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id) || ! empty($order->deliveroo_order_id)) {
                 $isThirdPartyOrder = true;
             }
 
@@ -342,9 +342,9 @@ trait Stage6PrepareAdvanceData
                     $this->calcData['ubereats_orders'] += 1;
                 }
 
-	            if (! empty($order->deliveroo_order_id)) {
-		            $this->calcData['deliveroo_orders'] += 1;
-	            }
+                if (! empty($order->deliveroo_order_id)) {
+                    $this->calcData['deliveroo_orders'] += 1;
+                }
 
                 //calc product counts
                 if ($isThirdPartyOrder) {
@@ -508,9 +508,9 @@ trait Stage6PrepareAdvanceData
                 $this->calcData['ubereats_orders_amount'] += $orderTotalPrice;
             }
 
-	        if (! empty($order->deliveroo_order_id)) {
-		        $this->calcData['deliveroo_orders_amount'] += $orderTotalPrice;
-	        }
+            if (! empty($order->deliveroo_order_id)) {
+                $this->calcData['deliveroo_orders_amount'] += $orderTotalPrice;
+            }
 
             //calculate thusibezorgd order amount
             if (! empty($order->uber_eats_order_id)) {
