@@ -215,14 +215,14 @@ if (! defined('FLUSH_POS')) {
 
 /* sold products*/
 if (! defined('EP_STATISTIC_SLOTS')) {
-	define('EP_STATISTIC_SLOTS', 'ep-statistic-slots');
+    define('EP_STATISTIC_SLOTS', 'ep-statistic-slots');
 }
 if (! defined('FLUSH_EATSTAT')) {
-	define('FLUSH_EATSTAT', 'flush-eatstat');
+    define('FLUSH_EATSTAT', 'flush-eatstat');
 }
 if (! defined('STORE_RESERVATION')) {
-	define('STORE_RESERVATION', 'store-reservation');
+    define('STORE_RESERVATION', 'store-reservation');
 }
 if (! defined('ORDER_ITEM')) {
-	define('ORDER_ITEM', 'order-item-');
+    define('ORDER_ITEM', 'order-item-');
 }
