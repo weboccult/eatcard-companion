@@ -14,13 +14,13 @@ class OrderItemHistoryView extends Model
 
     protected $guarded = [];
 
-	public function product()
-	{
-		return $this->belongsTo(Product::class, 'product_id', 'id');
-	}
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id');
+    }
 
-	public function order()
-	{
-		return $this->belongsTo(OrderHistoryView::class, 'id', 'order_id');
-	}
+    public function order()
+    {
+        return $this->belongsTo(OrderHistoryView::class, 'id', 'order_id');
+    }
 }
