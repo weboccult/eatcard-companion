@@ -2,8 +2,6 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Revenue\Stages;
 
-use App\Models\OrderHistoryView;
-use App\Models\OrderView;
 use App\Models\ReservationRevenueView;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +10,6 @@ use Weboccult\EatcardCompanion\Models\DrawerCount;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
-use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\BaseGenerator;
 
 /**
