@@ -208,6 +208,8 @@ if (! function_exists('generateTakeawayOrderId')) {
             ->where('created_at', '>', '2020-06-24 08:30:00')
             ->where('order_type', '<>', 'pos')
             ->whereNull('thusibezorgd_order_id')
+	        ->whereNull('uber_eats_order_id')
+	        ->whereNull('deliveroo_order_id')
             ->orderBy('order_id', 'desc')
             ->first();
         if ($exit) {
