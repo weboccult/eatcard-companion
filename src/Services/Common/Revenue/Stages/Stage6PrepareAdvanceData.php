@@ -304,7 +304,7 @@ trait Stage6PrepareAdvanceData
 
             //set third party flag
             $isThirdPartyOrder = false;
-            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id)) {
+            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id) || !empty ($order->deliveroo_order_id)) {
                 $isThirdPartyOrder = true;
             }
 
@@ -336,6 +336,10 @@ trait Stage6PrepareAdvanceData
                 if (! empty($order->uber_eats_order_id)) {
                     $this->calcData['ubereats_orders'] += 1;
                 }
+
+	            if (! empty($order->deliveroo_order_id)) {
+		            $this->calcData['deliveroo_orders'] += 1;
+	            }
 
                 //calc product counts
                 if ($isThirdPartyOrder) {
@@ -498,6 +502,10 @@ trait Stage6PrepareAdvanceData
             if (! empty($order->uber_eats_order_id)) {
                 $this->calcData['ubereats_orders_amount'] += $orderTotalPrice;
             }
+
+	        if (! empty($order->deliveroo_order_id)) {
+		        $this->calcData['deliveroo_orders_amount'] += $orderTotalPrice;
+	        }
 
             //calculate thusibezorgd order amount
             if (! empty($order->uber_eats_order_id)) {
@@ -703,8 +711,8 @@ trait Stage6PrepareAdvanceData
         $this->calcData['final_product_count'] += $this->calcData['product_count'];
 
         if ($this->additionalSettings['third_party_revenue_status'] == 1) {
-            $this->calcData['final_total_amount'] += $this->calcData['thusibezorgd_orders_amount'] + $this->calcData['ubereats_orders_amount'];
-            $this->calcData['final_total_orders'] += $this->calcData['thusibezorgd_orders'] + $this->calcData['ubereats_orders'];
+            $this->calcData['final_total_amount'] += $this->calcData['thusibezorgd_orders_amount'] + $this->calcData['ubereats_orders_amount'] + $this->calcData['deliveroo_orders_amount'];
+            $this->calcData['final_total_orders'] += $this->calcData['thusibezorgd_orders'] + $this->calcData['ubereats_orders'] + $this->calcData['deliveroo_orders'];
             $this->calcData['final_product_count'] += $this->calcData['third_party_product_count'];
         }
 

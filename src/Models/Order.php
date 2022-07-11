@@ -94,6 +94,7 @@ class Order extends Model
         'is_paylater_order',
         'tip_amount',
         'direct_order_discount_type',
+        'deliveroo_order_id'
     ];
 
     protected $appends = ['full_name', 'generated_date'];

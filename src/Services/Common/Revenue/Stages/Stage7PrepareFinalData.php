@@ -38,6 +38,7 @@ trait Stage7PrepareFinalData
         $this->finalData['total_dine_in'] = changePriceFormat($this->calcData['total_dine_in']);
         $this->finalData['total_kiosk'] = changePriceFormat($this->calcData['total_kiosk']);
         $this->finalData['thusibezorgd_orders'] = changePriceFormat($this->calcData['thusibezorgd_orders']);
+        $this->finalData['deliveroo_orders'] = changePriceFormat($this->calcData['deliveroo_orders']);
         $this->finalData['ubereats_orders'] = changePriceFormat($this->calcData['ubereats_orders']);
         $this->finalData['total_orders'] = ($this->calcData['final_total_orders']);
 
@@ -52,6 +53,7 @@ trait Stage7PrepareFinalData
         $this->finalData['total_ideal_amount'] = changePriceFormat($this->calcData['total_ideal_amount']);
         $this->finalData['total_gift_card_amount'] = changePriceFormat($this->calcData['total_gift_card_amount']);
         $this->finalData['thusibezorgd_amount'] = changePriceFormat($this->calcData['thusibezorgd_orders_amount']);
+        $this->finalData['deliveroo_orders_amount'] = changePriceFormat($this->calcData['deliveroo_orders_amount']);
         $this->finalData['ubereats_amount'] = changePriceFormat($this->calcData['ubereats_orders_amount']);
 
         $this->finalData['final_total'] = changePriceFormat($this->calcData['final_total_amount']);
@@ -232,6 +234,10 @@ trait Stage7PrepareFinalData
             $detailJson['key'] = 'Ubereats';
             $detailJson['value'] = ''.$this->finalData['ubereats_orders'];
             $summaryTop['details'][] = $detailJson;
+
+	        $detailJson['key'] = 'Deliveroo';
+	        $detailJson['value'] = ''.$this->finalData['deliveroo_orders'];
+	        $summaryTop['details'][] = $detailJson;
         }
 
         $detailJson['key'] = __companionPrintTrans('general.total_products');
@@ -358,6 +364,10 @@ trait Stage7PrepareFinalData
             $detailJson['key'] = 'Ubereats';
             $detailJson['value'] = '€'.$this->finalData['ubereats_amount'];
             $summaryBottom['details'][] = $detailJson;
+
+	        $detailJson['key'] = 'Deliveroo';
+	        $detailJson['value'] = '€'.$this->finalData['deliveroo_orders_amount'];
+	        $summaryBottom['details'][] = $detailJson;
         }
 
         $detailJson['key'] = 'line';
