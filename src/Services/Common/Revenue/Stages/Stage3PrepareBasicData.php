@@ -199,8 +199,8 @@ trait Stage3PrepareBasicData
             'total_21_discount_without_tax' => 0,
             'total_21_discount_without_tax_date' => [],
 
-            'coupon_used_prince' => 0,
-            'coupon_used_prince_date' => [],
+            'coupon_used_price' => 0,
+            'coupon_used_price_date' => [],
 
             'total_gift_card_count' => 0,
             'total_gift_card_count_date' => [],

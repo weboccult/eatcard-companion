@@ -589,8 +589,8 @@ trait Stage6PrepareAdvanceData
 
             //calculate thusibezorgd order amount
             if (! empty($order->coupon_price)) {
-                $this->calcData['coupon_used_prince'] += (float) ($order->coupon_price ?? 0);
-                $this->calcData['coupon_used_prince_date'][$orderDate] += (float) ($order->coupon_price ?? 0);
+                $this->calcData['coupon_used_price'] += (float) ($order->coupon_price ?? 0);
+                $this->calcData['coupon_used_price_date'][$orderDate] += (float) ($order->coupon_price ?? 0);
             }
 
             //discount inc tax reverse calc (discount_inc_tax_legacy) not possible before 2021-06-01
@@ -744,7 +744,7 @@ trait Stage6PrepareAdvanceData
             $this->calcData['total_discount_without_tax'] += $this->calcData['total_discount_without_tax_date'][$date];
             $this->calcData['total_9_discount_without_tax'] += $this->calcData['total_9_discount_without_tax_date'][$date];
             $this->calcData['total_21_discount_without_tax'] += $this->calcData['total_21_discount_without_tax_date'][$date];
-            $this->calcData['coupon_used_prince'] += $this->calcData['coupon_used_prince_date'][$date];
+//            $this->calcData['coupon_used_price'] += $this->calcData['coupon_used_price_date'][$date];
             $this->calcData['total_gift_card_count'] += $this->calcData['total_gift_card_count_date'][$date];
             $this->calcData['total_gift_card_amount'] += $this->calcData['total_gift_card_amount_date'][$date];
 
@@ -796,7 +796,7 @@ trait Stage6PrepareAdvanceData
             $this->calcData['final_product_count'] += $this->calcData['third_party_product_count'];
         }
 
-        $this->calcData['original_total_amount'] += $this->calcData['final_total_amount'] + $this->calcData['total_discount_inc_tax'] + $this->calcData['coupon_used_prince'];
+        $this->calcData['original_total_amount'] += $this->calcData['final_total_amount'] + $this->calcData['total_discount_inc_tax'] + $this->calcData['coupon_used_price'];
 
         if ($this->calcData['final_total_orders'] > 0) {
             $this->calcData['final_avg'] = $this->calcData['final_total_amount'] / $this->calcData['final_total_orders'];

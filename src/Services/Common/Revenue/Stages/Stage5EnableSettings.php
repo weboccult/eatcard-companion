@@ -134,7 +134,7 @@ trait Stage5EnableSettings
         $this->calcData['total_discount_without_tax_date'][$date] = 0;
         $this->calcData['total_9_discount_without_tax_date'][$date] = 0;
         $this->calcData['total_21_discount_without_tax_date'][$date] = 0;
-        $this->calcData['coupon_used_prince_date'][$date] = 0;
+        $this->calcData['coupon_used_price_date'][$date] = 0;
         $this->calcData['total_gift_card_count_date'][$date] = 0;
         $this->calcData['total_gift_card_amount_date'][$date] = 0;
         $this->calcData['total_turn_over_with_tax_date'][$date] = 0;
