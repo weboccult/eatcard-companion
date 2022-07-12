@@ -14,7 +14,7 @@ class OrderHistory extends Model
 
     protected $table = 'orders_history';
 
-	protected $guarded = [];
+    protected $guarded = [];
 
     protected $appends = ['full_name', 'generated_date'];
     /**

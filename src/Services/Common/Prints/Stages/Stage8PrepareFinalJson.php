@@ -13,7 +13,6 @@ use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\carbonFormatParse;
 
-
 /**
  * @description Stag 8
  * @mixin BaseGenerator
