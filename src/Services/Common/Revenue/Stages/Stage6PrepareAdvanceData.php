@@ -46,7 +46,8 @@ trait Stage6PrepareAdvanceData
             'statiege_deposite_total',
             'thusibezorgd_order_id',
             'uber_eats_order_id',
-            'is_paylater_order'
+            'is_paylater_order',
+	        'deliveroo_order_id'
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
@@ -104,7 +105,8 @@ trait Stage6PrepareAdvanceData
             'statiege_deposite_total',
             'thusibezorgd_order_id',
             'uber_eats_order_id',
-            'is_paylater_order'
+            'is_paylater_order',
+	        'deliveroo_order_id'
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
@@ -177,7 +179,8 @@ trait Stage6PrepareAdvanceData
             'coupon_price',
             'delivery_fee',
             'additional_fee',
-            'plastic_bag_fee'
+            'plastic_bag_fee',
+	        'deliveroo_order_id'
         )
             ->with([
                 'orderItems' => function ($q1) {
@@ -254,7 +257,8 @@ trait Stage6PrepareAdvanceData
             'coupon_price',
             'delivery_fee',
             'additional_fee',
-            'plastic_bag_fee'
+            'plastic_bag_fee',
+	        'deliveroo_order_id'
         )
             ->with([
                 'orderItems' => function ($q1) {
