@@ -98,6 +98,7 @@ trait Stage3PrepareBasicData
             'total_ideal_orders' => 0,
             'thusibezorgd_orders' => 0,
             'ubereats_orders' => 0,
+            'deliveroo_orders' => 0,
             'total_orders' => 0,
             'total_kiosk' => 0,
             'product_count' => 0,
@@ -118,6 +119,8 @@ trait Stage3PrepareBasicData
             'thusibezorgd_orders_amount' => 0,
 
             'ubereats_orders_amount' => 0,
+
+            'deliveroo_orders_amount' => 0,
 
             'total_takeaway' => 0,
 
@@ -196,8 +199,8 @@ trait Stage3PrepareBasicData
             'total_21_discount_without_tax' => 0,
             'total_21_discount_without_tax_date' => [],
 
-            'coupon_used_prince' => 0,
-            'coupon_used_prince_date' => [],
+            'coupon_used_price' => 0,
+            'coupon_used_price_date' => [],
 
             'total_gift_card_count' => 0,
             'total_gift_card_count_date' => [],
