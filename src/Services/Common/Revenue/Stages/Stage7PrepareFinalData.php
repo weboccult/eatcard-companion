@@ -28,8 +28,7 @@ trait Stage7PrepareFinalData
 
         $this->finalData['total_9_tax'] = changePriceFormat($this->calcData['total_9_tax']);
         $this->finalData['total_21_tax'] = changePriceFormat($this->calcData['total_21_tax']);
-        $this->finalData['coupon_price'] = changePriceFormat($this->calcData['coupon_used_prince']);
-
+        $this->finalData['coupon_price'] = $this->calcData['coupon_used_prince'] > 0 ? '-'.changePriceFormat($this->calcData['coupon_used_prince']) : '0,00';
         $this->finalData['gift_card_order_count'] = $this->calcData['total_gift_card_count'];
         $this->finalData['total_cash_orders'] = ($this->calcData['total_cash_orders']);
         $this->finalData['total_pin_orders'] = ($this->calcData['total_pin_orders']);
@@ -97,7 +96,8 @@ trait Stage7PrepareFinalData
                 $order_detail[$date]['total_tax_amount'] = changePriceFormat($this->calcData['total_tax_date'][$date]);
 
                 $order_detail[$date]['total_discount'] = changePriceFormat($this->calcData['total_discount_inc_tax_date'][$date]);
-//                $order_detail[$date]['total_discount_without_tax'] = changePriceFormat($this->calcData['total_discount_without_tax_date'][$date]);
+//                $order_detail[$date]['total_discount_without_tax'] = changePriceFormat()
+                //($this->calcData['total_discount_without_tax_date'][$date]);
             }
 
             $this->finalOrderDetail = $order_detail;
