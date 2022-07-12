@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\RevenueTypes;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
-use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 
 /**
  * @description Stag 7
@@ -91,14 +90,13 @@ trait Stage7PrepareFinalData
                 $order_detail[$date]['tax1_amount'] = replaceDotWithComma($this->calcData['total_9_tax_date'][$date]);
                 $order_detail[$date]['tax2_amount'] = replaceDotWithComma($this->calcData['total_21_tax_date'][$date]);
 
-                $order_detail[$date]['total_turnover_with_tax'] = replaceDotWithComma
-                ($this->calcData['total_turn_over_with_tax_date'][$date]);
+                $order_detail[$date]['total_turnover_with_tax'] = replaceDotWithComma($this->calcData['total_turn_over_with_tax_date'][$date]);
                 $order_detail[$date]['total_turnover_without_tax'] = replaceDotWithComma($this->calcData['total_turn_over_without_tax_date'][$date]);
                 $order_detail[$date]['total_tax_amount'] = replaceDotWithComma($this->calcData['total_tax_date'][$date]);
 
                 $order_detail[$date]['total_discount'] = replaceDotWithComma($this->calcData['total_discount_inc_tax_date'][$date]);
 //                $order_detail[$date]['total_discount_without_tax'] = replaceDotWithComma
-	            //($this->calcData['total_discount_without_tax_date'][$date]);
+                //($this->calcData['total_discount_without_tax_date'][$date]);
             }
 
             $this->finalOrderDetail = $order_detail;
