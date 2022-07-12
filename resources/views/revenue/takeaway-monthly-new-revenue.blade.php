@@ -163,6 +163,7 @@
                                         @if(isset($data['third_party_print_status']) && $data['third_party_print_status'])
                                         <p>Thuisbezorgd:</p>
                                         <p>Ubereats:</p>
+                                        <p>Deliveroo:</p>
                                         @endif
                                         <p>@companionPrintTrans('general.total_products'):</p>
                                         <p>@companionPrintTrans('general.average_spending'):</p>
@@ -184,11 +185,12 @@
                                         <p>{{$data['total_cash_orders']}}</p>
                                         <p>{{$data['total_pin_orders']}}</p>
                                         <p>{{$data['gift_card_order_count']}}</p>
-                                        <p>€@if($data['coupon_price'] > 0) -{{$data['coupon_price']}} @else {{$data['coupon_price']}} @endif</p>
+                                        <p>€{{$data['coupon_price']}}</p>
                                         <p>{{$data['total_ideal_orders']}}</p>
                                         @if(isset($data['third_party_print_status']) && $data['third_party_print_status'])
                                         <p>{{$data['thusibezorgd_orders']}}</p>
                                         <p>{{$data['ubereats_orders']}}</p>
+                                        <p>{{$data['deliveroo_orders']}}</p>
                                         @endif
                                         <p>{{$data['products_count']}}</p>
                                         <p>€{{$data['avg']}}</p>
@@ -207,9 +209,9 @@
                                 </div>
 {{--                                <div style="border-bottom: 1px dashed #000; margin-top: 150px"></div>--}}
                                 @if(isset($data['third_party_print_status']) && $data['third_party_print_status'] && $data['on_the_house_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 240px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 253px"></div>
                                 @elseif(isset($data['third_party_print_status']) && $data['third_party_print_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 230px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 243px"></div>
                                 @elseif(isset($data['on_the_house_status']))
                                     <div style="border-bottom: 1px dashed #000; margin-top: 220px"></div>
                                 @else
@@ -282,6 +284,10 @@
                                                     <span style="float: left;float:left;"><p>Ubereats:</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{($data['ubereats_amount'])}}</p></span>
                                                 </div>
+                                                    <div style="padding-top: 13px">
+                                                        <span style="float: left;float:left;"><p>Deliveroo:</p></span>
+                                                        <span style="text-align: right;float: right;"><p>€{{($data['deliveroo_orders_amount'])}}</p></span>
+                                                    </div>
                                                 @endif
                                                 <div style="padding-top: 13px">
                                                     <span style="float: left;float:left;"><p>@companionPrintTrans('general.counter'):</p></span>
