@@ -459,7 +459,7 @@ trait Stage6PrepareAdvanceData
 
             //set third party flag
             $isThirdPartyOrder = false;
-            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id)) {
+            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id) || ! empty($order->deliveroo_order_id)) {
                 $isThirdPartyOrder = true;
             }
 
@@ -588,7 +588,7 @@ trait Stage6PrepareAdvanceData
             }
 
             //calculate thusibezorgd order amount
-            if (! empty($order->uber_eats_order_id)) {
+            if (! empty($order->coupon_price)) {
                 $this->calcData['coupon_used_prince'] += (float) ($order->coupon_price ?? 0);
                 $this->calcData['coupon_used_prince_date'][$orderDate] += (float) ($order->coupon_price ?? 0);
             }
