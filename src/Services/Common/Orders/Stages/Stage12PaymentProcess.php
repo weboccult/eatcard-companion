@@ -124,9 +124,15 @@ trait Stage12PaymentProcess
                 }
             }
             if ($this->system == SystemTypes::KIOSK) {
+	            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+		            $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int)$this->takeawaySetting->print_dynamic_order_no)));
+	            } else {
+		            $orderId = ''.substr($this->createdOrder->order_id, -2);
+	            }
                 $this->paymentResponse = [
                     'payUrl'  => $response['payUrl'],
                     'order_id' => $this->createdOrder->id,
+                    'order_number' => $orderId
                 ];
             }
         }
@@ -199,6 +205,12 @@ trait Stage12PaymentProcess
                    'data'      => $data,
                ];
             } else {
+	            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+		            $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int)$this->takeawaySetting->print_dynamic_order_no)));
+	            } else {
+		            $orderId = ''.substr($this->createdOrder->order_id, -2);
+	            }
+	            $data['order_number'] = $orderId;
                 $this->paymentResponse = $data;
             }
         }
@@ -466,12 +478,11 @@ trait Stage12PaymentProcess
     {
         if ($this->system == SystemTypes::KIOSK) {
             if ($this->settings['bop_kiosk']['status']) {
-                if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
-                    $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int)
-                           $this->takeawaySetting->print_dynamic_order_no)));
-                } else {
-                    $orderId = ''.substr($this->createdOrder->order_id, -2);
-                }
+	            if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+		            $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int)$this->takeawaySetting->print_dynamic_order_no)));
+	            } else {
+		            $orderId = ''.substr($this->createdOrder->order_id, -2);
+	            }
 
                 $this->paymentResponse = [
                     'ssai' => 'fake_ssai',

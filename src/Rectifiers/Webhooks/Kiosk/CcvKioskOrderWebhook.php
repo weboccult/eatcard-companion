@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use function Weboccult\EatcardCompanion\Helpers\sendKioskOrderMailToOwner;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
@@ -69,7 +70,7 @@ class CcvKioskOrderWebhook extends BaseWebhook
                 }
                 $this->sendPrintJsonToSQS();
             }
-            $this->sendKioskOwnerEmail($response['status']);
+            $this->sendKioskOrderMailToOwner($response['status']);
         }
 
         return true;

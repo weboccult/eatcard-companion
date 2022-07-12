@@ -67,7 +67,7 @@ trait Stage0BasicDatabaseInteraction
 
     protected function setTakeawaySettingData()
     {
-        if ($this->system === SystemTypes::TAKEAWAY && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
+        if (($this->system === SystemTypes::TAKEAWAY || $this->system === SystemTypes::KIOSK) && isset ($this->payload['store_id']) && ! empty ($this->payload['store_id'])) {
             $storeId = $this->payload['store_id'];
             $takeawaySetting = Cache::tags([
                 FLUSH_ALL,
