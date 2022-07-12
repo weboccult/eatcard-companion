@@ -140,7 +140,45 @@ trait Stage6PrepareAdvanceData
     {
 
         //get data from order
-        Order::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
+        Order::select(
+            'id',
+            'is_ignored',
+            'sub_total',
+            'discount_inc_tax',
+            'discount_inc_tax_legacy',
+            'discount_type',
+            'tip_amount',
+            'is_base_order',
+            'reservation_paid',
+            'payment_split_type',
+            'statiege_deposite_total',
+            'all_you_eat_data',
+            'parent_id',
+            'store_id',
+            'order_id',
+            'created_at',
+            'paid_on',
+            'order_date',
+            'status',
+            'order_status',
+            'order_type',
+            'total_price',
+            'kiosk_id',
+            'normal_sub_total',
+            'alcohol_sub_total',
+            'discount_amount',
+            'total_tax',
+            'total_alcohol_tax',
+            'discount',
+            'method',
+            'thusibezorgd_order_id',
+            'uber_eats_order_id',
+            'payment_method_type',
+            'coupon_price',
+            'delivery_fee',
+            'additional_fee',
+            'plastic_bag_fee'
+        )
             ->with([
                 'orderItems' => function ($q1) {
                     $q1->with([
@@ -179,7 +217,45 @@ trait Stage6PrepareAdvanceData
                 $this->calculateOrderCreateDateRelatedData($orders);
             });
         //get data from order
-        OrderHistory::select('id', 'is_ignored', 'sub_total', 'discount_inc_tax', 'discount_inc_tax_legacy', 'discount_type', 'is_base_order', 'reservation_paid', 'payment_split_type', 'statiege_deposite_total', 'all_you_eat_data', 'parent_id', 'store_id', 'order_id', 'created_at', 'paid_on', 'order_date', 'status', 'order_status', 'order_type', 'total_price', 'kiosk_id', 'normal_sub_total', 'alcohol_sub_total', 'discount_amount', 'total_tax', 'total_alcohol_tax', 'discount', 'method', 'thusibezorgd_order_id', 'uber_eats_order_id', 'payment_method_type', 'coupon_price', 'delivery_fee', 'additional_fee', 'plastic_bag_fee')
+        OrderHistory::select(
+            'id',
+            'is_ignored',
+            'sub_total',
+            'discount_inc_tax',
+            'discount_inc_tax_legacy',
+            'discount_type',
+            'tip_amount',
+            'is_base_order',
+            'reservation_paid',
+            'payment_split_type',
+            'statiege_deposite_total',
+            'all_you_eat_data',
+            'parent_id',
+            'store_id',
+            'order_id',
+            'created_at',
+            'paid_on',
+            'order_date',
+            'status',
+            'order_status',
+            'order_type',
+            'total_price',
+            'kiosk_id',
+            'normal_sub_total',
+            'alcohol_sub_total',
+            'discount_amount',
+            'total_tax',
+            'total_alcohol_tax',
+            'discount',
+            'method',
+            'thusibezorgd_order_id',
+            'uber_eats_order_id',
+            'payment_method_type',
+            'coupon_price',
+            'delivery_fee',
+            'additional_fee',
+            'plastic_bag_fee'
+        )
             ->with([
                 'orderItems' => function ($q1) {
                     $q1->with([
@@ -252,8 +328,8 @@ trait Stage6PrepareAdvanceData
                 $qDate->whereDate('created_at', $this->date);
             })
             ->when($this->revenueType == RevenueTypes::MONTHLY, function ($qDateMonth) {
-                $qDateMonth->whereMonth('paid_on', $this->month);
-                $qDateMonth->whereYear('paid_on', $this->year);
+                $qDateMonth->whereMonth('created_at', $this->month);
+                $qDateMonth->whereYear('created_at', $this->year);
             })
             ->sum('count');
     }
@@ -304,7 +380,7 @@ trait Stage6PrepareAdvanceData
 
             //set third party flag
             $isThirdPartyOrder = false;
-            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id)) {
+            if (! empty($order->thusibezorgd_order_id) || ! empty($order->uber_eats_order_id) || ! empty($order->deliveroo_order_id)) {
                 $isThirdPartyOrder = true;
             }
 
@@ -335,6 +411,10 @@ trait Stage6PrepareAdvanceData
 
                 if (! empty($order->uber_eats_order_id)) {
                     $this->calcData['ubereats_orders'] += 1;
+                }
+
+                if (! empty($order->deliveroo_order_id)) {
+                    $this->calcData['deliveroo_orders'] += 1;
                 }
 
                 //calc product counts
@@ -497,6 +577,10 @@ trait Stage6PrepareAdvanceData
             //calculate thusibezorgd order amount
             if (! empty($order->uber_eats_order_id)) {
                 $this->calcData['ubereats_orders_amount'] += $orderTotalPrice;
+            }
+
+            if (! empty($order->deliveroo_order_id)) {
+                $this->calcData['deliveroo_orders_amount'] += $orderTotalPrice;
             }
 
             //calculate thusibezorgd order amount
@@ -703,8 +787,8 @@ trait Stage6PrepareAdvanceData
         $this->calcData['final_product_count'] += $this->calcData['product_count'];
 
         if ($this->additionalSettings['third_party_revenue_status'] == 1) {
-            $this->calcData['final_total_amount'] += $this->calcData['thusibezorgd_orders_amount'] + $this->calcData['ubereats_orders_amount'];
-            $this->calcData['final_total_orders'] += $this->calcData['thusibezorgd_orders'] + $this->calcData['ubereats_orders'];
+            $this->calcData['final_total_amount'] += $this->calcData['thusibezorgd_orders_amount'] + $this->calcData['ubereats_orders_amount'] + $this->calcData['deliveroo_orders_amount'];
+            $this->calcData['final_total_orders'] += $this->calcData['thusibezorgd_orders'] + $this->calcData['ubereats_orders'] + $this->calcData['deliveroo_orders'];
             $this->calcData['final_product_count'] += $this->calcData['third_party_product_count'];
         }
 

@@ -98,6 +98,7 @@ trait Stage3PrepareBasicData
             'total_ideal_orders' => 0,
             'thusibezorgd_orders' => 0,
             'ubereats_orders' => 0,
+            'deliveroo_orders' => 0,
             'total_orders' => 0,
             'total_kiosk' => 0,
             'product_count' => 0,
@@ -118,6 +119,8 @@ trait Stage3PrepareBasicData
             'thusibezorgd_orders_amount' => 0,
 
             'ubereats_orders_amount' => 0,
+
+            'deliveroo_orders_amount' => 0,
 
             'total_takeaway' => 0,
 
