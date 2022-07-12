@@ -28,7 +28,7 @@ trait Stage7PrepareFinalData
 
         $this->finalData['total_9_tax'] = changePriceFormat($this->calcData['total_9_tax']);
         $this->finalData['total_21_tax'] = changePriceFormat($this->calcData['total_21_tax']);
-        $this->finalData['coupon_price'] = $this->calcData['coupon_used_prince'] > 0 ? '-'.changePriceFormat($this->calcData['coupon_used_prince']) : '0,00';
+        $this->finalData['coupon_price'] = $this->calcData['coupon_used_price'] > 0 ? '-'.changePriceFormat($this->calcData['coupon_used_price']) : '0,00';
         $this->finalData['gift_card_order_count'] = $this->calcData['total_gift_card_count'];
         $this->finalData['total_cash_orders'] = ($this->calcData['total_cash_orders']);
         $this->finalData['total_pin_orders'] = ($this->calcData['total_pin_orders']);
@@ -87,7 +87,7 @@ trait Stage7PrepareFinalData
             $order_detail = [];
             foreach ($this->calcData['dates'] as $date) {
                 $order_detail[$date]['date'] = $date;
-                $order_detail[$date]['coupon_price'] = changePriceFormat($this->calcData['coupon_used_prince_date'][$date]);
+                $order_detail[$date]['coupon_price'] = changePriceFormat($this->calcData['coupon_used_price_date'][$date]);
                 $order_detail[$date]['tax1_amount'] = changePriceFormat($this->calcData['total_9_tax_date'][$date]);
                 $order_detail[$date]['tax2_amount'] = changePriceFormat($this->calcData['total_21_tax_date'][$date]);
 
