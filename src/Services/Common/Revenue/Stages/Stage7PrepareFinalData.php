@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\RevenueTypes;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
+use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 
 /**
  * @description Stag 7
@@ -22,56 +23,56 @@ trait Stage7PrepareFinalData
         $this->finalData['number_of_cashdrawer_open'] = $this->calcData['number_of_cashdrawer_open'];
         $this->finalData['third_party_print_status'] = $this->additionalSettings['third_party_revenue_status'];
 
-        $this->finalData['reservation_received_total'] = replaceDotWithComma($this->calcData['reservation_received_total']);
-        $this->finalData['reservation_refund_total'] = replaceDotWithComma($this->calcData['reservation_refund_total']);
+        $this->finalData['reservation_received_total'] = changePriceFormat($this->calcData['reservation_received_total']);
+        $this->finalData['reservation_refund_total'] = changePriceFormat($this->calcData['reservation_refund_total']);
 
-        $this->finalData['total_9_tax'] = replaceDotWithComma($this->calcData['total_9_tax']);
-        $this->finalData['total_21_tax'] = replaceDotWithComma($this->calcData['total_21_tax']);
-        $this->finalData['coupon_price'] = $this->calcData['coupon_used_prince'] > 0 ? '-'.replaceDotWithComma($this->calcData['coupon_used_prince']) : '0,00';
+        $this->finalData['total_9_tax'] = changePriceFormat($this->calcData['total_9_tax']);
+        $this->finalData['total_21_tax'] = changePriceFormat($this->calcData['total_21_tax']);
+        $this->finalData['coupon_price'] = $this->calcData['coupon_used_prince'] > 0 ? '-'.changePriceFormat($this->calcData['coupon_used_prince']) : '0,00';
         $this->finalData['gift_card_order_count'] = $this->calcData['total_gift_card_count'];
         $this->finalData['total_cash_orders'] = ($this->calcData['total_cash_orders']);
         $this->finalData['total_pin_orders'] = ($this->calcData['total_pin_orders']);
         $this->finalData['total_ideal_orders'] = ($this->calcData['total_ideal_orders']);
-        $this->finalData['total_takeaway'] = replaceDotWithComma($this->calcData['total_takeaway']);
-        $this->finalData['total_dine_in'] = replaceDotWithComma($this->calcData['total_dine_in']);
-        $this->finalData['total_kiosk'] = replaceDotWithComma($this->calcData['total_kiosk']);
-        $this->finalData['thusibezorgd_orders'] = replaceDotWithComma($this->calcData['thusibezorgd_orders']);
-        $this->finalData['deliveroo_orders'] = replaceDotWithComma($this->calcData['deliveroo_orders']);
-        $this->finalData['ubereats_orders'] = replaceDotWithComma($this->calcData['ubereats_orders']);
+        $this->finalData['total_takeaway'] = changePriceFormat($this->calcData['total_takeaway']);
+        $this->finalData['total_dine_in'] = changePriceFormat($this->calcData['total_dine_in']);
+        $this->finalData['total_kiosk'] = changePriceFormat($this->calcData['total_kiosk']);
+        $this->finalData['thusibezorgd_orders'] = changePriceFormat($this->calcData['thusibezorgd_orders']);
+        $this->finalData['deliveroo_orders'] = changePriceFormat($this->calcData['deliveroo_orders']);
+        $this->finalData['ubereats_orders'] = changePriceFormat($this->calcData['ubereats_orders']);
         $this->finalData['total_orders'] = ($this->calcData['final_total_orders']);
 
         $this->finalData['products_count'] = ($this->calcData['final_product_count']);
 
-        $this->finalData['plastic_bag_fee'] = replaceDotWithComma($this->calcData['plastic_bag_fee_total']);
-        $this->finalData['delivery_fee'] = replaceDotWithComma($this->calcData['delivery_fee_total']);
-        $this->finalData['additional_fee'] = replaceDotWithComma($this->calcData['additional_fee_total']);
+        $this->finalData['plastic_bag_fee'] = changePriceFormat($this->calcData['plastic_bag_fee_total']);
+        $this->finalData['delivery_fee'] = changePriceFormat($this->calcData['delivery_fee_total']);
+        $this->finalData['additional_fee'] = changePriceFormat($this->calcData['additional_fee_total']);
 
-        $this->finalData['total_cash_amount'] = replaceDotWithComma($this->calcData['total_cash_amount']);
-        $this->finalData['total_pin_amount'] = replaceDotWithComma($this->calcData['total_pin_amount']);
-        $this->finalData['total_ideal_amount'] = replaceDotWithComma($this->calcData['total_ideal_amount']);
-        $this->finalData['total_gift_card_amount'] = replaceDotWithComma($this->calcData['total_gift_card_amount']);
-        $this->finalData['thusibezorgd_amount'] = replaceDotWithComma($this->calcData['thusibezorgd_orders_amount']);
-        $this->finalData['deliveroo_orders_amount'] = replaceDotWithComma($this->calcData['deliveroo_orders_amount']);
-        $this->finalData['ubereats_amount'] = replaceDotWithComma($this->calcData['ubereats_orders_amount']);
+        $this->finalData['total_cash_amount'] = changePriceFormat($this->calcData['total_cash_amount']);
+        $this->finalData['total_pin_amount'] = changePriceFormat($this->calcData['total_pin_amount']);
+        $this->finalData['total_ideal_amount'] = changePriceFormat($this->calcData['total_ideal_amount']);
+        $this->finalData['total_gift_card_amount'] = changePriceFormat($this->calcData['total_gift_card_amount']);
+        $this->finalData['thusibezorgd_amount'] = changePriceFormat($this->calcData['thusibezorgd_orders_amount']);
+        $this->finalData['deliveroo_orders_amount'] = changePriceFormat($this->calcData['deliveroo_orders_amount']);
+        $this->finalData['ubereats_amount'] = changePriceFormat($this->calcData['ubereats_orders_amount']);
 
-        $this->finalData['final_total'] = replaceDotWithComma($this->calcData['final_total_amount']);
-        $this->finalData['total_pin_ideal_amount'] = replaceDotWithComma($this->calcData['final_pin_ideal_amount']);
-        $this->finalData['total_pin_ideal_cash_amount'] = replaceDotWithComma($this->calcData['final_pin_ideal_cash_amount']);
+        $this->finalData['final_total'] = changePriceFormat($this->calcData['final_total_amount']);
+        $this->finalData['total_pin_ideal_amount'] = changePriceFormat($this->calcData['final_pin_ideal_amount']);
+        $this->finalData['total_pin_ideal_cash_amount'] = changePriceFormat($this->calcData['final_pin_ideal_cash_amount']);
 
-        $this->finalData['discount_amt'] = replaceDotWithComma($this->calcData['total_discount_without_tax']);
-        $this->finalData['discount_inc_amt'] = replaceDotWithComma($this->calcData['total_discount_inc_tax']);
+        $this->finalData['discount_amt'] = changePriceFormat($this->calcData['total_discount_without_tax']);
+        $this->finalData['discount_inc_amt'] = changePriceFormat($this->calcData['total_discount_inc_tax']);
 
-        $this->finalData['on_the_house_total'] = replaceDotWithComma($this->calcData['on_the_house_item_total']);
+        $this->finalData['on_the_house_total'] = changePriceFormat($this->calcData['on_the_house_item_total']);
 
-        $this->finalData['reservation_deducted_total'] = replaceDotWithComma($this->calcData['reservation_deducted_total']);
+        $this->finalData['reservation_deducted_total'] = changePriceFormat($this->calcData['reservation_deducted_total']);
 
-        $this->finalData['deposit_total'] = replaceDotWithComma($this->calcData['deposite_total']);
-        $this->finalData['tip_amount'] = replaceDotWithComma($this->calcData['total_tip_amount']);
+        $this->finalData['deposit_total'] = changePriceFormat($this->calcData['deposite_total']);
+        $this->finalData['tip_amount'] = changePriceFormat($this->calcData['total_tip_amount']);
 
-        $this->finalData['avg'] = replaceDotWithComma($this->calcData['final_avg']);
+        $this->finalData['avg'] = changePriceFormat($this->calcData['final_avg']);
 
         foreach ($this->calcData['kioskTotal'] as $key => $value) {
-            $this->finalData['kioskTotal'][$key] = replaceDotWithComma($value);
+            $this->finalData['kioskTotal'][$key] = changePriceFormat($value);
         }
     }
 
@@ -86,16 +87,16 @@ trait Stage7PrepareFinalData
             $order_detail = [];
             foreach ($this->calcData['dates'] as $date) {
                 $order_detail[$date]['date'] = $date;
-                $order_detail[$date]['coupon_price'] = replaceDotWithComma($this->calcData['coupon_used_prince_date'][$date]);
-                $order_detail[$date]['tax1_amount'] = replaceDotWithComma($this->calcData['total_9_tax_date'][$date]);
-                $order_detail[$date]['tax2_amount'] = replaceDotWithComma($this->calcData['total_21_tax_date'][$date]);
+                $order_detail[$date]['coupon_price'] = changePriceFormat($this->calcData['coupon_used_prince_date'][$date]);
+                $order_detail[$date]['tax1_amount'] = changePriceFormat($this->calcData['total_9_tax_date'][$date]);
+                $order_detail[$date]['tax2_amount'] = changePriceFormat($this->calcData['total_21_tax_date'][$date]);
 
-                $order_detail[$date]['total_turnover_with_tax'] = replaceDotWithComma($this->calcData['total_turn_over_with_tax_date'][$date]);
-                $order_detail[$date]['total_turnover_without_tax'] = replaceDotWithComma($this->calcData['total_turn_over_without_tax_date'][$date]);
-                $order_detail[$date]['total_tax_amount'] = replaceDotWithComma($this->calcData['total_tax_date'][$date]);
+                $order_detail[$date]['total_turnover_with_tax'] = changePriceFormat($this->calcData['total_turn_over_with_tax_date'][$date]);
+                $order_detail[$date]['total_turnover_without_tax'] = changePriceFormat($this->calcData['total_turn_over_without_tax_date'][$date]);
+                $order_detail[$date]['total_tax_amount'] = changePriceFormat($this->calcData['total_tax_date'][$date]);
 
-                $order_detail[$date]['total_discount'] = replaceDotWithComma($this->calcData['total_discount_inc_tax_date'][$date]);
-//                $order_detail[$date]['total_discount_without_tax'] = replaceDotWithComma
+                $order_detail[$date]['total_discount'] = changePriceFormat($this->calcData['total_discount_inc_tax_date'][$date]);
+//                $order_detail[$date]['total_discount_without_tax'] = changePriceFormat()
                 //($this->calcData['total_discount_without_tax_date'][$date]);
             }
 
@@ -106,14 +107,14 @@ trait Stage7PrepareFinalData
             $date = Carbon::parse(request()->date)->format('d-m-Y');
             $this->finalData['start_date'] = $date.' 00:00';
             $this->finalData['end_date'] = $date.' 23:59';
-            $this->finalData['original_total_amount'] = replaceDotWithComma($this->calcData['original_total_amount']);
-            $this->finalData['total_0_without_tax_subtotal'] = replaceDotWithComma($this->calcData['total_0_without_tax_subtotal']);
+            $this->finalData['original_total_amount'] = changePriceFormat($this->calcData['original_total_amount']);
+            $this->finalData['total_0_without_tax_subtotal'] = changePriceFormat($this->calcData['total_0_without_tax_subtotal']);
 
-            $this->finalData['total_9_without_tax_discount_subtotal'] = replaceDotWithComma($this->calcData['total_9_without_tax_discount_subtotal']);
-            $this->finalData['total_21_without_tax_discount_subtotal'] = replaceDotWithComma($this->calcData['total_21_without_tax_discount_subtotal']);
+            $this->finalData['total_9_without_tax_discount_subtotal'] = changePriceFormat($this->calcData['total_9_without_tax_discount_subtotal']);
+            $this->finalData['total_21_without_tax_discount_subtotal'] = changePriceFormat($this->calcData['total_21_without_tax_discount_subtotal']);
 
-            $this->finalData['total_9_inc_tax_without_discount_subtotal'] = replaceDotWithComma($this->calcData['total_9_inc_tax_without_discount_subtotal']);
-            $this->finalData['total_21_inc_tax_without_discount_subtotal'] = replaceDotWithComma($this->calcData['total_21_inc_tax_without_discount_subtotal']);
+            $this->finalData['total_9_inc_tax_without_discount_subtotal'] = changePriceFormat($this->calcData['total_9_inc_tax_without_discount_subtotal']);
+            $this->finalData['total_21_inc_tax_without_discount_subtotal'] = changePriceFormat($this->calcData['total_21_inc_tax_without_discount_subtotal']);
         }
     }
 
