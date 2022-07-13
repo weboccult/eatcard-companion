@@ -12,7 +12,6 @@ use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
 use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
-use function Weboccult\EatcardCompanion\Helpers\carbonFormatParse;
 use function Weboccult\EatcardCompanion\Helpers\generateQrCode;
 
 /**
