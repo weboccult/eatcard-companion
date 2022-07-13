@@ -73,6 +73,7 @@ return [
         'kiosk'            => env('COMPANION_KIOSK_ENDPOINT', 'http://eatcard-kiosk.local'),
         'dine_in'          => env('COMPANION_DINE_IN_ENDPOINT', 'http://eatcard-dine_in-api.local'),
         'dine_in_frontend' => env('COMPANION_DINE_FRONTEND_ENDPOINT', 'http://eatcard-dine_in.local'),
+        'kiosktickets'    => env('COMPANION_KIOSK_TICKET_ENDPOINT', 'http://eatcard-kiosk.local'),
     ],
 
     /*
@@ -167,14 +168,19 @@ return [
                     'pos'   => [
                         'order'     => '/pos/webhook/<%id%>/<%store_id%>',
                         'sub_order' => '/pos/webhook-sub/<%id%>/<%store_id%>',
+                        'reservation' => '/ccv/webhook-reservation/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
                         'order' => '/webhook/ccv/<%id%>/<%store_id%>',
+                    ],
+                    'kiosk-tickets' => [
+                        'reservation' => '/ccv/webhook/<%id%>/<%store_id%>',
                     ],
                 ],
                 'returnUrl'  => [
                     'pos'   => '/pos',
                     'kiosk' => '/<%device_id%>',
+                    'kiosk-tickets' => '/<%device_id%>',
                 ],
             ],
             'wipay'     => [
@@ -182,6 +188,7 @@ return [
                 'production' => 'https://wipay.worldline.nl',
                 'endpoints'  => [
                     'createOrder' => '/api/2.0/json/debit',
+                    'fetchOrderStatus' => '/api/2.0/json/status',
                 ],
                 'webhook'    => null,
                 // No need, it will point to main domain directly.
@@ -259,4 +266,20 @@ return [
     */
 
     'aws_url' => env('COMPANION_AWS_URL', 'https://eatcard.s3.REGION-X.amazonaws.com'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Qr Setting
+    |--------------------------------------------------------------------------
+    |
+    | Qr related setting can be manage form here
+    |
+    */
+
+    'generate_qr' => [
+        'size' => env('QR_SIZE', 300),
+        'merge_image' => env('QR_MERGE_IMAGE', 'https://eatcard-stage.s3.eu-central-1.amazonaws.com/Eatcard_app_icon.png'),
+        'format' => env('QR_FORMAT', 'png'),
+        'destination_folder' => env('QR_DESTINATION_FOLDER', 'assets'),
+    ],
 ];

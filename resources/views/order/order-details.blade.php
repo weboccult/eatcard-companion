@@ -5,7 +5,7 @@
     <title>Document</title>
 
     <style type="text/css" media="all">
-        body {
+        .body {
             margin: 0 auto !important;
             padding: 0 !important;
             -webkit-text-size-adjust: 100% !important;
@@ -19,8 +19,8 @@
         }
 
         * {
-            margin: 0 auto;
-            padding: 0;
+            /*margin: 0 auto;*/
+            /*padding: 0;*/
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -83,7 +83,7 @@
 
     </style>
 </head>
-<body>
+<body class="body">
 <div class="container" style="width: 300px">
     <div class="revenue-print-ticket">
         <div>
@@ -145,9 +145,11 @@
                     @endif
                     <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
                     <div style="padding: 4px 0;text-align: center">
-                        <p style="font-weight: 600">
-                            {{$data['typeorder']}} op {{$data['datetime']}}
-                        <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
+                        @if(isset($data['typeorder']) && !empty($data['typeorder']))
+                            <p style="font-weight: 600">
+                                {{$data['typeorder']}} op {{$data['datetime']}}
+                            <div style="border-bottom: 1px solid #000; margin-top: 8px"></div>
+                        @endif
                         @if($data['customercomments'])
                             {{--                            <div class="comment-status">--}}
                             <p style="font-size: 14px; font-weight: 600;line-height: 25px">Opmerking</p>
@@ -303,6 +305,24 @@
                          @endif
                        @endforeach
 
+                        @if(isset($data['qrimage']) && !empty($data['qrimage']))
+
+                            <div>
+                                <div style="padding: 10px 0px 3px 0px" >
+                                    <h4 style="font-weight: 200;"> {{$data['qrtext']}} </h4>
+                                </div>
+                                <div style="padding-bottom: 10px" >
+                                    <img src="{!! $data['qrimage'] !!}"
+                                     style="display:block; margin-right: auto; margin-left: auto"
+                                     width="100" height="100" border="0"
+                                     alt="reservation-qr"/>
+                                </div>
+                            </div>
+
+                            <div style="border-bottom: 1px solid #000; "></div>
+
+                       @endif
+
                         @if($data['receipt'])
                             <p>
                                 @foreach($data['receipt'] as $temp)
@@ -346,7 +366,7 @@
                                                 <p>Uw order word verwerkt door Eatcard, onze<br/> partner voor takeaway
                                                 </p>
                                                 <img src="@companionGeneralHelper('getS3File',env('COMPANION_AWS_URL').'/assets/eatcard-logo-print.png')"
-                                                     style="display:block;padding-top: 5px" width="56" height="25"
+                                                     style="display:block;padding-top: 5px;margin-right: auto; margin-left: auto" width="56" height="25"
                                                      border="0" alt="eat card"/>
                                             </div>
                                     </div>

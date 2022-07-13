@@ -9,6 +9,7 @@ use Weboccult\EatcardCompanion\Exceptions\KDSUserNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\NoKitchenPrintForUntilException;
 use Weboccult\EatcardCompanion\Exceptions\OrderIdEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
+use Weboccult\EatcardCompanion\Exceptions\PaymentDetailsNotFoundException;
 use Weboccult\EatcardCompanion\Exceptions\ReservationOrderItemEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\SaveOrderEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\StoreEmptyException;
@@ -20,6 +21,7 @@ use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -270,6 +272,27 @@ trait Stage4BasicDatabaseInteraction
 
     /**
      * @return void
+     * Set KDS User data for KDS Kitchen print
+     * throw exception if data not found
+     */
+    protected function setPaymentDetails()
+    {
+        if (empty($this->paymentId)) {
+            return;
+        }
+
+        $paymentDetail = PaymentDetail::query()->where('id', $this->paymentId)->first();
+
+//        if (empty($paymentDetail)) {
+//            throw new PaymentDetailsNotFoundException();
+//        }
+
+        companionLogger('------Companion Print payment details : ', $paymentDetail);
+        $this->paymentDetail = $paymentDetail;
+    }
+
+    /**
+     * @return void
      * set POS/Kiosk Device setting data
      * set POS/Kiosk device id, From Protocol OR Based on order details
      * For suborder, It's depend on device settings, so if suborder print is skipped then throw exception.
@@ -281,6 +304,8 @@ trait Stage4BasicDatabaseInteraction
         // is device id is specified then need to replace it.
         if (! empty($this->additionalSettings['current_device_id']) && (int) $this->additionalSettings['current_device_id'] > 0) {
             $deviceId = (int) $this->additionalSettings['current_device_id'];
+        } elseif (! empty($this->paymentDetail)) {
+            $deviceId = $this->paymentDetail['kiosk_id'];
         } elseif ($this->orderType == OrderTypes::PAID) {
             $deviceId = $this->order['kiosk_id'];
         //        } elseif ($this->order == OrderTypes::RUNNING) {

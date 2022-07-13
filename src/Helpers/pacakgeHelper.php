@@ -17,6 +17,7 @@ use Weboccult\EatcardCompanion\Services\Core\EatcardEmail;
 use Weboccult\EatcardCompanion\Services\Core\MultiSafe;
 use Weboccult\EatcardCompanion\Services\Core\OneSignal;
 use Weboccult\EatcardCompanion\Services\Facades\EatcardRevenue;
+use Weboccult\EatcardCompanion\Services\Core\EatcardReservation;
 
 if (! function_exists('packageVersion')) {
     /**
@@ -25,7 +26,12 @@ if (! function_exists('packageVersion')) {
     function packageVersion(): string
     {
         try {
-            return (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
+            $packageVersion = 'Unknown';
+            if (class_exists(InstalledVersions::class)) {
+                $packageVersion = (string) InstalledVersions::getVersion('weboccult/eatcard-companion');
+            }
+
+            return $packageVersion;
         } catch (Exception $e) {
             return 'Unknown';
         }
@@ -58,6 +64,7 @@ if (! function_exists('companionLogger')) {
         switch ($driver) {
             case LoggerTypes::FILE:
                 Log::info('[ Companion package Version : '.packageVersion().'] - '.$logContent);
+//                Log::info('[ Companion package Version : Unknown] - '.$logContent);
                 break;
             case LoggerTypes::CLOUDWATCH:
                 break;
@@ -229,5 +236,17 @@ if (! function_exists('eatcardEmail')) {
     function eatcardEmail(): EatcardEmail
     {
         return app(EatcardEmail::class);
+    }
+}
+
+if (! function_exists('eatcardReservation')) {
+    /**
+     * Access eatcardReservation through helper.
+     *
+     * @return EatcardReservation
+     */
+    function eatcardReservation(): EatcardReservation
+    {
+        return app(EatcardReservation::class);
     }
 }

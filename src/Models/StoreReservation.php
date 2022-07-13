@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Weboccult\EatcardCompanion\Traits\PaymentTable;
 use function Weboccult\EatcardCompanion\Helpers\getDutchDate;
 
 class StoreReservation extends Model
 {
     use SoftDeletes;
+    use PaymentTable;
 
     protected $table = 'store_reservations';
 
@@ -81,5 +83,18 @@ class StoreReservation extends Model
     public function rounds(): HasMany
     {
         return $this->hasMany(ReservationOrderItem::class, 'reservation_id')->orderBy('round');
+    }
+
+    public function reservation_serve_requests()
+    {
+        return $this->hasMany(ReservationServeRequest::class, 'reservation_id');
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function kiosk(): BelongsTo
+    {
+        return $this->belongsTo(KioskDevice::class, 'kiosk_id', 'id');
     }
 }

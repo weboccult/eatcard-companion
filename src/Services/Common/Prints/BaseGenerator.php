@@ -7,6 +7,7 @@ use Throwable;
 use Weboccult\EatcardCompanion\Models\KdsUser;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\OrderReceipt;
+use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -89,6 +90,9 @@ abstract class BaseGenerator implements BaseGeneratorContract
     protected string $reservationOrderItemCartId = '';
 
     protected ?KioskDevice $kiosk;
+
+    protected ?PaymentDetail $paymentDetail = null;
+    protected int $paymentId = 0;
 
     protected $categories = null;
 
@@ -178,6 +182,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->prepareSubOrderData();
         $this->prepareSaveOrderData();
         $this->prepareDeviceId();
+        $this->preparePaymentId();
     }
 
     /**
@@ -193,6 +198,7 @@ abstract class BaseGenerator implements BaseGeneratorContract
         $this->setReservationData();
         $this->setSaveOrderData();
         $this->setStoreData();
+        $this->setPaymentDetails();
         $this->setDeviceData();
         $this->setKDSUserData();
     }
@@ -239,12 +245,14 @@ abstract class BaseGenerator implements BaseGeneratorContract
     private function stage8_PrepareFinalJson()
     {
         $this->setMainPrinter();
+        $this->setStarPrinter();
         $this->setKitchenRelatedFields();
         $this->setOpenCashDrawer();
         $this->setPrintTitles();
         $this->setDeliveryAddress();
         $this->setStoreAddress();
         $this->setLogo();
+        $this->setTicketsQR();
         $this->setOtherDetails();
         $this->setItems();
         $this->setReceipt();

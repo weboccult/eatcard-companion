@@ -1,0 +1,83 @@
+<?php
+
+namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks\Tickets;
+
+use Carbon\Carbon;
+use Exception;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+
+class CashTicketsWebhook extends BaseWebhook
+{
+    use TicketsWebhookCommonActions;
+
+    /**
+     * @throws Exception
+     *
+     * @return mixed
+     */
+    public function handle()
+    {
+        companionLogger('Cash Tickets webhook request started', 'ReservationId #'.$this->reservationId, 'PaymentId #'.$this->paymentId, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+        companionLogger('Cash Tickets payload', json_encode(['payload' => $this->payload], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+
+        $this->fetchAndSetStore();
+        $this->fetchAndSetReservation();
+        $this->fetchAndSetPaymentDetails();
+
+        $update_data = [];
+        $update_payment_data = [];
+
+        $paymentStatus = 'pending';
+        $localPaymentStatus = 'pending';
+        $status = $this->fetchedReservation->status;
+        $paidOn = null;
+        $processType = $this->fetchedPaymentDetails->process_type ?? '';
+        $reservationUpdatePayload = $this->fetchedPaymentDetails->payload ?? '';
+        companionLogger('------update reservation payload', $reservationUpdatePayload);
+
+        if ($this->payload['status'] == 'paid') {
+            $paymentStatus = 'paid';
+            $localPaymentStatus = 'paid';
+            $paidOn = Carbon::now()->format('Y-m-d H:i:s');
+        } elseif ($this->payload['status'] == 'failed') {
+            $paymentStatus = 'failed';
+            $status = 'cancelled';
+            $localPaymentStatus = 'failed';
+        } else {
+            companionLogger('invalid cash payment status', $this->payload);
+        }
+
+        if ($processType == 'update' && ! empty($reservationUpdatePayload) && $paymentStatus == 'paid') {
+            $reservationUpdatePayload = json_decode($reservationUpdatePayload, true);
+
+            if (isset($reservationUpdatePayload['all_you_eat_data']) && ! empty($reservationUpdatePayload['all_you_eat_data'])) {
+                $reservationUpdatePayload['all_you_eat_data'] = json_encode($reservationUpdatePayload['all_you_eat_data']);
+            }
+
+            $update_data = $reservationUpdatePayload;
+            $update_payment_data['payload'] = '';
+        }
+
+        if ($processType == 'create') {
+            $update_data['status'] = $status;
+            $update_data['payment_status'] = $paymentStatus;
+            $update_data['local_payment_status'] = $localPaymentStatus;
+            $update_data['paid_on'] = $paidOn;
+        }
+
+        $update_payment_data['payment_status'] = $paymentStatus;
+        $update_payment_data['local_payment_status'] = $localPaymentStatus;
+        $update_payment_data['paid_on'] = $paidOn;
+
+        if ($update_payment_data['local_payment_status'] == 'failed') {
+            $update_payment_data['cancel_from'] = 'manual';
+        }
+
+        companionLogger('------update cash data', $update_data, $update_payment_data);
+
+        $this->afterStatusGetProcess($update_data, $update_payment_data);
+
+        return true;
+    }
+}

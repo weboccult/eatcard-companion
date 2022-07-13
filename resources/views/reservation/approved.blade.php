@@ -259,6 +259,22 @@ xmlns:o="urn:schemas-microsoft-com:office:office">
 									</table>
 								</td>
 							</tr>
+                            @if($storeRes->qr_image != '#')
+                            <tr>
+                                <td align="center" style="padding: 30px">
+                                    <table class="em_wrapper" align="center" width="478" border="0" cellspacing="0"
+                                           cellpadding="0" style="width:478px;">
+                                        <tr>
+                                            <td align="center">
+                                                <img src="{!! $storeRes->qr_image !!}"
+                                                     style="display:block;" width="100" height="100" border="0"
+                                                     alt="reservation-qr"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            @endif
                             @if($storeRes->total_price)
 							<tr>
 								<td align="center" style="padding:0 10px 20px 10px">

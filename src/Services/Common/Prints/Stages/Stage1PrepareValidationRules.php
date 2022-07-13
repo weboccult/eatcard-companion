@@ -41,9 +41,9 @@ trait Stage1PrepareValidationRules
             $this->addRuleToGeneratorSpecificRules(PrintTypeNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
         }
 
-        if ($this->orderType != OrderTypes::PAID && in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
+        if (! in_array($this->orderType, [OrderTypes::PAID, OrderTypes::RUNNING]) && in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
             //PDF and HTML only supported for paid orders
-            $this->addRuleToGeneratorSpecificRules(PrintMethodNotSupportedException::class, in_array($this->printType, [PrintTypes::PROFORMA]));
+            $this->addRuleToGeneratorSpecificRules(PrintMethodNotSupportedException::class, true);
         }
     }
 }

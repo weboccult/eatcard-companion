@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Prints\Stages;
 
+use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Classes\ImageFilters;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
@@ -12,6 +13,7 @@ use function Weboccult\EatcardCompanion\Helpers\__companionPrintTrans;
 use function Weboccult\EatcardCompanion\Helpers\changePriceFormat;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\carbonFormatParse;
+use function Weboccult\EatcardCompanion\Helpers\generateQrCode;
 
 /**
  * @description Stag 8
@@ -30,11 +32,18 @@ trait Stage8PrepareFinalJson
             return;
         }
 
+        //need to skip default printer for kioskTickets
+        if ($this->systemType == SystemTypes::KIOSKTICKETS) {
+            return;
+        }
+
         $printer_name = [];
         //set printer as per system setting
         if ($this->systemType == SystemTypes::KIOSK && ! empty($this->additionalSettings['kiosk_printer_name'])) {
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
         } elseif ($this->systemType == SystemTypes::POS && ! empty($this->additionalSettings['kiosk_printer_name'])) {
+            $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
+        } elseif ($this->systemType == SystemTypes::POSTICKETS && ! empty($this->additionalSettings['kiosk_printer_name'])) {
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
         } elseif ($this->printType == PrintTypes::MAIN && ! empty($this->additionalSettings['kiosk_printer_name'])) {
             $printer_name[] = $this->additionalSettings['kiosk_printer_name'];
@@ -60,6 +69,13 @@ trait Stage8PrepareFinalJson
 
         $this->jsonFormatFullReceipt['printername'] = $printer_name;
 //        companionLogger('----Companion Print printername', $printer_name);
+    }
+
+    private function setStarPrinter()
+    {
+        if (! empty($this->additionalSettings['is_star_printer'])) {
+            $this->jsonFormatFullReceipt['starPrintfullreceipt'] = 1;
+        }
     }
 
     /**
@@ -148,7 +164,7 @@ trait Stage8PrepareFinalJson
                 $title6 = __companionPrintTrans('general.'.($this->order['order_type'] ?? '')).' op '.($this->order['order_date'] ?? '').($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 //            $title6 = ($this->order['order_type'] ?? '').' op '.($this->order['order_date'] ?? '').
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
-                $titleTime = carbonFormatParse('d-m-Y H:i', ($this->order['paid_on'] ?? ''));
+                $titleTime = Carbon::parse($this->order['paid_on'])->format('d-m-Y H:i') ?? '';
                 $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
             }
 
@@ -173,6 +189,20 @@ trait Stage8PrepareFinalJson
 
                 $orderNo = 'Table '.$this->advanceData['tableName'];
                 $titleTime = '';
+
+                if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
+                    $title1 = 'Tickets';
+                    $title2 = $this->reservation['voornaam'] ?? '';
+                    $title3 = $this->reservation['gsm_no'] ?? '';
+                    if ($this->additionalSettings['is_print_exclude_email'] == 0) {
+                        $title4 = $this->reservation['email'] ?? '';
+                    }
+                    $title6 = date('Y-m-d').' om '.date('H:i');
+
+                    $orderNo = $this->advanceData['tableName'];
+                    $this->jsonFormatFullReceipt['titteTime'][0]['key2'] = 'Betaald op:';
+                    $titleTime = Carbon::parse($this->reservation['paid_on'])->format('Y-m-d H:i') ?? '';
+                }
             }
 
             //reservation order item set then it will be kitchen print of round order
@@ -343,6 +373,18 @@ trait Stage8PrepareFinalJson
         $this->jsonFormatFullReceipt['showeatcardname'] = $showEatcardName;
     }
 
+    protected function setTicketsQR()
+    {
+        if (! in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
+            return;
+        }
+
+        $qrImage = generateQrCode($this->store, $this->reservation->reservation_id, 'RT', true);
+
+        $this->jsonFormatFullReceipt['qrtext'] = $this->reservation->reservation_id;
+        $this->jsonFormatFullReceipt['qrimage'] = $qrImage['aws_image'] ?? '';
+    }
+
     /**
      * @return void
      * set other additional details related to his order type, print type and settings
@@ -434,6 +476,15 @@ trait Stage8PrepareFinalJson
             if ($this->printType == PrintTypes::PROFORMA && isset($this->total_price)) {
                 $total = $this->total_price;
                 $tableName = '';
+            }
+
+            if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
+                $dateTime = ($this->reservation->getRawOriginal('res_date') ?? '').(' om '.($this->reservation['from_time'] ?? ''));
+                $total = $this->paymentDetail['amount'] ?? 0;
+
+                if ($this->paymentDetail['transaction_type'] == 'DEBIT') {
+                    $total = $this->reservation->total_price ?? 0;
+                }
             }
         }
 

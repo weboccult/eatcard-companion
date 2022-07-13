@@ -5,6 +5,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Prints\Generators;
 use Illuminate\Support\Facades\Cache;
 use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\StoreReservationEmptyException;
 use Weboccult\EatcardCompanion\Models\DevicePrinter;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
@@ -401,7 +402,7 @@ class RunningOrderGenerator extends BaseGenerator
             $this->item_discount = (float) $item['discount'];
         }
 
-        $notVoided = ! (isset($item['void_id']) && $item['void_id'] != '');
+        $notVoided = ! (isset($item['void_id']) && (int) ($item['void_id']) > 0);
         $this->isVoidProduct = ! $notVoided;
         $notOnTheHouse = ! (isset($item['on_the_house']) && $item['on_the_house'] == '1');
         $this->isOnTheHouseProduct = ! $notOnTheHouse;
@@ -489,12 +490,32 @@ class RunningOrderGenerator extends BaseGenerator
         }
 
         $summary = [];
+        $totalPrice = $this->reservation['total_price'] ?? 0;
+        $refund = 0;
 
-        if (($this->reservation['total_price'] ?? 0) > 0) {
-            $summary[] = [
-                'key'   =>  __companionPrintTrans('print.reservation_deposit'),
-                'value' => '-'.changePriceFormat(($this->reservation['total_price'] ?? 0)),
-            ];
+        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail)) {
+            if ($this->paymentDetail['transaction_type'] == 'DEBIT') {
+                $refund = $this->paymentDetail['amount'] ?? 0;
+                $totalPrice = $totalPrice + ($this->paymentDetail['amount'] ?? 0);
+            } elseif ($this->paymentDetail['process_type'] == 'create') {
+                $totalPrice = 0;
+            } elseif ($this->paymentDetail['process_type'] == 'update') {
+                $totalPrice = $totalPrice - $this->paymentDetail['amount'];
+            }
+
+            if ($totalPrice > 0) {
+                $summary[] = [
+                    'key'   => __companionPrintTrans('print.reservation_deposit'),
+                    'value' => changePriceFormat($totalPrice),
+                ];
+            }
+        } else {
+            if ($totalPrice > 0) {
+                $summary[] = [
+                    'key'   => __companionPrintTrans('print.reservation_deposit'),
+                    'value' => '-'.changePriceFormat($totalPrice),
+                ];
+            }
         }
 
         if ($this->total_dis_inc_tax > 0) {
@@ -502,6 +523,13 @@ class RunningOrderGenerator extends BaseGenerator
                    'key'   => __companionPrintTrans('print.discount_amount').$this->order_discount_amount_with_prefix,
                    'value' => '-'.changePriceFormat($this->total_dis_inc_tax),
                ];
+        }
+
+        if ($refund > 0) {
+            $summary[] = [
+                'key'   => __companionPrintTrans('print.refund'),
+                'value' => '-'.changePriceFormat($refund),
+            ];
         }
 
         if (isset($this->reservation['coupon_price']) && $this->reservation['coupon_price'] > 0) {

@@ -37,6 +37,7 @@ return [
     'discount_amount' => 'Discount',
     'reservation_deposit' => 'Reservation Deposit',
     'gift_voucher_cost' => 'Gift card',
+    'refund' => 'Refund',
 
     /* 9. ->Payment summary */
     'split' => 'Split',

@@ -6,8 +6,11 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Weboccult\EatcardCompanion\Models\AllYouEatCategories;
 use Weboccult\EatcardCompanion\Models\Device;
+use Weboccult\EatcardCompanion\Models\DineinCart;
 use Weboccult\EatcardCompanion\Models\DineinPrices;
 use Weboccult\EatcardCompanion\Models\EmailCount;
 use Weboccult\EatcardCompanion\Models\GeneralNotification;
@@ -20,6 +23,8 @@ use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderDeliveryDetails;
 use Weboccult\EatcardCompanion\Models\OrderHistory;
 use Weboccult\EatcardCompanion\Models\Product;
+use Weboccult\EatcardCompanion\Models\ReservationDineIn;
+use Weboccult\EatcardCompanion\Models\ReservationEvent;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
@@ -304,12 +309,26 @@ if (! function_exists('generateReservationId')) {
     function generateReservationId(): int
     {
         $id = rand(1111111, 9999999);
+        $id = (string) $id; //convert it into string because of query optimize, here in db reservation_id datatype is a string
         $exist = StoreReservation::query()->where('reservation_id', $id)->first();
         if ($exist) {
             return generateReservationId();
         } else {
             return $id;
         }
+    }
+}
+
+if (! function_exists('generateRandomNumberV2')) {
+    /**
+     * @param int $length : Integer
+     *
+     * @return int
+     * @Description generate 4 digit number for reservation gast-pin
+     */
+    function generateRandomNumberV2($length = 4)
+    {
+        return rand(pow(10, $length - 1) - 1, pow(10, $length) - 1);
     }
 }
 if (! function_exists('carbonParseAddHoursFormat')) {
@@ -379,6 +398,105 @@ if (! function_exists('getAycePrice')) {
         }
 
         return $ayce_amount;
+    }
+}
+
+if (! function_exists('aycePersonDiscountCalculate')) {
+    /**
+     * @param $aycedata
+     *
+     * @return float|int|mixed
+     */
+    function aycePersonDiscountCalculate($aycedata)
+    {
+        $discount = 0;
+        $discountData = $aycedata['discount']['ayce_data'] ?? null;
+
+        /*<--- not set any type of discount --->*/
+        if (empty($discountData)) {
+            return $discount;
+        }
+
+        $dineInPrice = $aycedata['dinein_price'] ?? null;
+        $ayce_no_of_adults = $aycedata['no_of_adults'] ?? null;
+        $ayce_no_of_kids2 = $aycedata['no_of_kids2'] ?? null;
+        $ayce_no_of_kids = $aycedata['no_of_kids'] ?? null;
+        $ayce_is_per_year = $dineInPrice['is_per_year'] ?? null;
+
+        $discount_no_of_adults = $discountData['no_of_adults'] ?? null;
+        $discount_no_of_kids2 = $discountData['no_of_kids2'] ?? null;
+        $discount_no_of_kids = $discountData['no_of_kids'] ?? null;
+        $discount_dynm_kids = $discountData['dynm_kids'] ?? null;
+
+        if (! empty($dineInPrice)) {
+            if (! empty($ayce_no_of_adults) && ! empty($discount_no_of_adults)) {
+                /*<--- adult discount --->*/
+                $discount += calculateOfDiscount($discountData['no_of_adults'], $dineInPrice['price']);
+            }
+
+            if (! empty($ayce_no_of_kids2) && ! empty($discount_no_of_kids2)) {
+                /*<--- kids2 discount --->*/
+                $discount += calculateOfDiscount($discountData['no_of_kids2'], $dineInPrice['child_price_2']);
+            }
+
+            /*<--- kids per year discount --->*/
+            if (! empty($ayce_no_of_kids) && ! empty($discount_no_of_kids)) {
+                $price = $dineInPrice['child_price'];
+                $min_age = (int) ($dineInPrice['min_age'] ?? 0);
+                $kid_price = (float) ($dineInPrice['child_price'] ?? 0);
+
+                foreach ($discount_no_of_kids as $kids_age) {
+                    if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
+//                        $price = ($kid_price * ((int) $kids_age['age']) - $min_age);
+                        $price = ((((int) $kids_age['age']) - $min_age) + 1) * $kid_price;
+                    }
+
+                    $discount += calculateOfDiscount($kids_age, $price);
+                }
+            }
+
+            /*<--- Dynamic kids discount --->*/
+            if (! empty($dineInPrice['dynamic_prices'] ?? null) && ! empty($discount_dynm_kids)) {
+                foreach ($discount_dynm_kids as $dynamic_prices) {
+                    $dynamicPriceData = collect($dineInPrice['dynamic_prices'])->where('id', $dynamic_prices['id'])->first();
+                    if ($dynamicPriceData) {
+                        $discount += calculateOfDiscount($dynamic_prices, $dynamicPriceData['price']);
+                    }
+                }
+            }
+        }
+
+        return $discount;
+    }
+}
+
+if (! function_exists('calculateOfDiscount')) {
+
+    /**
+     * @param $data
+     * @param $aycePrice
+     *
+     * @return float|int|mixed
+     */
+    function calculateOfDiscount($data, $aycePrice)
+    {
+        $discountAmount = 0;
+        $discountType = $data['discount_type'] ?? null;
+        if (empty($discountType)) {
+            return $discountAmount;
+        }
+
+        $price = (float) ($aycePrice ?? 0);
+        $person = (int) ($data['count'] ?? 0);
+        $discount = $data['discount'] ?? 0;
+
+        if ($discountType == 'euro') {
+            $discountAmount = round(($person * $discount), 5);
+        } else {
+            $discountAmount = round(($person * $price * $discount) / 100, 5);
+        }
+
+        return $discountAmount;
     }
 }
 
@@ -582,10 +700,11 @@ if (! function_exists('sendResWebNotification')) {
 
             /*web notification*/
             $reservation = ReservationTable::whereHas('reservation', function ($q) use ($store_id) {
-                $q/*->whereHas('meal')*/ ->where('status', 'approved');
+                $q/*->whereHas('meal')*/ ->whereIn('status', ['approved', 'pending', 'cancelled', 'declined']);
             })->with([
                 'reservation' => function ($q) use ($store_id) {
                     $q->with([
+                        'reservation_serve_requests',
                         'meal:id,name,time_limit',
                         'tables.table',
                         'user' => function ($q2) use ($store_id) {
@@ -597,14 +716,12 @@ if (! function_exists('sendResWebNotification')) {
                                 },
                             ]);
                         },
-                    ])->where('status', 'approved')->where(function ($q1) {
-                        $q1->whereIn('payment_status', [
-                            'paid',
-                            '',
-                        ])->orWhere('total_price', null);
+                    ])->whereIn('status', ['approved', 'pending', 'cancelled', 'declined'])->where(function ($q1) {
+                        $q1->whereIn('local_payment_status', ['paid', '', 'pending', 'failed'])->orWhere('total_price', null);
                     });
                 },
             ])->where('reservation_id', $id)->first();
+
             if ($reservation && $reservation->reservation) {
                 $reservation->reservation->end = 120;
                 if ($reservation->reservation->is_dine_in || $reservation->reservation->is_qr_scan) {
@@ -691,6 +808,7 @@ if (! function_exists('sendResWebNotification')) {
                 }
 
                 $reservation->reservation->orders = $temp_orders;
+
                 $last_message = Message::query()->where('thread_id', $reservation->reservation->thread_id)
                     ->orderBy('created_at', 'desc')
                     ->first();
@@ -699,23 +817,32 @@ if (! function_exists('sendResWebNotification')) {
                 } else {
                     $reservation->reservation->last_message = null;
                 }
+
                 $reservation->reservation->orders = $temp_orders;
+
                 $tempReservation = $reservation->toArray();
                 $tempReservation['reservation']['reservation_date'] = $reservation->reservation->getRawOriginal('res_date');
                 companionLogger('new booking web notification', $tempReservation);
+
                 $dinein_area_id = '';
+
                 $table = ReservationTable::with(['table'])->where('reservation_id', $id)->first();
-                $current_reservation_table = ReservationTable::query()
-                    ->where('reservation_id', $id)
-                    ->pluck('table_id')
-                    ->toArray();
+
                 if ($table && $table['table']) {
                     $dinein_area_id = $table['table']->dining_area_id;
                 }
+
+                $current_reservation_table = ReservationTable::query()
+                                    ->where('reservation_id', $id)
+                                    ->pluck('table_id')
+                                    ->toArray();
+
                 $channel = ! empty($channel) ? $channel : 'new_booking';
+
                 $start = Carbon::parse($reservation->from_time)->format('H:i');
                 $end = Carbon::parse($reservation->end_time)->diffInMinutes($start);
                 if ($channel == 'remove_booking') {
+                    companionLogger('--------remove booking');
                     $additionalData = json_encode([
                         'reservation_id'          => $reservation->reservation->id,
                         'status'                  => $reservation->reservation->status,
@@ -821,6 +948,7 @@ if (! function_exists('sendResWebNotification')) {
                     'additional_data' => $additionalData,
                     'system_name'     => env('APP_NAME', 'Package'),
                 ]));
+                companionLogger('-------channel', $channel, $id, $store_id);
             }
 
             return true;
@@ -1358,17 +1486,20 @@ if (! function_exists('set_discount_with_prifix')) {
      *
      * @return string
      */
-    function set_discount_with_prifix($discount_type, $discount, int $only_return_sign = 0)
+    function set_discount_with_prifix($discount_type, $discount, int $quantity = 0)
     {
         $discount_with_prifix = '';
         $discount_prifix = $discount_type == 1 ? 'eur' : '%';
-        if ($only_return_sign == 1) {
+        if ($quantity == -1) {
             $discount_with_prifix = ' ('.$discount_prifix.')';
 
             return $discount_with_prifix;
         }
-        if ($discount > 0) {
+        if ($discount > 0 && $quantity == 0) {
             $discount_with_prifix = ' ('.changePriceFormat($discount).' '.$discount_prifix.')';
+        }
+        if ($discount > 0 && $quantity > 0) {
+            $discount_with_prifix = ' ('.changePriceFormat($discount).' '.$discount_prifix.' x '.$quantity.' )';
         }
 
         return $discount_with_prifix;
@@ -1447,6 +1578,7 @@ if (! function_exists('extractRequestType')) {
     function extractRequestType($requestType)
     {
         $deviceId = 0;
+        $paymentId = 0;
         $generator = '';
         $printType = '';
         $systemPrintType = '';
@@ -1460,6 +1592,8 @@ if (! function_exists('extractRequestType')) {
             'receipt_pos_sub', // Print sub order default
             'receipt_kiosk', // Print default for kiosk
             'receipt_kitchen', // Reprint only kitchen and label from admin for paid orders
+            'receipt_kiosk_tickets', // Print proforma with QR for tickets
+            'receipt_pos_tickets', // Print proforma with QR for tickets
         ];
 
         if (strpos($requestType, '@') !== false) {
@@ -1480,6 +1614,12 @@ if (! function_exists('extractRequestType')) {
                 $requestType = isset($checkReservation[1]) ? $checkReservation[1] : 'receipt';
                 $printType = 'saved_order';
                 $systemPrintType = PrintTypes::DEFAULT;
+            } elseif ($checkReservation[0] == 'receipt_kiosk_tickets') {
+                $requestType = 'receipt_kiosk_tickets';
+                $paymentId = (int) ($checkReservation[1] ?? 0);
+            } elseif ($checkReservation[0] == 'receipt_pos_tickets') {
+                $requestType = 'receipt_pos_tickets';
+                $paymentId = (int) ($checkReservation[1] ?? 0);
             } elseif ($requestType == 'receipt_pos_sub') {
                 $printType = 'receipt_pos_sub';
                 $generator = SubOrderGenerator::class;
@@ -1506,12 +1646,23 @@ if (! function_exists('extractRequestType')) {
         } elseif ($requestType == 'receipt_kiosk') {
             $systemType = SystemTypes::KIOSK;
             $systemPrintType = PrintTypes::DEFAULT;
+        } elseif ($requestType == 'receipt_kiosk_tickets') {
+            $generator = RunningOrderGenerator::class;
+            $printType = 'reservation';
+            $systemType = SystemTypes::KIOSKTICKETS;
+            $systemPrintType = PrintTypes::PROFORMA;
+        } elseif ($requestType == 'receipt_pos_tickets') {
+            $generator = RunningOrderGenerator::class;
+            $printType = 'reservation';
+            $systemType = SystemTypes::POSTICKETS;
+            $systemPrintType = PrintTypes::PROFORMA;
         }
 
         return [
             'generator' => $generator,
             'requestType' => $requestType,
             'deviceId' => $deviceId,
+            'paymentId' => $paymentId,
             'printType' => $printType,
             'printMethod' => PrintMethod::PROTOCOL,
             'systemPrintType' => $systemPrintType,
@@ -1860,5 +2011,384 @@ if (! function_exists('calculateAllYouCanEatPerson')) {
 
             return $person;
         }
+    }
+}
+
+if (! function_exists('checkSlotAvailability')) {
+
+    /**
+     * @param $start_time
+     * @param $key
+     * @param $picktimes
+     *
+     * @return string
+     */
+    function checkSlotAvailability($start_time, $key, $picktimes)
+    {
+        $start_picktime = Carbon::parse($start_time);
+        $diff_picktime = 120;
+        if (isset($picktimes[$key + 1])) {
+            $end_picktime = Carbon::parse($picktimes[$key + 1]->from_time);
+            $diff_picktime = ($start_picktime->diffInMinutes($end_picktime) <= 120) ? $start_picktime->diffInMinutes($end_picktime) : 120;
+        } else {
+            if (! isset($picktimes[$key + 1])) {
+                if (isset($picktimes[$key - 1])) {
+                    $end_picktime = Carbon::parse($picktimes[$key - 1]->from_time);
+                    $diff_picktime = ($start_picktime->diffInMinutes($end_picktime) <= 120) ? $start_picktime->diffInMinutes($end_picktime) : 120;
+                }
+            }
+        }
+        $end_time = Carbon::parse($start_picktime)->addMinutes($diff_picktime)->format('H:i');
+        if (strtotime($start_picktime) > strtotime($end_time)) {
+            return '24:00';
+        } else {
+            return $end_time;
+        }
+    }
+}
+
+if (! function_exists('getAnotherMeeting')) {
+    function getAnotherMeeting($reservation, $meal, $item)
+    {
+        if (! $reservation->end_time) {
+            $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
+            $reservation->end_time = Carbon::parse($reservation->from_time)
+                ->addMinutes($time_limit)
+                ->format('H:i');
+
+            if (strtotime($reservation->from_time) > strtotime($reservation->end_time)) {
+                $reservation->end_time = '23:59';
+            }
+        }
+        if (! isset($time_limit)) {
+            $time_limit = ($meal->time_limit) ? $meal->time_limit : 120;
+        }
+        $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+
+        if (strtotime($item->from_time) > strtotime($end_time)) {
+            $end_time = '23:59';
+        }
+
+        $another_meeting = (strtotime($item->from_time) > strtotime($reservation->from_time) && strtotime($item->from_time) < strtotime($reservation->end_time)) ||
+            (strtotime($reservation->from_time) > strtotime($item->from_time) && strtotime($reservation->from_time) < strtotime($end_time)) ||
+            (strtotime($item->from_time) == strtotime($reservation->from_time));
+
+        return $another_meeting;
+    }
+}
+
+if (! function_exists('bestsum')) {
+    function bestsum($data, $maxsum)
+    {
+        $res = array_fill(0, $maxsum + 1, '0');
+        $res[0] = [];              //base case
+        foreach ($data as $group) {
+            $new_res = $res;               //copy res
+            foreach ($group as $ele) {
+                for ($i = 0; $i < ($maxsum - $ele + 1); $i++) {
+                    if ($res[$i] != 0) {
+                        $ele_index = $i + $ele;
+                        $new_res[$ele_index] = $res[$i];
+                        $new_res[$ele_index][] = $ele;
+                    }
+                }
+            }
+            $res = $new_res;
+        }
+
+        for ($i = $maxsum; $i > 0; $i--) {
+            if ($res[$i] != 0) {
+                return $res[$i];
+                break;
+            }
+        }
+
+        return [];
+    }
+}
+
+if (! function_exists('getStoreInitial')) {
+    /**
+     * @param $string
+     *
+     * @return string
+     */
+    function getStoreInitial($string)
+    {
+        if (preg_match('/\s/', $string)) {
+            $words = explode(' ', $string);
+            $acronym = '';
+            foreach ($words as $w) {
+                $acronym .= $w[0];
+                if (strlen($acronym) >= 2) {
+                    break;
+                }
+            }
+        } else {
+            $acronym = substr($string, 0, 2);
+        }
+
+        return strtoupper($acronym);
+    }
+}
+
+if (! function_exists('generateQrCode')) {
+    function generateQrCode($store, $uniqueId, string $postFix = 'RT', $uploadInS3 = false, $extra = [])
+    {
+        try {
+            $format = config('eatcardCompanion.generate_qr.format');
+            $mergeImage = config('eatcardCompanion.generate_qr.merge_image');
+            $size = config('eatcardCompanion.generate_qr.size');
+            $destinationFolder = config('eatcardCompanion.generate_qr.destination_folder');
+
+            $returnQrData = [
+                'generated_qr' => null,
+                'aws_image'    => '',
+            ];
+
+            $perFix = getStoreInitial($store->store_name);
+            if (strtoupper($postFix) == 'RT') {
+                $returnQrData['generated_qr'] = $perFix.'-'.$uniqueId.'-'.$postFix;
+            }
+
+            if (! $uploadInS3) {
+                return $returnQrData;
+            }
+
+            if ($destinationFolder) {
+                $s3ImagePath = $destinationFolder != 'assets' ? '/assets/'.$destinationFolder : '/assets';
+                $s3ImagePath .= '/'.$store->id;
+                $s3ImagePath .= '/'.phpEncrypt($returnQrData['generated_qr']).'.'.$format;
+            }
+
+            if (empty($mergeImage)) {
+                $qrImage = QrCode::format($format)->size($size)->generate($returnQrData['generated_qr']);
+            } else {
+                $qrImage = QrCode::format($format)
+                    ->merge($mergeImage, .2, true)
+                    ->size($size)
+                    ->generate($returnQrData['generated_qr']);
+            }
+
+            if (! Storage::disk('s3')->exists($s3ImagePath)) {
+                Storage::disk('s3')->put($s3ImagePath, $qrImage, 'public');
+            }
+
+            $returnQrData['aws_image'] = env('COMPANION_AWS_URL').$s3ImagePath;
+            companionLogger('generateQrCode response', $returnQrData);
+
+            return $returnQrData;
+        } catch (\Exception $exception) {
+            companionLogger('generateQrCode function exception', 'Line - '.$exception->getLine(), 'Error - '.$exception->getMessage());
+        }
+    }
+}
+
+if (! function_exists('checkAnotherMeeting')) {
+
+    /**
+     * @param $tableId
+     * @param $reservation
+     * @param null $meal
+     *
+     * @return bool
+     */
+    function checkAnotherMeeting($tableId, $reservation, $meal = null): bool
+    {
+        try {
+            $status = ['declined', 'cancelled'];
+            $isSeatedStatus = [2];
+
+            $allReservationIds = StoreReservation::query()
+                ->where('store_id', $reservation->store_id)
+                ->where('res_date', $reservation->reservation_date)
+                ->where('is_checkout', 0)
+                ->whereNotIn('status', $status)
+                ->whereNotIn('is_seated', $isSeatedStatus)
+                ->where('id', '!=', $reservation->id)
+                ->get();
+
+            $particularReservationIds = ReservationTable::query()
+                ->whereIn('reservation_id', $allReservationIds->pluck('id'))
+                ->whereIn('table_id', $tableId)
+                ->where('reservation_id', '!=', $reservation->id)
+                ->pluck('reservation_id');
+
+            $getTablesAllReservation = collect($allReservationIds)->whereIn('id', $particularReservationIds);
+
+            foreach ($getTablesAllReservation as $key => $tableReservation) {
+                $anotherMeeting = getAnotherMeetingByReservation($reservation, $tableReservation, $meal);
+                if ($anotherMeeting === true) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            companionLogger('---------getAnotherMeeting error', $e->getMessage(), $e->getLine(), $e->getFile());
+
+            return false;
+        }
+    }
+}
+
+if (! function_exists('getAnotherMeetingByReservation')) {
+    /**
+     * @param $reservation
+     * @param $item
+     * @param $meal
+     *
+     * @return bool
+     */
+    function getAnotherMeetingByReservation($reservation, $item, $meal): bool
+    {
+        if (! empty($meal)) {
+            $reservation->meal = $meal;
+        }
+
+        $time_limit = 120;
+        if ($reservation->end_time) {
+            $time_limit = ($reservation->meal && $reservation->meal->time_limit) ? $reservation->meal->time_limit : 120;
+            $reservation->end_time = Carbon::parse($reservation->from_time)->addMinutes($time_limit)->format('H:i');
+        }
+        $end_time = Carbon::parse($item->from_time)->addMinutes($time_limit)->format('H:i');
+
+        return ($item->from_time > $reservation->from_time && $item->from_time < $reservation->end_time) || ($reservation->from_time > $item->from_time && $reservation->from_time < $end_time) || ($item->from_time == $reservation->from_time);
+    }
+}
+
+if (! function_exists('assignedReservationTableOrUpdate')) {
+
+    /**
+     * @param $reservation
+     * @param $reservationNewTables
+     * @param array $payload
+     *
+     * @return bool
+     */
+    function assignedReservationTableOrUpdate($reservation, $reservationNewTables): bool
+    {
+        try {
+            $groupId = 0;
+            $newTable = $reservationNewTables;
+            /*<--- remove old table if not in destination table  ----->*/
+            ReservationTable::query()->where('reservation_id', $reservation->id)->whereNotIn('table_id', $newTable)->delete();
+
+            /*<--- update reservation table---->*/
+            foreach ($newTable as $key=>$table) {
+                $reservation_table = ReservationTable::where('reservation_id', $reservation->id)->where('table_id', $table)->first();
+                if (! $reservation_table) {
+                    ReservationTable::query()->create([
+                        'reservation_id' => $reservation->id,
+                        'table_id'       => $table,
+                    ]);
+                }
+            }
+
+            $groupId = $reservation->group_id ?? 0;
+            if ($reservation['group_id'] > 0 && count($newTable) <= 1) {
+                $groupId = 0;
+            } elseif ($reservation['group_id'] == 0 && count($newTable) > 1) {
+                $last_group_id = getLatestGroupId($reservation->reservation_date, $reservation->store_id);
+                $groupId = $last_group_id + 1;
+            }
+
+            $payload['group_id'] = $groupId;
+            StoreReservation::query()->where('id', $reservation->id)->update($payload);
+
+            return true;
+        } catch (\Exception $e) {
+            companionLogger('----------table-assign-error ', $e->getMessage(), $e->getLine());
+
+            return false;
+        }
+    }
+}
+
+if (! function_exists('getLatestGroupId')) {
+    /**
+     * @param $resDate
+     * @param $storeId
+     *
+     * @return int
+     */
+    function getLatestGroupId($resDate, $storeId): int
+    {
+        $groupId = StoreReservation::query()->select('group_id', 'store_id')
+                                ->where('res_date', $resDate)
+                                ->where('store_id', $storeId)
+                                ->orderBy('group_id', 'desc')
+                                ->value('group_id');
+
+        return (int) $groupId ?? 0;
+    }
+}
+
+if (! function_exists('checkTableMinMaxLimitAccordingToPerson')) {
+    function checkTableMinMaxLimitAccordingToPerson($reservation, $payload = []): bool
+    {
+        $person = $payload['person'] ?? 0;
+        $tables = $reservation->tables2()->get();
+        $minSum = collect($tables)->sum('no_of_min_seats');
+        $maxSum = collect($tables)->sum('no_of_seats');
+
+        $isSkipReAssigned = true;
+        if (in_array($person, range($minSum, $maxSum))) {
+            $isSkipReAssigned = false;
+        }
+
+        return $isSkipReAssigned;
+    }
+}
+
+if (! function_exists('getModelName')) {
+    /**
+     * @param $model
+     *
+     * @return string
+     */
+    function getModelName($model): string
+    {
+        return class_basename($model);
+    }
+}
+
+if (! function_exists('getModelId')) {
+    /**
+     * @param $model
+     *
+     * @return mixed
+     */
+    function getModelId($model)
+    {
+        return $model->getKey();
+    }
+}
+
+if (! function_exists('undoCheckIn')) {
+    /**
+     * @param $reservation
+     * @param array $extra
+     */
+    function undoCheckIn($reservation, array $extra = [])
+    {
+        StoreReservation::query()->find($reservation->id)->update([
+            'checked_in_at'      => null,
+            'is_seated'          => 0,
+            'undo_checkin_count' => ($reservation->undo_checkin_count + 1),
+            'is_second_scan'     => 0,
+        ]);
+
+        ReservationEvent::query()->create([
+            'user_id'    => $extra['user_id'] ?? 0,
+            'res_id'     => $reservation->id,
+            'event_from' => $extra['event_from'],
+            'event'      => 'undo_check_in',
+        ]);
+
+        ReservationDineIn::query()->where('reservation_id', $reservation->id)->delete();
+        DineinCart::query()->where('reservation_id', $reservation->id)->delete();
+
+        sendResWebNotification($reservation->id, $reservation->store_id, 'undo_check_in');
     }
 }

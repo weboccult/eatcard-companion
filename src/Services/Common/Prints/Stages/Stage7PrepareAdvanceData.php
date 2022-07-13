@@ -52,6 +52,7 @@ trait Stage7PrepareAdvanceData
     protected function prepareTableName()
     {
         $tableName = '';
+        $singleTableName = '';
         if ($this->orderType == OrderTypes::PAID) {
             $tableName = $this->order['table_name'] ?? '';
 
@@ -64,13 +65,20 @@ trait Stage7PrepareAdvanceData
 
         if (! empty($this->reservation)) {
             if (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() > 1) {
-                $tables = $this->reservation['tables2']->pluck('name')->toArray();
+                $tables = $this->reservation['tables2']->pluck('name')->unique()->toArray();
                 $tableName = implode(',', $tables);
+            } elseif (isset($this->reservation['tables2']) && $this->reservation['tables2']->count() == 1) {
+                $tables = $this->reservation['tables2']->pluck('name')->toArray();
+                $singleTableName = implode(',', $tables);
             }
         }
 
-        if ($this->orderType == OrderTypes::RUNNING && ! empty($this->reservationOrderItems)) {
-            $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
+        if ($this->orderType == OrderTypes::RUNNING) {
+            if (! empty($this->reservationOrderItems)) {
+                $tableName = __companionPrintTrans('print.table_name').' #'.($this->reservationOrderItems->table->name ?? '');
+            } else {
+                $tableName = __companionPrintTrans('print.table_name').' #'.(! empty($tableName) ? $tableName : $singleTableName);
+            }
         }
         $this->advanceData['tableName'] = $tableName;
     }
@@ -220,6 +228,8 @@ trait Stage7PrepareAdvanceData
             return;
         }
 
+        $ayceDiscountData = $this->additionalSettings['ayce_data']['discount']['ayce_data'] ?? [];
+
         if (isset($all_you_eat_data['no_of_adults']) && ! empty($all_you_eat_data['no_of_adults'])) {
             $item = $this->itemFormat;
 
@@ -237,6 +247,15 @@ trait Stage7PrepareAdvanceData
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
 
+            if (! empty($ayceDiscountData)) {
+                $itemDiscount = (float) ($ayceDiscountData['no_of_adults']['discount'] ?? 0);
+                $itemDiscountType = ($ayceDiscountData['no_of_adults']['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                $item['discount_count'] = $ayceDiscountData['no_of_adults']['count'] ?? 0;
+                $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                $item['discount'] = (float) ($ayceDiscountData['no_of_adults']['total_discount'] ?? 0);
+                $item['is_euro_discount'] = 1;
+            }
+
             $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
             $this->jsonItemsIndex += 1;
@@ -249,7 +268,7 @@ trait Stage7PrepareAdvanceData
             $item['printername'] = [];
             $item['labelprintname'] = [];
             $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_kids2']);
-            $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_adults'];
+            $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price_2'] * @$all_you_eat_data['no_of_kids2'];
             $item['kitchendescription'] = '';
             $item['mainproductcomment'] = '';
             $item['itemaddons'] = [];
@@ -257,6 +276,15 @@ trait Stage7PrepareAdvanceData
             $item['category'] = '';
             $item['on_the_house'] = 0;
             $item['void_id'] = 0;
+
+            if (! empty($ayceDiscountData)) {
+                $itemDiscount = (float) ($ayceDiscountData['no_of_kids2']['discount'] ?? 0);
+                $itemDiscountType = ($ayceDiscountData['no_of_kids2']['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                $item['discount_count'] = $ayceDiscountData['no_of_kids2']['count'] ?? 0;
+                $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                $item['discount'] = (float) ($ayceDiscountData['no_of_kids2']['total_discount'] ?? 0);
+                $item['is_euro_discount'] = 1;
+            }
 
             $this->itemPricesCalculate($item, true);
             $this->jsonItems[$this->jsonItemsIndex] = $item;
@@ -286,6 +314,25 @@ trait Stage7PrepareAdvanceData
                             $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * ($kid - $all_you_eat_data['dinein_price']['min_age'] + 1);
                         }
 
+                        if (! empty($ayceDiscountData)) {
+                            foreach ($ayceDiscountData['no_of_kids'] as $key_kid => $currentKidDiscount) {
+                                if (isset($currentKidDiscount['printed'])) {
+                                    continue;
+                                }
+
+                                if (isset($currentKidDiscount['age']) && $currentKidDiscount['age'] == $kid) {
+                                    $itemDiscount = (float) ($currentKidDiscount['discount'] ?? 0);
+                                    $itemDiscountType = ($currentKidDiscount['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                                    $item['discount_count'] = $currentKidDiscount['count'] ?? 0;
+                                    $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount);
+                                    $item['discount'] = (float) ($currentKidDiscount['total_discount'] ?? 0);
+                                    $item['is_euro_discount'] = 1;
+                                    $ayceDiscountData['no_of_kids'][$key_kid]['printed'] = 1;
+                                    break;
+                                }
+                            }
+                        }
+
                         $this->itemPricesCalculate($item, true);
                         $this->jsonItems[$this->jsonItemsIndex] = $item;
                         $this->jsonItemsIndex += 1;
@@ -307,6 +354,14 @@ trait Stage7PrepareAdvanceData
                 $item['price'] = ''.changePriceFormat(@$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids']);
                 $item['original_price'] = @$all_you_eat_data['dinein_price']['child_price'] * @$all_you_eat_data['no_of_kids'];
 
+                if (! empty($ayceDiscountData)) {
+                    $itemDiscount = (float) ($ayceDiscountData['no_of_kids'][0]['discount'] ?? 0);
+                    $itemDiscountType = ($ayceDiscountData['no_of_kids'][0]['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                    $item['discount_count'] = $ayceDiscountData['no_of_kids'][0]['count'] ?? 0;
+                    $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                    $item['discount'] = (float) ($ayceDiscountData['no_of_kids'][0]['total_discount'] ?? 0);
+                    $item['is_euro_discount'] = 1;
+                }
                 $this->itemPricesCalculate($item, true);
                 $this->jsonItems[$this->jsonItemsIndex] = $item;
                 $this->jsonItemsIndex += 1;
@@ -330,6 +385,16 @@ trait Stage7PrepareAdvanceData
                     $item['category'] = '';
                     $item['on_the_house'] = 0;
                     $item['void_id'] = 0;
+
+                    if (! empty($ayceDiscountData)) {
+                        $currentKidDiscount = collect($ayceDiscountData['dynm_kids'] ?? [])->where('id', ($dynamic_price_person['id'] ?? 0))->first();
+                        $itemDiscount = (float) ($currentKidDiscount['discount'] ?? 0);
+                        $itemDiscountType = ($currentKidDiscount['discount_type'] ?? '') == 'euro' ? 1 : 0;
+                        $item['discount_count'] = $currentKidDiscount['count'] ?? 0;
+                        $item['itemname'] .= set_discount_with_prifix($itemDiscountType, $itemDiscount, $item['discount_count']);
+                        $item['discount'] = (float) ($currentKidDiscount['total_discount'] ?? 0);
+                        $item['is_euro_discount'] = 1;
+                    }
 
                     $this->itemPricesCalculate($item, true);
                     $this->jsonItems[$this->jsonItemsIndex] = $item;
@@ -935,6 +1000,34 @@ trait Stage7PrepareAdvanceData
             }
         }
 
+        if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && $this->orderType == OrderTypes::RUNNING) {
+            $paymentDetails = $this->paymentDetail;
+            //return if order not found
+            if (empty($paymentDetails)) {
+                return;
+            }
+            if ($paymentDetails['method'] == 'ccv') {
+                $paymentDetails['ccv_customer_receipt_decode'] = json_decode($paymentDetails['transaction_receipt'], true);
+                if ($paymentDetails['ccv_customer_receipt_decode']) {
+                    foreach ($paymentDetails['ccv_customer_receipt_decode'] as $temp) {
+                        $receipt[] = $temp;
+                    }
+                }
+            }
+            if ($paymentDetails['method'] == 'wipay') {
+                $decoded = json_decode($paymentDetails['transaction_receipt'], true);
+                $paymentDetails['worldline_customer_receipt_decode'] = collect($decoded)
+                    ->flatten()
+                    ->reject(function ($value, $key) {
+                        return $value == '0';
+                    })
+                    ->toArray();
+                foreach ($paymentDetails['worldline_customer_receipt_decode'] as $temp) {
+                    $receipt[] = $temp;
+                }
+            }
+        }
+
         $this->jsonReceipt = $receipt;
     }
 
@@ -1252,6 +1345,10 @@ trait Stage7PrepareAdvanceData
                     'value' => $split_no.'/'.$this->order['payment_split_persons'],
                 ];
             }
+        } elseif ($this->orderType == OrderTypes::RUNNING && in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS]) && ! empty($this->paymentDetail) && $this->paymentDetail['transaction_type'] == 'CREDIT') {
+            $cash_paid = $this->paymentDetail['cash_paid'] ?? 0;
+            $method = $this->paymentDetail['method'] ?? '';
+            $total_price = $this->paymentDetail['amount'] ?? 0;
         }
 
         if ($method == 'cash') {

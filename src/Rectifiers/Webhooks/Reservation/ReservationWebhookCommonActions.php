@@ -16,6 +16,7 @@ use function Weboccult\EatcardCompanion\Helpers\__companionViews;
 use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
+use function Weboccult\EatcardCompanion\Helpers\generateQrCode;
 use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
 /**
@@ -149,6 +150,16 @@ trait ReservationWebhookCommonActions
                 } else {
                     $view = 'email.reservation_cancelled';
                     $translatedSubject = __companionTrans('reservation.reservation_cancelled_email_subject');
+                }
+
+                if ($this->fetchedReservation->status == 'approved') {
+                    $store = $this->fetchedStore;
+                    $uniqueId = $this->fetchedReservation->reservation_id;
+                    $postFix = 'RT';
+                    $uploadInS3 = true;
+
+                    $qrResponse = generateQrCode($store, $uniqueId, $postFix, $uploadInS3);
+                    $this->fetchedReservation->qr_image = $qrResponse['aws_image'] ?? '#';
                 }
 
                 if ($this->fetchedReservation->thread_id) {

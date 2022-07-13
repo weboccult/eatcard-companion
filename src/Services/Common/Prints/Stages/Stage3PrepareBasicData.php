@@ -220,7 +220,7 @@ trait Stage3PrepareBasicData
         }
 
         //set print type main print for PDF and HTML
-        if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML])) {
+        if (in_array($this->printMethod, [PrintMethod::PDF, PrintMethod::HTML]) && ! in_array($this->printType, [PrintTypes::MAIN, PrintTypes::PROFORMA])) {
             $this->printType = PrintTypes::MAIN;
         }
 
@@ -295,6 +295,17 @@ trait Stage3PrepareBasicData
     {
         if (! empty($this->payloadRequestDetails)) {
             $this->additionalSettings['current_device_id'] = (int) ($this->payloadRequestDetails['deviceId'] ?? 0);
+        }
+    }
+
+    /**
+     * @return void
+     * set global payment id from protocol payload
+     */
+    protected function preparePaymentId()
+    {
+        if (! empty($this->payloadRequestDetails)) {
+            $this->paymentId = (int) ($this->payloadRequestDetails['paymentId'] ?? 0);
         }
     }
 }
