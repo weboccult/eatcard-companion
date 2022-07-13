@@ -10,8 +10,6 @@ use Weboccult\EatcardCompanion\Enums\RevenueTypes;
 use Weboccult\EatcardCompanion\Models\DrawerCount;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
-use Weboccult\EatcardCompanion\Models\OrderHistory;
-use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\BaseGenerator;
 
 /**
@@ -359,7 +357,7 @@ trait Stage6PrepareAdvanceData
                 }
             });
 
-	    ReservationRevenueView::where('store_id', $this->storeId)
+        ReservationRevenueView::where('store_id', $this->storeId)
            ->where('is_refunded', 1)
            ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
                $qDate->whereDate('refund_price_date', $this->date);
