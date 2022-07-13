@@ -227,6 +227,7 @@ trait Stage8PrepareAdvanceData
 
             $this->orderItemsData[$key]['unit_price'] = 0;
             $this->orderItemsData[$key]['comment'] = $item['comment'] ?? '';
+            $this->orderItemsData[$key]['grab_and_go'] = $item['grab_and_go'] ?? 0;
             $product = $this->productData->where('id', $item['id'])->first();
             $productCalcPrice = 0;
             $product_price = $product->price;
