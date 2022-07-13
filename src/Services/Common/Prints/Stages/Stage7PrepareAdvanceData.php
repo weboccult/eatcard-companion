@@ -168,8 +168,14 @@ trait Stage7PrepareAdvanceData
 
             return;
         }
-
-        $fullReceipt = '1';
+	    $device_print_array = [];
+	    if(isset($this->store->storeSetting) && !empty($this->store->storeSetting->exclude_print_from_main_print)) {
+		    $device_print_array = explode(',', $this->store->storeSetting->exclude_print_from_main_print);
+	    }
+	    $fullReceipt = '1';
+	    if($this->systemType == SystemTypes::KIOSK && in_array(SystemTypes::KIOSK, $device_print_array) && $this->full_receipt_print == false) {
+		    $fullReceipt = '0';
+	    }
         $excludeSystemName = '';
 
         if ($this->systemType == SystemTypes::POS) {
