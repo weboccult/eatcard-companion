@@ -167,7 +167,7 @@
                                     <p>{{$data['total_cash_orders']}}</p>
                                     <p>{{$data['total_pin_orders']}}</p>
                                     <p>{{$data['gift_card_order_count']}}</p>
-                                    <p>€@if($data['coupon_price'] > 0) -{{ ($data['coupon_price']) }} @else {{ ($data['coupon_price']) }} @endif</p>
+                                    <p>€{{ ($data['coupon_price']) }}</p>
                                     <p>{{$data['total_ideal_orders']}}</p>
                                     @if((isset($data['third_party_print_status']) && $data['third_party_print_status']))
                                         <p>{{$data['thusibezorgd_orders']}}</p>
