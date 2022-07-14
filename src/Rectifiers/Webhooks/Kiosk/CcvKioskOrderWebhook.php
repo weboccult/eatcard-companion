@@ -7,7 +7,6 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
