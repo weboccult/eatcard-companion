@@ -244,25 +244,23 @@ trait Stage8PrepareFinalJson
             }
         }
 
-
-        if(!empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice'){
+        if (! empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice') {
             $this->jsonFormatFullReceipt['titteTime'][] = [
                 'key2'   => $this->reservation->company,
-                'value2' => ''
+                'value2' => '',
             ];
         }
 
-        if (!empty($titleTime)) {
+        if (! empty($titleTime)) {
             $this->jsonFormatFullReceipt['titteTime'][] = [
                 'key2'   => $timeTitle,
-                'value2' => $titleTime
+                'value2' => $titleTime,
             ];
         }
 
-        if(empty($this->jsonFormatFullReceipt['titteTime'])) {
+        if (empty($this->jsonFormatFullReceipt['titteTime'])) {
             unset($this->jsonFormatFullReceipt['titteTime']);
         }
-
 
         if ($this->additionalSettings['show_main_order_number_in_print'] == 1) {
             $mainreceiptordernumber = $title5;

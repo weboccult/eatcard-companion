@@ -708,8 +708,8 @@ trait Stage6PrepareAdvanceData
 //                       $this->calcData['kioskTotal'][$kiosk_device->id] += round($orderTotalPrice,2);
 
                         $orderTotalCloneForSubtractGrabAndGoItemPrice = $orderTotalPrice;
-                        foreach ($order->orderItems as $odrItem){
-                            if ($odrItem->grab_and_go == 1){
+                        foreach ($order->orderItems as $odrItem) {
+                            if ($odrItem->grab_and_go == 1) {
                                 $this->calcData['grab_and_go_total_amount'] += $odrItem->total_price;
                                 $orderTotalCloneForSubtractGrabAndGoItemPrice -= $odrItem->total_price;
                             }
