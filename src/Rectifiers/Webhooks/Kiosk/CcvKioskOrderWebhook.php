@@ -7,6 +7,7 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\BaseWebhook;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
@@ -38,6 +39,8 @@ class CcvKioskOrderWebhook extends BaseWebhook
 
         $kiosk_api_key = $device->environment == 'test' ? $device->test_api_key : $device->api_key;
         $api_key = base64_encode($kiosk_api_key.':');
+
+	    companionLogger('----=====CCV Webhook request data : ', $url, $createOrderUrl, $kiosk_api_key, $api_key, $url.$createOrderUrl.$this->fetchedOrder->id);
 
         $request = $client->request('POST', $url.$createOrderUrl.$this->fetchedOrder->id, [
             'headers' => [
