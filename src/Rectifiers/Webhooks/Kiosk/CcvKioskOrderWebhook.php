@@ -39,7 +39,7 @@ class CcvKioskOrderWebhook extends BaseWebhook
         $kiosk_api_key = $device->environment == 'test' ? $device->test_api_key : $device->api_key;
         $api_key = base64_encode($kiosk_api_key.':');
 
-        $request = $client->request('GET', $url.$createOrderUrl.$this->fetchedOrder->id, [
+        $request = $client->request('GET', $url.$createOrderUrl.$this->fetchedOrder->ccv_payment_ref, [
             'headers' => [
                 'Authorization' => 'Basic '.$api_key,
                 'Content-Type'  => 'application/json;charset=UTF-8',
