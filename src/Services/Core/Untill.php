@@ -72,7 +72,7 @@ class Untill
     {
         $xmlData = $this->getTemplateXML($template);
         $this->xmlData = $this->replacer($xmlData, $parameters);
-
+	    companionLogger('Template name : ', $template, ' | Payment info xmlData : ', $this->xmlData, ' | Parameters : '. $parameters);
         return $this;
     }
 
@@ -93,8 +93,9 @@ class Untill
             'APP_TOKEN' => config('eatcardCompanion.untill.app_token'),
             'APP_NAME' => config('eatcardCompanion.untill.app_name'),
         ];
+	    companionLogger('1. Set utill credentials : ', $parameters, ' | XML data : ', $this->xmlData);
         $this->xmlData = $this->replacer($this->xmlData, $parameters);
-
+		companionLogger('2. Set utill credentials : ', $parameters, ' | XML data : ', $this->xmlData);
         return $this;
     }
 
