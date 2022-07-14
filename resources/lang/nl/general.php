@@ -122,4 +122,6 @@ return [
 
     'product_pcs'                              => 'Pcs',
     'product_pc'                               => 'Pc',
+
+    'grab_and_go'                              => 'Grab And Go',
 ];

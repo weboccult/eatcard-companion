@@ -252,6 +252,7 @@
                                     @foreach($store->kioskDevices as $device)
                                         <p>{{$device->name}}:</p>
                                     @endforeach
+                                    <p>@companionPrintTrans('general.grab_and_go'):</p>
                                     <p>@companionPrintTrans('general.dine_in_revenue'):</p>
                                     <p>@companionPrintTrans('general.gift_card_revenue'):</p>
                                     <p>Reservation Deposited</p>
@@ -270,6 +271,7 @@
                                     @foreach($store->kioskDevices as $device)
                                         <p>€{{($data['kioskTotal'][$device->name])}}</p>
                                     @endforeach
+                                    <p>€{{($data['grab_and_go_total_amount'])}}</p>
                                     <p>€{{($data['total_dine_in'])}}</p>
                                     <p>€{{($data['total_gift_card_amount'])}}</p>
                                     <p>€{{($data['reservation_received_total'])}}</p>

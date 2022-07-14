@@ -101,6 +101,7 @@ trait Stage3PrepareBasicData
             'deliveroo_orders' => 0,
             'total_orders' => 0,
             'total_kiosk' => 0,
+            'grab_and_go_total_amount' => 0,
             'product_count' => 0,
             'third_party_product_count' => 0,
             'on_the_house_item_total' => 0,

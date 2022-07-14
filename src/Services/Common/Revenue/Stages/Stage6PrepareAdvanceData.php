@@ -706,7 +706,16 @@ trait Stage6PrepareAdvanceData
                     if ($order->kiosk_id == $kiosk_device->id && ! in_array($order['order_type'], ['all_you_eat', 'dine_in'])) {
                         $this->calcData['total_kiosk'] += $orderTotalPrice;
 //                       $this->calcData['kioskTotal'][$kiosk_device->id] += round($orderTotalPrice,2);
-                        $this->calcData['kioskTotal'][$kiosk_device->name] += $orderTotalPrice;
+
+                        $orderTotalCloneForSubtractGrabAndGoItemPrice = $orderTotalPrice;
+                        foreach ($order->orderItems as $odrItem){
+                            if ($odrItem->grab_and_go == 1){
+                                $this->calcData['grab_and_go_total_amount'] += $odrItem->total_price;
+                                $orderTotalCloneForSubtractGrabAndGoItemPrice -= $odrItem->total_price;
+                            }
+                        }
+
+                        $this->calcData['kioskTotal'][$kiosk_device->name] += $orderTotalCloneForSubtractGrabAndGoItemPrice;
                         $this->calcData['store_device_amount'][$kiosk_device->name] += $orderTotalPrice;
                     }
                 }

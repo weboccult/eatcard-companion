@@ -58,10 +58,10 @@ trait Stage3PrepareBasicData
                 'ordernumber'            => '#',
                 'title6'                 => '',
                 'titteTime'              => [
-                    [
-                        'key2'   => 'Besteldatum:',
-                        'value2' => '',
-                    ],
+//                    [
+//                        'key2'   => 'Besteldatum:',
+//                        'value2' => '',
+//                    ],
                 ],
                 'deliverytitle'          => '',
                 'deliveryaddress'        => '',

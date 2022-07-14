@@ -19,8 +19,8 @@
         }
 
         * {
-            /*margin: 0 auto;*/
-            /*padding: 0;*/
+            margin: 0 auto;
+            padding: 0;
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -111,12 +111,20 @@
                     @if(isset($data['title4']) && $data['title4'] != '')
                         <p>{{$data['title4']}}</p>
                     @endif
-                    @if(isset($data['titteTime'][0]['key2']) && $data['titteTime'][0]['key2'] != '')
-                    <div style="margin-top: 5px">
-                        <p style="float: left">{{$data['titteTime'][0]['key2']}}</p>
-                        <p style="float: right">{{$data['titteTime'][0]['value2']}}</p>
-                    </div>
+                    @if(isset($data['titteTime']) && count($data['titteTime']) > 0)
+                        @foreach($data['titteTime'] as $key)
+                            <div style="">
+                                <p style="float: left">{{$key['key2']}}</p>
+                                <p style="float: right">{{$key['value2']}}</p>
+                            </div>
+                        @endforeach
                     @endif
+{{--                    @if(isset($data['titteTime'][0]['key2']) && $data['titteTime'][0]['key2'] != '')--}}
+{{--                    <div style="margin-top: 5px">--}}
+{{--                        <p style="float: left">{{$data['titteTime'][0]['key2']}}</p>--}}
+{{--                        <p style="float: right">{{$data['titteTime'][0]['value2']}}</p>--}}
+{{--                    </div>--}}
+{{--                    @endif--}}
                     @if(!empty($data['kioskname']))
                         <p>{{$data['kioskname']}}</p>
                     @endif

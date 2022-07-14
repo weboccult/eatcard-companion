@@ -260,6 +260,10 @@
                                                     </div>
                                                 @endforeach
                                                 <div style="padding-top: 13px">
+                                                    <span style="float: left;float:left;"><p>@companionPrintTrans('general.grab_and_go'):</p></span>
+                                                    <span style="text-align: right;float: right;"><p>€{{($data['grab_and_go_total_amount'])}}</p></span>
+                                                </div>
+                                                <div style="padding-top: 13px">
                                                     <span style="float: left;float:left;"><p>@companionPrintTrans('general.dine_in_revenue'):</p></span>
                                                     <span style="text-align: right;float: right;"><p>€{{($data['total_dine_in'])}}</p></span>
                                                 </div>

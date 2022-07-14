@@ -141,6 +141,7 @@ trait Stage8PrepareFinalJson
         $titleTime = '';
         $pickupTime = '';
         $dynamicOrderNo = ! empty($this->advanceData['dynamicOrderNo']) ? ('#'.$this->advanceData['dynamicOrderNo']) : '';
+        $timeTitle = 'Besteldatum:';
 
         if ($this->orderType == OrderTypes::PAID) {
             if ($this->systemType == SystemTypes::KDS) {
@@ -199,7 +200,7 @@ trait Stage8PrepareFinalJson
                     $title6 = date('Y-m-d').' om '.date('H:i');
 
                     $orderNo = $this->advanceData['tableName'];
-                    $this->jsonFormatFullReceipt['titteTime'][0]['key2'] = 'Betaald op:';
+                    $timeTitle = 'Betaald op:';
                     $titleTime = Carbon::parse($this->reservation['paid_on'])->format('Y-m-d H:i') ?? '';
                 }
             }
@@ -243,11 +244,25 @@ trait Stage8PrepareFinalJson
             }
         }
 
-        if (! empty($titleTime)) {
-            $this->jsonFormatFullReceipt['titteTime'][0]['value2'] = $titleTime;
-        } else {
+
+        if(!empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice'){
+            $this->jsonFormatFullReceipt['titteTime'][] = [
+                'key2'   => $this->reservation->company,
+                'value2' => ''
+            ];
+        }
+
+        if (!empty($titleTime)) {
+            $this->jsonFormatFullReceipt['titteTime'][] = [
+                'key2'   => $timeTitle,
+                'value2' => $titleTime
+            ];
+        }
+
+        if(empty($this->jsonFormatFullReceipt['titteTime'])) {
             unset($this->jsonFormatFullReceipt['titteTime']);
         }
+
 
         if ($this->additionalSettings['show_main_order_number_in_print'] == 1) {
             $mainreceiptordernumber = $title5;
