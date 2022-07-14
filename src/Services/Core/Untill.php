@@ -72,7 +72,7 @@ class Untill
     {
         $xmlData = $this->getTemplateXML($template);
         $this->xmlData = $this->replacer($xmlData, $parameters);
-	    companionLogger('Template name : ', $template, ' | Payment info xmlData : ', $this->xmlData, ' | Parameters : '. $parameters);
+	    companionLogger('Template name : ', $template, ' | Payment info xmlData : ', $this->xmlData, ' | Parameters : ', $parameters);
         return $this;
     }
 
