@@ -263,7 +263,7 @@
                                         <p>Deliveroo:</p>
                                     @endif
                                     <div style="border-bottom: 2px solid #fff; width: 85px;margin-left: 0px;margin-top: 3px;margin-bottom: 3px"></div>
-                                    <p style="margin-top: 20px">{@companionPrintTrans('general.total_sumup_from')}:</p>
+                                    <p style="margin-top: 20px">@companionPrintTrans('general.total_sumup_from'):</p>
                                     <div style="border-bottom: 2px solid #000;width: 122px;margin-top: 5px"></div>
                                 </div>
                                 <div style="display: inline-block;text-align: right;float: right">
