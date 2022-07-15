@@ -177,6 +177,10 @@ trait Stage3PrepareBasicData
             'categories_settings' => [],
             'dinein_guest_order' => false,
 
+            //tickets
+            'tickets_data' => [],
+            'is_hide_table_name_tickets' => 0,
+
         ];
 
         //format of advance data

@@ -72,6 +72,9 @@ trait Stage5EnableSettings
         $this->additionalSettings['no_of_prints'] = ''.($store->storeSetting->no_of_prints ?? '1');
         $this->additionalSettings['show_main_order_number_in_print'] = ($store->storeSetting->show_main_order_number_in_print ?? 0);
         $this->additionalSettings['print_total_font_size'] = ($store->storeSetting->print_total_font_size ?? 0);
+
+        $this->additionalSettings['tickets_data'] = $this->store->reservation_tickets_data ? json_decode($this->store->reservation_tickets_data, true) : [];
+        $this->additionalSettings['is_hide_table_name_tickets'] = $this->additionalSettings['tickets_data']['is_hide_table_name'] ?? 0;
     }
 
     /**
