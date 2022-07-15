@@ -332,7 +332,7 @@ abstract class BaseReservationSlots
         }
 //        }
 
-        if ($this->allowNowSlot) {
+        if ($this->allowNowSlot && empty($slotId)) {
             $nowSlot = [
                 'id' => 0,
                 'store_id' => $this->storeId,
