@@ -95,7 +95,7 @@ trait Stage2ValidateValidations
         if ($this->system == SystemTypes::KIOSKTICKETS) {
             $current24Time = Carbon::now()->format('H:i');
 
-            if ($this->reservationDate < Carbon::now()->format('Y-m-d') || ($this->reservationDate == Carbon::now()->format('Y-m-d') && strtotime($this->slot->from_time) <= strtotime($current24Time))) {
+            if ($this->reservationDate < Carbon::now()->format('Y-m-d') || ($this->reservationDate == Carbon::now()->format('Y-m-d') && $this->slot->id > 0 && strtotime($this->slot->from_time) <= strtotime($current24Time))) {
                 companionLogger(' reservation date or time was passed : ', $this->reservationDate, $this->slot);
                 $this->setDumpDieValue(['error' => 'Selected reservation may not available at the moment. Contact support for more detail.']);
             }

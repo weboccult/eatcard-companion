@@ -79,6 +79,8 @@ abstract class BaseProcessor implements BaseProcessorContract
 
     protected bool $isReservationCronStop = false;
 
+    private bool $allowNowSlot = false;
+
     protected $settings = [
         'additional_fee' => [
             'status' => false,
