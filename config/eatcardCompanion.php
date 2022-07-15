@@ -171,7 +171,7 @@ return [
                         'reservation' => '/ccv/webhook-reservation/<%id%>/<%store_id%>',
                     ],
                     'kiosk' => [
-                        'order' => '/webhook/ccv/<%id%>/<%store_id%>',
+                        'order' => '/kiosk/webhook/<%id%>/<%store_id%>',
                     ],
                     'kiosk-tickets' => [
                         'reservation' => '/ccv/webhook/<%id%>/<%store_id%>',
