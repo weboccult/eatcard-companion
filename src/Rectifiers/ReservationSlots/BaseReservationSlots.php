@@ -265,7 +265,7 @@ abstract class BaseReservationSlots
         } else {
             $isSlotModifiedAvailable = StoreSlotModified::query()
                     ->where('store_id', $this->storeId)
-                    ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
                         $q->where('id', $slotId);
                     })
                     ->where('is_day_meal', 0)
@@ -286,7 +286,7 @@ abstract class BaseReservationSlots
 
         if ($isSlotModifiedAvailable > 0) {
             $isSlotModifiedAvailable = StoreSlotModified::where('store_id', $this->storeId)
-                    ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
                         $q->where('id', $slotId);
                     })
                     ->where('meal_id', $this->mealId)
@@ -307,7 +307,7 @@ abstract class BaseReservationSlots
                         $q2->where('store_weekdays.is_week_day_meal', 0);
                     });
             })->where('store_slots.store_id', $this->storeId)
-                ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+                ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
                     $q->where('store_slots.id', $slotId);
                 })
                 ->where('store_weekdays.id', $isDaySlotExist->id)
@@ -321,7 +321,7 @@ abstract class BaseReservationSlots
         } else {
             $defaultSlot = StoreSlot::where('store_id', $this->storeId)
                     ->where('meal_id', $this->mealId)
-                    ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
                         $q->where('id', $slotId);
                     })
                     ->doesntHave('store_weekday')
