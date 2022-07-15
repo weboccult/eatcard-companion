@@ -31,6 +31,7 @@ trait Stage7PrepareFinalData
         $this->finalData['coupon_price'] = $this->calcData['coupon_used_price'] > 0 ? '-'.changePriceFormat($this->calcData['coupon_used_price']) : '0,00';
         $this->finalData['gift_card_order_count'] = $this->calcData['total_gift_card_count'];
         $this->finalData['total_cash_orders'] = ($this->calcData['total_cash_orders']);
+        $this->finalData['total_on_invoice_order'] = ($this->calcData['total_on_invoice_order']);
         $this->finalData['total_pin_orders'] = ($this->calcData['total_pin_orders']);
         $this->finalData['total_ideal_orders'] = ($this->calcData['total_ideal_orders']);
         $this->finalData['total_takeaway'] = changePriceFormat($this->calcData['total_takeaway']);
@@ -49,6 +50,7 @@ trait Stage7PrepareFinalData
         $this->finalData['additional_fee'] = changePriceFormat($this->calcData['additional_fee_total']);
 
         $this->finalData['total_cash_amount'] = changePriceFormat($this->calcData['total_cash_amount']);
+        $this->finalData['total_on_invoice_amount'] = changePriceFormat($this->calcData['total_on_invoice_amount']);
         $this->finalData['total_pin_amount'] = changePriceFormat($this->calcData['total_pin_amount']);
         $this->finalData['total_ideal_amount'] = changePriceFormat($this->calcData['total_ideal_amount']);
         $this->finalData['total_gift_card_amount'] = changePriceFormat($this->calcData['total_gift_card_amount']);

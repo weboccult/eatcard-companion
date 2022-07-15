@@ -94,6 +94,7 @@ trait Stage3PrepareBasicData
 
             //all
             'total_cash_orders' => 0,
+            'total_on_invoice_order' => 0,
             'total_pin_orders' => 0,
             'total_ideal_orders' => 0,
             'thusibezorgd_orders' => 0,
@@ -112,6 +113,8 @@ trait Stage3PrepareBasicData
             'dates' => [],
 
             'total_cash_amount' => 0,
+
+            'total_on_invoice_amount' => 0,
 
             'total_pin_amount' => 0,
 

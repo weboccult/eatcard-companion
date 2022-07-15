@@ -401,6 +401,11 @@ trait Stage6PrepareAdvanceData
                 $this->calcData['total_pin_orders'] += 1;
             }
 
+            // count on invoice orders
+            if ($order->method == 'on_invoice') {
+                $this->calcData['total_on_invoice_order'] += 1;
+            }
+
             //calc online pay orders
             if (in_array($order->payment_method_type, ['multisafepay', 'mollie'])) {
                 $this->calcData['total_ideal_orders'] += 1;
@@ -497,6 +502,11 @@ trait Stage6PrepareAdvanceData
                 $this->calcData['total_cash_amount'] += $orderTotalPrice;
             }
             //total tip amount
+
+            //total on invoice payments
+            if ($order->method == 'on_invoice') {
+                $this->calcData['total_on_invoice_amount'] += $orderTotalPrice;
+            }
 
             $this->calcData['total_tip_amount'] += $tip_amount;
 
@@ -812,6 +822,6 @@ trait Stage6PrepareAdvanceData
         }
 
         $this->calcData['final_pin_ideal_amount'] = $this->calcData['total_pin_amount'] + $this->calcData['total_ideal_amount'];
-        $this->calcData['final_pin_ideal_cash_amount'] = $this->calcData['final_pin_ideal_amount'] + $this->calcData['total_cash_amount'];
+        $this->calcData['final_pin_ideal_cash_amount'] = $this->calcData['final_pin_ideal_amount'] + $this->calcData['total_cash_amount'] + $this->calcData['total_on_invoice_amount'];
     }
 }

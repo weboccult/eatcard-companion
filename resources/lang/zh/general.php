@@ -124,4 +124,7 @@ return [
     'product_pc'                               => 'Pc',
 
     'grab_and_go'                              => 'Grab And Go',
+    'on_invoice'                               => 'On Invoice',
+    'total_on_invoice'                         => 'Number of on invoice',
+    'on_invoice_title'                         => 'On invoice',
 ];

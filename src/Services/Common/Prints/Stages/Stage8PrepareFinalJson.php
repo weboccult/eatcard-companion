@@ -191,6 +191,7 @@ trait Stage8PrepareFinalJson
                 $titleTime = '';
 
                 if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
+                    companionLogger('--------ticket hide table name', $this->additionalSettings['is_hide_table_name_tickets']);
                     $title1 = 'Tickets';
                     $title2 = $this->reservation['voornaam'] ?? '';
                     $title3 = $this->reservation['gsm_no'] ?? '';
@@ -199,7 +200,11 @@ trait Stage8PrepareFinalJson
                     }
                     $title6 = date('Y-m-d').' om '.date('H:i');
 
-                    $orderNo = $this->advanceData['tableName'];
+                    if (! empty($this->additionalSettings['is_hide_table_name_tickets'])) {
+                        $orderNo = '';
+                    } else {
+                        $orderNo = $this->advanceData['tableName'];
+                    }
                     $timeTitle = 'Betaald op:';
                     $titleTime = Carbon::parse($this->reservation['paid_on'])->format('Y-m-d H:i') ?? '';
                 }
@@ -245,6 +250,7 @@ trait Stage8PrepareFinalJson
         }
 
         if (! empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice') {
+            $title1 = 'On Invoice';
             $this->jsonFormatFullReceipt['titteTime'][] = [
                 'key2'   => $this->reservation->company,
                 'value2' => '',
