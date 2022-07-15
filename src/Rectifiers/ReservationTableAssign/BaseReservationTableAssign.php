@@ -177,7 +177,7 @@ abstract class BaseReservationTableAssign
 
         $slotType = $this->payload['data_model'] ?? '';
 
-        $slotId = $this->payload['slot_id'] ?? '';
+        $slotId = $this->payload['slot_id'] ?? 0;
 
         if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
             $this->store->reservation_tickets_data = json_decode($this->store->reservation_tickets_data, true);
@@ -188,7 +188,7 @@ abstract class BaseReservationTableAssign
             $this->allowNowSlot = false;
         }
 
-        if ($this->allowNowSlot) {
+        if ($this->allowNowSlot && empty($slotId)) {
             $this->slot = (object) ([
                            'id' => 0,
                            'store_id' => $this->store->id,

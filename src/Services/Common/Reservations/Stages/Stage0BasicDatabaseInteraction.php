@@ -91,7 +91,7 @@ trait Stage0BasicDatabaseInteraction
     protected function setSlotData()
     {
         $this->slotType = $this->payload['data_model'] ?? '';
-        $slotId = $this->payload['slot_id'] ?? '';
+        $slotId = $this->payload['slot_id'] ?? 0;
         $slot = [];
 
         if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
@@ -103,7 +103,7 @@ trait Stage0BasicDatabaseInteraction
             $this->allowNowSlot = false;
         }
 
-        if ($this->allowNowSlot) {
+        if ($this->allowNowSlot && empty($slotId)) {
             $this->slot = (object) ([
                             'id' => 0,
                             'store_id' => $this->store->id,
