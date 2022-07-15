@@ -18,13 +18,13 @@
             font-size: 10px;
         }
 
-        * {
-            margin: 0 auto;
-            padding: 0;
-            -webkit-box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            box-sizing: border-box;
-        }
+        /** {*/
+        /*    margin: 0 auto;*/
+        /*    padding: 0;*/
+        /*    -webkit-box-sizing: border-box;*/
+        /*    -moz-box-sizing: border-box;*/
+        /*    box-sizing: border-box;*/
+        /*}*/
 
         img {
             border: 0 !important;
@@ -80,11 +80,15 @@
             font-size: 24px;
         }
 
-
+        .clearfix::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
     </style>
 </head>
 <body class="body">
-<div class="container" style="width: 300px">
+<div class="container" style="width: 300px; margin: 0 auto;padding: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;box-sizing: border-box;">
     <div class="revenue-print-ticket">
         <div>
             <div style=" text-align: center">
@@ -111,11 +115,14 @@
                     @if(isset($data['title4']) && $data['title4'] != '')
                         <p>{{$data['title4']}}</p>
                     @endif
+                    @if(!empty($data['kioskname']))
+                        <p>{{$data['kioskname']}}</p>
+                    @endif
                     @if(isset($data['titteTime']) && count($data['titteTime']) > 0)
                         @foreach($data['titteTime'] as $key)
-                            <div style="">
-                                <p style="float: left">{{$key['key2']}}</p>
-                                <p style="float: right">{{$key['value2']}}</p>
+                            <div style="{{ $loop->index == 0 ? "display:block;" : "display:block;"}}" class="clearfix">
+                                <p style="float: left;">{{$key['key2']}}</p>
+                                <p style="float: right;">{{$key['value2']}}</p>
                             </div>
                         @endforeach
                     @endif
@@ -125,9 +132,9 @@
 {{--                        <p style="float: right">{{$data['titteTime'][0]['value2']}}</p>--}}
 {{--                    </div>--}}
 {{--                    @endif--}}
-                    @if(!empty($data['kioskname']))
-                        <p>{{$data['kioskname']}}</p>
-                    @endif
+{{--                    @if(!empty($data['kioskname']))--}}
+{{--                        <p>{{$data['kioskname']}}</p>--}}
+{{--                    @endif--}}
 
                 </div>
                 <h3 style="font-size: 20px;font-weight: 800;padding-top: 30px;text-align: center">

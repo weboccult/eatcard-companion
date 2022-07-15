@@ -126,6 +126,25 @@
                             </div>
                         </div>
                         <div style="border-bottom: 1px dashed #000; margin-top: 15px"></div>
+                        <h3 style="padding-top: 3px">@companionPrintTrans('general.on_invoice_title')</h3>
+                        <div style="padding-top: 3px">
+                            <div style="display: inline-block;float: left">
+                                <p>@companionPrintTrans('general.on_invoice'):</p>
+                            </div>
+                            <div style="display: inline-block;float: right;text-align: right">
+                                <p>€{{$data['total_on_invoice_amount']}}</p>
+                            </div>
+                        </div>
+                        <div style="border-bottom: 2px solid #000; width: 150px;margin-left: 255px;margin-top:15px"></div>
+                        <div style="padding-top: 5px">
+                            <div style="display: inline-block;float: left">
+                                <p>@companionPrintTrans('general.total_cash_registered'):</p>
+                            </div>
+                            <div style="display: inline-block;float: right;text-align: right">
+                                <p>€{{$data['total_on_invoice_amount']}}</p>
+                            </div>
+                        </div>
+                        <div style="border-bottom: 1px dashed #000; margin-top: 15px"></div>
                         <div style="font-size: 11px;line-height: 12px;padding-top: 5px">
                             <h3>@companionPrintTrans('general.wireless_payment')</h3>
                             <div style="padding-top: 5px">
@@ -157,6 +176,7 @@
                                         <p>@companionPrintTrans('general.number_of_cashdrawer_open'):</p>
                                         <p>@companionPrintTrans('general.total_cash'):</p>
                                         <p>@companionPrintTrans('general.total_pin'):</p>
+                                        <p>@companionPrintTrans('general.total_on_invoice'):</p>
                                         <p>@companionPrintTrans('general.gift_card_count') ontvangen:</p>
                                         <p>@companionPrintTrans('general.gift_card_count') used:</p>
                                         <p>@companionPrintTrans('general.total_online'):</p>
@@ -184,6 +204,7 @@
                                         <p>{{$data['number_of_cashdrawer_open']}}</p>
                                         <p>{{$data['total_cash_orders']}}</p>
                                         <p>{{$data['total_pin_orders']}}</p>
+                                        <p>{{$data['total_on_invoice_order']}}</p>
                                         <p>{{$data['gift_card_order_count']}}</p>
                                         <p>€{{$data['coupon_price']}}</p>
                                         <p>{{$data['total_ideal_orders']}}</p>
@@ -209,13 +230,13 @@
                                 </div>
 {{--                                <div style="border-bottom: 1px dashed #000; margin-top: 150px"></div>--}}
                                 @if(isset($data['third_party_print_status']) && $data['third_party_print_status'] && $data['on_the_house_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 253px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 263px"></div>
                                 @elseif(isset($data['third_party_print_status']) && $data['third_party_print_status'])
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 243px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 253px"></div>
                                 @elseif(isset($data['on_the_house_status']))
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 220px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 230px"></div>
                                 @else
-                                    <div style="border-bottom: 1px dashed #000; margin-top: 205px"></div>
+                                    <div style="border-bottom: 1px dashed #000; margin-top: 215px"></div>
                                 @endif
                                 <div style="font-size: 11px;line-height: 10px;padding-top: 0px">
                                     <h3>@companionPrintTrans('general.day_wise_data')</h3>
