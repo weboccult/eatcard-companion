@@ -191,6 +191,7 @@ trait Stage8PrepareFinalJson
                 $titleTime = '';
 
                 if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {
+                    companionLogger('--------ticket hide table name', $this->additionalSettings['is_hide_table_name_tickets']);
                     $title1 = 'Tickets';
                     $title2 = $this->reservation['voornaam'] ?? '';
                     $title3 = $this->reservation['gsm_no'] ?? '';
