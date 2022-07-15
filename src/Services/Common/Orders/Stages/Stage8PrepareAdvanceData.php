@@ -707,10 +707,10 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['plastic_bag_fee'] = $this->settings['plastic_bag_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['plastic_bag_fee']['value'];
             }
-	        if ($this->settings['additional_fee']['status'] == true) {
-		        $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
-		        $this->orderData['total_price'] += $this->orderData['additional_fee'];
-	        }
+            if ($this->settings['additional_fee']['status'] == true) {
+                $this->orderData['additional_fee'] = $this->settings['additional_fee']['value'];
+                $this->orderData['total_price'] += $this->orderData['additional_fee'];
+            }
         }
     }
 
