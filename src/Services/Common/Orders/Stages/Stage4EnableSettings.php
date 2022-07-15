@@ -36,7 +36,10 @@ trait Stage4EnableSettings
             $isAdditionalFeeApply = true;
         }
 
-        if ($isAdditionalFeeApply && isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
+        if ($isAdditionalFeeApply && isset($this->store->storeSetting) &&
+	        (($this->system == SystemTypes::DINE_IN && (($this->store->storeSetting->is_online_payment == 1 && $paymentMethod != 'pin') || (($this->store->storeSetting->is_pin == 1 && $paymentMethod == 'pin')))) ||
+		        (($this->system == SystemTypes::KIOSK || $this->system == SystemTypes::POS) && $this->store->storeSetting->is_pin == 1)) || ($this->system == SystemTypes::TAKEAWAY && $this->store->storeSetting->is_online_payment == 1) &&
+	        $this->store->storeSetting->additional_fee) {
             $this->settings['additional_fee'] = [
                 'status' => true,
                 'value'  => $this->store->storeSetting->additional_fee ?? 0,
