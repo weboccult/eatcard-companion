@@ -85,8 +85,10 @@ class WorldLineGetFinalPaymentStatusAction extends BaseWebhook
             $update_data['is_uncertain_status'] = 1;
         }
         $this->updateOrder($update_data);
-	    $status = $update_data['status'] == 'paid' ? 'success' : ($update_data['status'] == 'failed' ? 'failed' : '');
-	    $this->sendKioskOrderMailToOwner($status);
+        if($update_data['status'] != 'pending') {
+	        $status = $update_data['status'] == 'paid' ? 'success' : ($update_data['status'] == 'failed' ? 'failed' : '');
+	        $this->sendKioskOrderMailToOwner($status);
+        }
         if ($this->orderType == 'order' && $update_data['status'] == 'paid') {
             $this->sendNotifications();
             $this->sendPrintJsonToSQS();
