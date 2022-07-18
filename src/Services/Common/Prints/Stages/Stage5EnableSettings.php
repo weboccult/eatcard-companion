@@ -6,7 +6,6 @@ use Weboccult\EatcardCompanion\Enums\OrderTypes;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Prints\BaseGenerator;
-use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @description Stag 5
@@ -75,7 +74,6 @@ trait Stage5EnableSettings
         $this->additionalSettings['print_total_font_size'] = ($store->storeSetting->print_total_font_size ?? 0);
 
         $this->additionalSettings['tickets_data'] = $this->store->reservation_tickets_data ? json_decode($this->store->reservation_tickets_data, true) : [];
-        companionLogger('--------ticket data setting', $this->additionalSettings['tickets_data']);
         $this->additionalSettings['is_hide_table_name_tickets'] = $this->additionalSettings['tickets_data']['is_hide_table_name'] ?? 0;
     }
 
