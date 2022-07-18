@@ -65,6 +65,7 @@ abstract class BaseReservationSlots
 
     public bool $isTableAssign = false;
     public array $assignedTables = [];
+    public bool $allowNowSlot = false;
 
     public function __construct()
     {
@@ -155,6 +156,11 @@ abstract class BaseReservationSlots
         if ($this->systemType == SystemTypes::CRON) {
             $this->isTableAssign = true;
         }
+
+        if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
+            $this->store->reservation_tickets_data = json_decode($this->store->reservation_tickets_data, true);
+            $this->allowNowSlot = ! empty($this->store->reservation_tickets_data['allow_booking_for_current_time_only'] ?? 0);
+        }
     }
 
     protected function Stage1PrepareValidationRules()
@@ -177,6 +183,10 @@ abstract class BaseReservationSlots
     protected function Stage3SetStoreOffDates()
     {
         $this->date = Carbon::parse($this->date)->format('Y-m-d');
+
+        if ($this->date != Carbon::now()->format('Y-m-d')) {
+            $this->allowNowSlot = false;
+        }
 
         if ($this->isTableAssign) {
             $this->nextForDay = Carbon::parse($this->date)->format('Y-m-d');
@@ -242,79 +252,116 @@ abstract class BaseReservationSlots
 
         $this->pickUpSlot = [];
         $slotId = 0;
+        $nowSlot = [];
+        $SkipGetOtherSlotes = false;
         if ($this->isTableAssign) {
-            $slotId = $this->payload['slot_id'] ?? '';
+            $slotId = $this->payload['slot_id'] ?? 0;
+            $SkipGetOtherSlotes = $this->allowNowSlot;
         }
 
+//        if(!$SkipGetOtherSlotes) {
         if ($this->meal->is_meal_res) {
             $isSlotModifiedAvailable = 1;
         } else {
             $isSlotModifiedAvailable = StoreSlotModified::query()
-                ->where('store_id', $this->storeId)
-                ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                    $q->where('id', $slotId);
-                })
-                ->where('is_day_meal', 0)
-                ->where('store_date', $this->date)
-                ->where('is_available', 1)
-                ->count();
+                    ->where('store_id', $this->storeId)
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
+                        $q->where('id', $slotId);
+                    })
+                    ->where('is_day_meal', 0)
+                    ->where('store_date', $this->date)
+                    ->where('is_available', 1)
+                    ->count();
         }
 
         $isDaySlotExist = StoreWeekDay::where('store_id', $this->storeId)
-            ->where('name', Carbon::parse($this->date)->format('l'))
-            ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q) {
-                $q->where('is_week_day_meal', 1);
-            })
-            ->when(! (! $this->meal->is_meal_res && $this->meal->is_week_meal_res), function ($q) {
-                $q->where('is_week_day_meal', 0);
-            })
-            ->first();
+                ->where('name', Carbon::parse($this->date)->format('l'))
+                ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q) {
+                    $q->where('is_week_day_meal', 1);
+                })
+                ->when(! (! $this->meal->is_meal_res && $this->meal->is_week_meal_res), function ($q) {
+                    $q->where('is_week_day_meal', 0);
+                })
+                ->first();
 
         if ($isSlotModifiedAvailable > 0) {
             $isSlotModifiedAvailable = StoreSlotModified::where('store_id', $this->storeId)
-                ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                    $q->where('id', $slotId);
-                })
-                ->where('meal_id', $this->mealId)
-                ->where('store_date', $this->date)
-                ->where('is_available', 1)
-                ->orderBy('from_time', 'ASC')
-                ->get();
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
+                        $q->where('id', $slotId);
+                    })
+                    ->where('meal_id', $this->mealId)
+                    ->where('store_date', $this->date)
+                    ->where('is_available', 1)
+                    ->orderBy('from_time', 'ASC')
+                    ->get();
 
             $this->pickUpSlot = $isSlotModifiedAvailable;
             $this->modelName = 'StoreSlotModified';
         } elseif ($isDaySlotExist) {
             $daySlot = StoreSlot::leftJoin('store_weekdays', 'store_weekdays.id', '=', 'store_slots.store_weekdays_id', function ($q) {
                 $q->where('store_weekdays.is_active', 1)->where('store_weekdays.name', Carbon::parse($this->date)->format('l'))
-                ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q1) {
-                    $q1->where('store_weekdays.is_week_day_meal', 1);
-                })
-                ->when(! (! $this->meal->is_meal_res && $this->meal->is_week_meal_res), function ($q2) {
-                    $q2->where('store_weekdays.is_week_day_meal', 0);
-                });
+                    ->when(! $this->meal->is_meal_res && $this->meal->is_week_meal_res, function ($q1) {
+                        $q1->where('store_weekdays.is_week_day_meal', 1);
+                    })
+                    ->when(! (! $this->meal->is_meal_res && $this->meal->is_week_meal_res), function ($q2) {
+                        $q2->where('store_weekdays.is_week_day_meal', 0);
+                    });
             })->where('store_slots.store_id', $this->storeId)
-            ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                $q->where('store_slots.id', $slotId);
-            })
-            ->where('store_weekdays.id', $isDaySlotExist->id)
-            ->select('store_slots.*')
-            ->where('store_slots.meal_id', $this->mealId)
-            ->where('store_slots.store_weekdays_id', '!=', null)
-            ->orderBy('store_slots.from_time', 'ASC')
-            ->get();
+                ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
+                    $q->where('store_slots.id', $slotId);
+                })
+                ->where('store_weekdays.id', $isDaySlotExist->id)
+                ->select('store_slots.*')
+                ->where('store_slots.meal_id', $this->mealId)
+                ->where('store_slots.store_weekdays_id', '!=', null)
+                ->orderBy('store_slots.from_time', 'ASC')
+                ->get();
             $this->pickUpSlot = $daySlot;
             $this->modelName = 'StoreSlot';
         } else {
             $defaultSlot = StoreSlot::where('store_id', $this->storeId)
-                ->where('meal_id', $this->mealId)
-                ->when($this->isTableAssign && ! empty($slotId), function ($q) use ($slotId) {
-                    $q->where('id', $slotId);
-                })
-                ->doesntHave('store_weekday')
-                ->orderBy('from_time', 'ASC')
-                ->get();
+                    ->where('meal_id', $this->mealId)
+                    ->when($this->isTableAssign && (! empty($slotId) || $SkipGetOtherSlotes), function ($q) use ($slotId) {
+                        $q->where('id', $slotId);
+                    })
+                    ->doesntHave('store_weekday')
+                    ->orderBy('from_time', 'ASC')
+                    ->get();
             $this->pickUpSlot = $defaultSlot;
             $this->modelName = 'StoreSlot';
+        }
+//        }
+
+        if ($this->allowNowSlot && empty($slotId)) {
+            $nowSlot = [
+                'id' => 0,
+                'store_id' => $this->storeId,
+                'from_time' => Carbon::now()->format('G:i'),
+                'max_entries' => 'Unlimited',
+                'meal_id' => $this->mealId,
+                'store_weekdays_id' => null,
+                'is_slot_disabled' => 0,
+                'meal_group_id' => null,
+
+            ];
+
+//            if ($SkipGetOtherSlotes){
+//                $this->pickUpSlot = (object)(collect($nowSlot))->first();
+            ////                $this->pickUpSlot = json_decode(json_encode($nowSlot));
+            ////                $this->pickUpSlot = (($nowSlot));
+            ////                dd($this->pickUpSlot);
+            ////
+            ////                $this->pickUpSlot = new \stdClass();
+            ////
+            ////                foreach ($nowSlot as $keys => $value ) {
+            ////                    $this->pickUpSlot->{$keys} = $value;
+            ////                }
+            ////                dd($this->pickUpSlot);
+//
+//            } else {
+            $this->pickUpSlot = $this->pickUpSlot->push((object) ($nowSlot));
+            $this->pickUpSlot = collect($this->pickUpSlot)->sortBy('from_time')->values();
+//            }
         }
     }
 
@@ -328,7 +375,7 @@ abstract class BaseReservationSlots
                 $this->pickUpSlot[$index]->disable = false;
 
                 // Checking if time has been past for today
-                if (strtotime($pickTime->from_time) <= strtotime($current24Time) && $this->date >= Carbon::now()->format('Y-m-d')) {
+                if ($pickTime->id > 0 && (strtotime($pickTime->from_time) <= strtotime($current24Time)) && $this->date >= Carbon::now()->format('Y-m-d')) {
                     companionLogger('1. Slot is disable | stage :- Stage5EnableDisablePickUpSlotByPastTimeOff', $pickTime->from_time);
                     $this->pickUpSlot[$index]->disable = true;
                     continue;
@@ -525,7 +572,10 @@ abstract class BaseReservationSlots
     {
         $this->returnResponseData['disable_dates'] = $this->offDayAndDate;
         $this->returnResponseData['model_name'] = $this->modelName;
-        $this->returnResponseData['pickup_slot'] = collect($this->pickUpSlot)->map->only(['id', 'from_time', 'disable'])->values();
+//        $this->returnResponseData['pickup_slot'] = collect($this->pickUpSlot)->map->only(['id', 'from_time','disable'])->values();
+        $this->returnResponseData['pickup_slot'] = collect($this->pickUpSlot)->map(function ($user) {
+            return collect($user)->only(['id', 'from_time', 'disable']);
+        })->values();
         $this->returnResponseData['error_messages'] = [];
 
         if ($this->isTableAssign) {

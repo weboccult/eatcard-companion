@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Rectifiers\ReservationTableAssign;
 
+use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Exceptions\PersonEmptyException;
 use Weboccult\EatcardCompanion\Exceptions\SlotEmptyException;
 use Weboccult\EatcardCompanion\Models\CancelReservation;
@@ -83,6 +84,8 @@ abstract class BaseReservationTableAssign
     public int $reservationCheckAttempt = 0;
 
     protected ?array $dumpDieValue = null;
+
+    public bool $allowNowSlot = false;
 
     /**
      * @param mixed $storeId
@@ -174,8 +177,30 @@ abstract class BaseReservationTableAssign
 
         $slotType = $this->payload['data_model'] ?? '';
 
-        $slotId = $this->payload['slot_id'] ?? '';
-        if ($slotType == 'StoreSlot') {
+        $slotId = $this->payload['slot_id'] ?? 0;
+
+        if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
+            $this->store->reservation_tickets_data = json_decode($this->store->reservation_tickets_data, true);
+            $this->allowNowSlot = ! empty($this->store->reservation_tickets_data['allow_booking_for_current_time_only'] ?? 0);
+        }
+
+        if ($this->reservationDate != Carbon::now()->format('Y-m-d')) {
+            $this->allowNowSlot = false;
+        }
+
+        if ($this->allowNowSlot && empty($slotId)) {
+            $this->slot = (object) ([
+                           'id' => 0,
+                           'store_id' => $this->store->id,
+                           'from_time' => Carbon::now()->format('G:i'),
+                           'max_entries' => 'Unlimited',
+                           'meal_id' => $this->meal->id,
+                           'store_weekdays_id' => null,
+                           'is_slot_disabled' => 0,
+                           'meal_group_id' => null,
+
+                       ]);
+        } elseif ($slotType == 'StoreSlot') {
             $this->slot = StoreSlot::where('id', $slotId)->first();
             if (isset($this->slot->store_weekdays_id) && $this->slot->store_weekdays_id != null) {
                 $store_weekday = StoreWeekDay::find($this->slot->store_weekdays_id);
