@@ -35,11 +35,11 @@ trait Stage4EnableSettings
         if (in_array($paymentMethod, ['cash', 'paylater'])) {
             $isAdditionalFeeApply = false;
         } elseif ($this->system == SystemTypes::DINE_IN && (($this->store->storeSetting->is_online_payment == 1 && $paymentMethod != 'pin') || (($this->store->storeSetting->is_pin == 1 && $paymentMethod == 'pin')))) {
-        	$isAdditionalFeeApply = true;
+            $isAdditionalFeeApply = true;
         } elseif (($this->system == SystemTypes::KIOSK || $this->system == SystemTypes::POS) && $this->store->storeSetting->is_pin == 1) {
-        	$isAdditionalFeeApply = true;
+            $isAdditionalFeeApply = true;
         } elseif ($this->system == SystemTypes::TAKEAWAY && $this->store->storeSetting->is_online_payment == 1) {
-        	$isAdditionalFeeApply = true;
+            $isAdditionalFeeApply = true;
         }
 
         if ($isAdditionalFeeApply && isset($this->store->storeSetting) && $this->store->storeSetting->additional_fee) {
