@@ -123,38 +123,59 @@ class WorldLineWebhook extends BaseWebhook
                         ]);
                         sendResWebNotification($this->fetchedOrder->parent_id, $this->fetchedStore->id, 'remove_booking', [], $force_refresh);
                     }
-                }
-                $is_notification = 0;
-                if (($this->fetchedStore->is_notification) && (! $this->fetchedStore->notificationSetting || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_dine_in_notification))) {
-                    $is_notification = 1;
-                    sendAppNotificationHelper($this->fetchedOrder->toArray(), $this->fetchedStore);
-                }
-                $data = [
-                    'orderDate'       => $this->fetchedOrder->order_date,
-                    'is_notification' => $is_notification,
-                ];
-                $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $data, $is_last_payment, $force_refresh);
-                if ($socket_data) {
-                    $redis = LRedis::connection();
-                    if ($this->fetchedOrder->order_type == 'kiosk') {
-                        $socket_data['type'] = 'kiosk';
-                        $socket_data['kiosk_id'] = $device->id;
-                        try {
-                            $client = new Client();
-                            $domain = config('eatcardCompanion.system_endpoints.kiosk');
-                            $client->request('GET', $domain.'/print-admin/'.$store_id.'/'.$order['id'].'?print=1');
-                            companionLogger('Kiosk auto order print from admin success'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-                        } catch (\Exception $e) {
-                            companionLogger('kiosk print from admin - auto print queue send error'.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-                        }
-                    }
-                    $redis->publish('new_order', json_encode($socket_data));
+	                $is_notification = 0;
+	                if (($this->fetchedStore->is_notification) && (! $this->fetchedStore->notificationSetting || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_dine_in_notification))) {
+		                $is_notification = 1;
+		                sendAppNotificationHelper($this->fetchedOrder->toArray(), $this->fetchedStore);
+	                }
+	                $data = [
+		                'orderDate'       => $this->fetchedOrder->order_date,
+		                'is_notification' => $is_notification,
+	                ];
+	                $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $data, $is_last_payment, $force_refresh);
+	                if ($socket_data) {
+		                $redis = LRedis::connection();
+		                if ($this->fetchedOrder->order_type == 'kiosk') {
+			                $socket_data['type'] = 'kiosk';
+			                $socket_data['kiosk_id'] = $device->id;
+			                try {
+				                $client = new Client();
+				                $domain = config('eatcardCompanion.system_endpoints.kiosk');
+				                $client->request('GET', $domain.'/print-admin/'.$store_id.'/'.$order['id'].'?print=1');
+				                companionLogger('Kiosk auto order print from admin success'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+			                } catch (\Exception $e) {
+				                companionLogger('kiosk print from admin - auto print queue send error'.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+			                }
+		                }
+		                $redis->publish('new_order', json_encode($socket_data));
+	                }
                 }
                 if ($this->fetchedOrder->order_type == 'kiosk') {
                     $status = $update_data['status'] == 'paid' ? 'success' : ($update_data['status'] == 'failed' ? 'failed' : '');
                     $this->sendKioskOrderMailToOwner($status);
                 }
             }
+        }
+
+        if($this->orderType == 'sub_order' && $update_data['status'] == 'paid') {
+	        if(isset($parent_order->order_date)) {
+		        $return_date = $parent_order->order_date;
+		        $current_data = [
+			        'orderDate'       => $return_date,
+			        'is_notification' => 1
+		        ];
+		        try {
+			        $socket_data = $this->sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
+			        if ($socket_data) {
+				        $redis = LRedis::connection();
+				        $redis->publish('new_order', json_encode($socket_data));
+				        companionLogger('worldline callback sub order socket : sub order id  : ' . $order->id . '  IP address : ' . request()->ip() . ', browser : ' . request()->header('User-Agent'));
+			        }
+		        }
+		        catch (\Exception $e) {
+			        companionLogger('Error :- worldline callback sub order socket error ' . $e->getMessage() . '  : sub order id  : ' . $order->id . '  IP address : ' . request()->ip() . ', browser : ' . request()->header('User-Agent'));
+		        }
+	        }
         }
 
         return true;
