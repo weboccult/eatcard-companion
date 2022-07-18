@@ -113,6 +113,7 @@ class WorldLineWebhook extends BaseWebhook
             $device = $this->fetchedOrder->kiosk;
         }
         $this->updateOrder($update_data);
+        companionLogger('Current order type : '. $this->orderType);
         if ($this->orderType == 'order') {
         	companionLogger('If kiosk order type was order');
             if (! empty($this->fetchedOrder)) {
