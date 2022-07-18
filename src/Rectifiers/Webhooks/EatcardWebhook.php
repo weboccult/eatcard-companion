@@ -15,7 +15,7 @@ use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MollieGiftCardWebhoo
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardCancelRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardSuccessRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardWebhook;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\WorldLineGetFinalPaymentStatusAction;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineGetFinalPaymentStatusAction;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk\CcvKioskOrderWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Reservation\MollieReservationSuccessRedirect;
