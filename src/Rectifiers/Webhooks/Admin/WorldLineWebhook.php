@@ -112,6 +112,7 @@ class WorldLineWebhook extends BaseWebhook
         } else {
             $device = $this->fetchedOrder->kiosk;
         }
+        companionLogger('Update order data after wipay webhook');
         $this->updateOrder($update_data);
         companionLogger('Current order type : '. $this->orderType);
         if ($this->orderType == 'order') {
