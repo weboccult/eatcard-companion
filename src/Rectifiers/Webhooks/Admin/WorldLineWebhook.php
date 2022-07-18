@@ -112,14 +112,9 @@ class WorldLineWebhook extends BaseWebhook
         } else {
             $device = $this->fetchedOrder->kiosk;
         }
-        companionLogger('Update order data after wipay webhook');
         $this->updateOrder($update_data);
-        companionLogger('Current order type : '.$this->orderType);
         if ($this->orderType == 'order') {
-            companionLogger('If kiosk order type was order');
             if (! empty($this->fetchedOrder)) {
-                companionLogger('Order payload status : '.$this->payload['status']);
-                companionLogger('Update order status : '.$update_data['status']);
                 if ($this->payload['status'] == 'final' && $update_data['status'] == 'paid') {
                     if (isset($this->fetchedOrder->parent_id) && $this->fetchedOrder->parent_id != '') {
                         StoreReservation::query()->where('id', $this->fetchedOrder->parent_id)->update([
@@ -146,7 +141,6 @@ class WorldLineWebhook extends BaseWebhook
                             try {
                                 $client = new Client();
                                 $domain = config('eatcardCompanion.system_endpoints.kiosk');
-                                companionLogger('Kiosk url for sqs print : '.$domain);
                                 $client->request('GET', $domain.'/print-admin/'.$store_id.'/'.$this->fetchedOrder->id.'?print=1');
                                 companionLogger('Kiosk auto order print from admin success'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
                             } catch (\Exception $e) {
