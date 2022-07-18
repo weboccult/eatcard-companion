@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Weboccult\EatcardCompanion\Models\Product;
+use Weboccult\EatcardCompanion\Models\ProductView;
 
 class OrderItemHistoryView extends Model
 {
@@ -16,7 +17,7 @@ class OrderItemHistoryView extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'id', 'product_id');
+        return $this->belongsTo(ProductView::class, 'id', 'product_id');
     }
 
     public function order()

@@ -52,8 +52,8 @@ trait Stage6PrepareAdvanceData
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
-                    $q2->withTrashed()->with(['category' => function ($q3) {
-                        $q3->withTrashed();
+                    $q2/*->withTrashed()*/->with(['category' => function ($q3) {
+                        /*$q3->withTrashed();*/
                     }]);
                 }]);
             }, 'voidOrder' => function ($q5) {
@@ -111,8 +111,8 @@ trait Stage6PrepareAdvanceData
         )
             ->with(['orderItems' => function ($q1) {
                 $q1->with(['product' => function ($q2) {
-                    $q2->withTrashed()->with(['category' => function ($q3) {
-                        $q3->withTrashed();
+                    $q2/*->withTrashed()*/->with(['category' => function ($q3) {
+                        /*$q3->withTrashed();*/
                     }]);
                 }]);
             }, 'voidOrder' => function ($q5) {
@@ -187,9 +187,9 @@ trait Stage6PrepareAdvanceData
                 'orderItems' => function ($q1) {
                     $q1->with([
                         'product' => function ($q2) {
-                            $q2->withTrashed()->with([
+                            $q2/*->withTrashed()*/->with([
                                 'category' => function ($q3) {
-                                    $q3->withTrashed();
+                                    /*$q3->withTrashed();*/
                                 },
                             ]);
                         },
@@ -265,9 +265,9 @@ trait Stage6PrepareAdvanceData
                 'orderItems' => function ($q1) {
                     $q1->with([
                         'product' => function ($q2) {
-                            $q2->withTrashed()->with([
+                            $q2/*->withTrashed()*/->with([
                                 'category' => function ($q3) {
-                                    $q3->withTrashed();
+                                    /*$q3->withTrashed();*/
                                 },
                             ]);
                         },
