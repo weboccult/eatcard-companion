@@ -26,7 +26,7 @@ class WorldLineGetFinalPaymentStatusAction extends BaseWebhook
      */
     public function handle()
     {
-        companionLogger('Wipay Final webhook request started', 'OrderId #'.$this->orderId, 'IP address : ' .request()->ip(), 'browser : '.request()->header('User-Agent'));
+        companionLogger('Wipay Final webhook request started', 'OrderId #'.$this->orderId, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
 //        companionLogger('Wipay Final payload', json_encode(['payload' => $this->payload], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         if ($this->orderType == 'sub_order') {
             $this->fetchedOrder = SubOrder::with('parentOrder.kiosk')->where(['id' => $this->orderId])->firstOrFail();

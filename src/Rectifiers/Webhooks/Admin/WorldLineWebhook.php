@@ -151,7 +151,7 @@ class WorldLineWebhook extends BaseWebhook
                     }
                 }
                 if ($this->fetchedOrder->order_type == 'kiosk') {
-	                $status = $update_data['status'] == 'paid' ? 'success' : ($update_data['status'] == 'failed' ? 'failed' : '');
+                    $status = $update_data['status'] == 'paid' ? 'success' : ($update_data['status'] == 'failed' ? 'failed' : '');
                     $this->sendKioskOrderMailToOwner($status);
                 }
             }
