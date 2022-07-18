@@ -780,40 +780,40 @@ trait Stage7PrepareAdvanceData
                 companionLogger('If printmethod was protocol and system type kiosk');
             } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($saveOrderId)) {
                 $skipKitchenLabelPrint = true;
-	            companionLogger('If printmethod was default and saved order id was not empty');
+                companionLogger('If printmethod was default and saved order id was not empty');
             } elseif ($this->printType == PrintTypes::MAIN) {
                 // no need to print if only wat to reprint main print or kitchen print already printed
                 $skipKitchenLabelPrint = true;
-	            companionLogger('If print type was main');
+                companionLogger('If print type was main');
             } elseif ($this->printType == PrintTypes::DEFAULT && ! empty($order['parent_id']) && $this->additionalSettings['dinein_guest_order'] == false) {
                 // no need to print for round orders
                 $skipKitchenLabelPrint = true;
-	            companionLogger('If print type was default and also not empty parent_id');
+                companionLogger('If print type was default and also not empty parent_id');
             } elseif ($this->printType == PrintTypes::DEFAULT && $this->additionalSettings['is_print_cart_add'] == 1 && in_array($item['product']['category_id'], $this->additionalSettings['addon_print_categories'])) {
                 // no need to print if printed already
                 $skipKitchenLabelPrint = true;
-	            companionLogger('If print type was default and is print cart add is 1');
+                companionLogger('If print type was default and is print cart add is 1');
             }
 
             if ($this->orderType == OrderTypes::SUB && isset($order['status']) && $order['status'] != 'paid' && ! $isSubOrderItems) {
                 //skip kitchen print if custome or equal split sub order is not paid.
                 $skipKitchenLabelPrint = true;
-	            companionLogger('If order type was SUB');
+                companionLogger('If order type was SUB');
             }
 
             if ($skipKitchenLabelPrint == false) {
-            	companionLogger('Is skip kitchen and label print status was false');
-            	companionLogger('Product printer details : '. json_encode($item['product']));
+                companionLogger('Is skip kitchen and label print status was false');
+                companionLogger('Product printer details : '.json_encode($item['product']));
                 if ($item['product']['printers']) {
                     $pro_kitchen = collect($item['product']['printers'])
                         ->pluck('printer_name')
                         ->toArray();
-                    companionLogger('Pro kitchen printer details : '. json_encode($pro_kitchen));
+                    companionLogger('Pro kitchen printer details : '.json_encode($pro_kitchen));
                 }
 
                 if (isset($item['product']['category']['is_takeaway_printer']) && $item['product']['category']['is_takeaway_printer'] == 1 && isset($item['product']['category']['takeaway_device_id']) && $item['product']['category']['takeaway_device_id']) {
                     companionLogger('Product category print details : '.json_encode($item['product']['category']));
-                	$printer = /*Cache::tags([
+                    $printer = /*Cache::tags([
                         FLUSH_ALL,
                         FLUSH_POS,
                         FLUSH_STORE_BY_ID.$this->store->id,
@@ -826,7 +826,7 @@ trait Stage7PrepareAdvanceData
                     $device_id = $item['product']['category']['takeaway_device_id'];
                     $printer_type = $item['product']['category']['takeaway_printer_type'];
                 } else {
-	                companionLogger('Product category print details else : '.json_encode($item['product']['category']));
+                    companionLogger('Product category print details else : '.json_encode($item['product']['category']));
                     $printer = /*Cache::tags([
                         FLUSH_ALL,
                         FLUSH_POS,
@@ -840,7 +840,7 @@ trait Stage7PrepareAdvanceData
                     $device_id = $item['product']['category']['device_id'];
                     $printer_type = $item['product']['category']['printer_type'];
                 }
-                companionLogger('Product print type : '. $printer_type);
+                companionLogger('Product print type : '.$printer_type);
 
                 if ($printer_type == 'kitchen' && $printer) {
                     $kitchen = [$printer->name];
@@ -876,8 +876,8 @@ trait Stage7PrepareAdvanceData
                     $kitchen = $kitchen_printer ? $kitchen_printer->pluck('name')->toArray() : [];
                     $label = $label_printer ? $label_printer->pluck('name')->toArray() : [];
                 }
-				companionLogger('Final pro kitchen print printer name : '. json_encode($pro_kitchen));
-				companionLogger('Final kitchen print printer name : '. json_encode($kitchen));
+                companionLogger('Final pro kitchen print printer name : '.json_encode($pro_kitchen));
+                companionLogger('Final kitchen print printer name : '.json_encode($kitchen));
 
                 //set final kitchen and label printer
                 $newItem['printername'] = ! empty($pro_kitchen) ? $pro_kitchen : (! empty($kitchen) ? $kitchen : []);
