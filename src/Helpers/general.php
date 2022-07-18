@@ -347,6 +347,22 @@ if (! function_exists('carbonParseAddHoursFormat')) {
     }
 }
 
+if (! function_exists('carbonFormatParse')) {
+
+    /**
+     * @param string $time
+     * @param int $hours : Integer
+     * @param string $format
+     *
+     * @return string
+     * @Description calculate carbon time
+     */
+    function carbonFormatParse(string $format, string $time): string
+    {
+        return Carbon::parse($time)->format($format);
+    }
+}
+
 if (! function_exists('getAycePrice')) {
     /**
      * @param array $ayce_data

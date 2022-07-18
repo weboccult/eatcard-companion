@@ -7,7 +7,6 @@ use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Queue;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\Redis as LRedis;
 use Mollie\Laravel\Facades\Mollie;
 use Weboccult\EatcardCompanion\Enums\PrintMethod;
 use Weboccult\EatcardCompanion\Enums\PrintTypes;
@@ -22,7 +21,6 @@ use Weboccult\EatcardCompanion\Services\Facades\MultiSafe;
 use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\generalUrlGenerator;
 use function Weboccult\EatcardCompanion\Helpers\phpEncrypt;
-use function Weboccult\EatcardCompanion\Helpers\sendWebNotification;
 use function Weboccult\EatcardCompanion\Helpers\webhookGenerator;
 
 /**
@@ -40,7 +38,8 @@ trait Stage12PaymentProcess
      */
     protected function ccvPayment()
     {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'ccv') {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'ccv' && ! $this->settings['bop_kiosk']['status']) {
+            companionLogger('----ccv payment start ', ['order_id' => $this->createdOrder->id]);
             if ($this->system == SystemTypes::POS) {
                 if ($this->isSubOrder) {
                     $webhook_url = webhookGenerator('payment.gateway.ccv.webhook.pos.sub_order', [
@@ -83,6 +82,9 @@ trait Stage12PaymentProcess
                     'accessProtocol'     => 'OPI_NL',
                 ],
             ];
+
+            companionLogger('----ccv payment payload ', $inputs, ['order_id' => $this->createdOrder->id]);
+
             $client = new Client();
 
             $url = $this->device->environment == 'test' ? config('eatcardCompanion.payment.gateway.ccv.staging') : config('eatcardCompanion.payment.gateway.ccv.production');
@@ -100,7 +102,7 @@ trait Stage12PaymentProcess
             ]);
             $request->getHeaderLine('content-type');
             $response = json_decode($request->getBody()->getContents(), true);
-            companionLogger('ccv api res', $response);
+            companionLogger('ccv api response', $response, ['order_id' => $this->createdOrder->id]);
             /*update ccv payment for the order*/
             if (isset($order['order_id'])) {
                 unset($order->order_id);
@@ -122,9 +124,15 @@ trait Stage12PaymentProcess
                 }
             }
             if ($this->system == SystemTypes::KIOSK) {
+                if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+                    $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int) $this->takeawaySetting->print_dynamic_order_no)));
+                } else {
+                    $orderId = ''.substr($this->createdOrder->order_id, -2);
+                }
                 $this->paymentResponse = [
                     'payUrl'  => $response['payUrl'],
                     'order_id' => $this->createdOrder->id,
+                    'order_number' => $orderId,
                 ];
             }
         }
@@ -137,7 +145,7 @@ trait Stage12PaymentProcess
      */
     protected function wiPayment()
     {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'wipay') {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK]) && $this->createdOrder->payment_method_type == 'wipay' && ! $this->settings['bop_kiosk']['status']) {
             $order_price = round($this->createdOrder->total_price * 100, 0);
             if ($this->system == SystemTypes::KIOSK) {
                 $order_type = 'order';
@@ -176,7 +184,7 @@ trait Stage12PaymentProcess
                 return;
             }
 
-            companionLogger('Wipay payment Response', 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
+            companionLogger('Wipay payment Response', $this->paymentResponse, 'IP address - '.request()->ip(), 'Browser - '.request()->header('User-Agent'));
 
             if ($this->system == SystemTypes::POS && $this->isSubOrder && $order_type == 'sub_order') {
                 $order = SubOrder::query()->findOrFail($this->createdOrder->id);
@@ -197,6 +205,12 @@ trait Stage12PaymentProcess
                    'data'      => $data,
                ];
             } else {
+                if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+                    $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int) $this->takeawaySetting->print_dynamic_order_no)));
+                } else {
+                    $orderId = ''.substr($this->createdOrder->order_id, -2);
+                }
+                $data['order_number'] = $orderId;
                 $this->paymentResponse = $data;
             }
         }
@@ -379,16 +393,6 @@ trait Stage12PaymentProcess
     protected function cashPayment()
     {
         if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
-//            $current_data = [
-//                'orderDate'       => $this->createdOrder->order_date,
-//                'is_notification' => 1,
-//            ];
-//            $order = $this->createdOrder->toArray();
-//            $socket_data = sendWebNotification($this->store, $order, $current_data, 0, 0);
-//            if ($socket_data) {
-//                $redis = LRedis::connection();
-//                $redis->publish('new_order', json_encode($socket_data));
-//            }
             $this->paymentResponse = [
                 'store_slug' => $this->store->store_slug,
                 'orderId' => $this->createdOrder->id,
@@ -409,6 +413,7 @@ trait Stage12PaymentProcess
                         'is_checkout'   => 1,
                         'checkout_from' => 'dine_in_2',
                     ]);
+                    companionLogger(' Reservation checkout after payment for Dine-in Guest user');
                 }
             }
         }
@@ -416,6 +421,7 @@ trait Stage12PaymentProcess
 
     public function sendPrintJsonToSQS()
     {
+        // here we give print for only cash,pin,pay-later and kiosk bop payments, rest all order print will be done after payment success webhook come
         $printRes = [];
 
         if ($this->system === SystemTypes::DINE_IN && in_array($this->orderData['method'], ['cash', 'pin'])) {
@@ -428,11 +434,6 @@ trait Stage12PaymentProcess
         }
 
         if ($this->system === SystemTypes::TAKEAWAY && ($this->orderData['method'] == 'cash' || $this->createdOrder->is_paylater_order == 1)) {
-
-//            /*Find order item difference with current time*/
-//            $current_time = Carbon::now();
-//            $order_time_difference = $current_time->diffInMinutes(Carbon::now()->parse($this->createdOrder['order_time']));
-
             if (($this->store->future_order_print_status == 0 || ($this->createdOrder['order_date'] == Carbon::now()->format('Y-m-d') /*&& $order_time_difference <= $this->store->future_order_print_time*/))) {
                 $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
                     ->method(PrintMethod::SQS)
@@ -445,6 +446,15 @@ trait Stage12PaymentProcess
             }
         }
 
+        if ($this->system === SystemTypes::KIOSK && $this->settings['bop_kiosk']['status']) {
+            $printRes = EatcardPrint::generator(PaidOrderGenerator::class)
+                ->method(PrintMethod::SQS)
+                ->type(PrintTypes::DEFAULT)
+                ->system(SystemTypes::KIOSK)
+                ->payload(['order_id' => ''.$this->createdOrder['id']])
+                ->generate();
+        }
+
         //for print json send in sqs
         if ($this->store->sqs && ! empty($printRes)) {
             config([
@@ -455,7 +465,7 @@ trait Stage12PaymentProcess
             try {
                 Queue::connection('sqs')->pushRaw(json_encode($printRes), $this->store->sqs->sqs_queue_name);
             } catch (\Exception $e) {
-                companionLogger('Eatcard companion SQS queue send related Exception dine-in', $e);
+                companionLogger('SQS queue send related Exception : ', $e);
             }
         }
     }
@@ -467,11 +477,19 @@ trait Stage12PaymentProcess
     protected function setBypassPaymentLogicAndOverridePaymentResponse()
     {
         if ($this->system == SystemTypes::KIOSK) {
-            if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk') {
+            if ($this->settings['bop_kiosk']['status']) {
+                if (isset($this->takeawaySetting) && isset($this->takeawaySetting->print_dynamic_order_no) && (int) $this->takeawaySetting->print_dynamic_order_no > 0) {
+                    $orderId = ''.substr($this->createdOrder->order_id, (-1 * ((int) $this->takeawaySetting->print_dynamic_order_no)));
+                } else {
+                    $orderId = ''.substr($this->createdOrder->order_id, -2);
+                }
+
                 $this->paymentResponse = [
                     'ssai' => 'fake_ssai',
                     'reference' => 'fake_response',
                     'payUrl' => 'https://www.google.com',
+                    'order_id' => $orderId,
+                    'id' => encrypt($this->createdOrder['id']),
                 ];
             }
         }

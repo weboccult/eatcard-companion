@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 /**
  * @description Stag 4
@@ -13,27 +14,41 @@ use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
  */
 trait Stage4EnableSettings
 {
-    protected function enableAdditionalFees()
+    protected function enableExtraSettings()
     {
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::KIOSK])) {
-            if ($this->payload['method'] != 'cash' && isset($this->store->storeSetting) && $this->store->storeSetting->is_pin == 1 && ! empty($this->store->storeSetting->additional_fee)) {
-                $this->settings['additional_fee'] = [
-                    'status' => true,
-                    'value'  => $this->store->storeSetting->additional_fee,
-                    // 'value'  => $this->payload['additional_fee'] ?? 0,
-                    // here we're not using fee from frontend side payload
-                ];
+        $this->settings['bop_kiosk'] = [
+            'status' => false,
+        ];
+        if ($this->system == SystemTypes::KIOSK) {
+            $this->settings['bop_kiosk']['status'] = (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk');
+            if ($this->settings['bop_kiosk']['status']) {
+                companionLogger('-----Kiosk bop on for Kiosk device : ', ($this->orderData['kiosk_id'] ?? 0));
             }
         }
-        if (in_array($this->system, [SystemTypes::TAKEAWAY, SystemTypes::DINE_IN])) {
-            if (! in_array($this->payload['method'], ['cash', 'paylater']) && isset($this->store->storeSetting) && $this->store->storeSetting->is_online_payment == 1 && $this->store->storeSetting->additional_fee) {
-                $this->settings['additional_fee'] = [
-                    'status' => true,
-                    'value'  => $this->store->storeSetting->additional_fee ?? 0,
-                    // 'value'  => $this->payload['additional_fee'] ?? 0,
-                    // here we're not using fee from frontend side payload
-                ];
-            }
+    }
+
+    protected function enableAdditionalFees()
+    {
+        $isAdditionalFeeApply = false;
+        $paymentMethod = $this->payload['method'] ?? '';
+
+        if (in_array($paymentMethod, ['cash', 'paylater'])) {
+            $isAdditionalFeeApply = false;
+        } elseif ($this->system == SystemTypes::DINE_IN && (($this->store->storeSetting->is_online_payment == 1 && $paymentMethod != 'pin') || (($this->store->storeSetting->is_pin == 1 && $paymentMethod == 'pin')))) {
+            $isAdditionalFeeApply = true;
+        } elseif (($this->system == SystemTypes::KIOSK || $this->system == SystemTypes::POS) && $this->store->storeSetting->is_pin == 1) {
+            $isAdditionalFeeApply = true;
+        } elseif ($this->system == SystemTypes::TAKEAWAY && $this->store->storeSetting->is_online_payment == 1) {
+            $isAdditionalFeeApply = true;
+        }
+
+        if ($isAdditionalFeeApply && isset($this->store->storeSetting) && $this->store->storeSetting->additional_fee) {
+            $this->settings['additional_fee'] = [
+                'status' => true,
+                'value'  => $this->store->storeSetting->additional_fee ?? 0,
+                // 'value'  => $this->payload['additional_fee'] ?? 0,
+                // here we're not using fee from frontend side payload
+            ];
         }
     }
 
@@ -51,39 +66,41 @@ trait Stage4EnableSettings
     protected function enablePlasticBagFees()
     {
         $plasticBagFee = (float) ($this->payload['plastic_bag_fee'] ?? 0);
+        $isPlasticBagFeeApply = false;
+
+        //return if no fee come from input
+        if (empty($plasticBagFee)) {
+            return;
+        }
+
+        //we always get price from database
+        $plasticBagFee = $this->store->storeSetting->plastic_bag_fee ?? 0;
+
         if ($this->system == SystemTypes::TAKEAWAY) {
-            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && $this->store->storeSetting->plastic_bag_fee && $plasticBagFee > 0) {
-                $this->settings['plastic_bag_fee'] = [
-                    'status' => true,
-                    'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
-                    // 'value'  => $this->payload['plastic_bag_fee'] ?? 0,
-                    // here we're not using fee from frontend side payload
-                ];
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_takeaway == 1 && ! empty($plasticBagFee)) {
+                $isPlasticBagFeeApply = true;
             }
         }
 
         if ($this->system == SystemTypes::KIOSK) {
-            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_kiosk == 1 &&
-                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in') {
-                $this->settings['plastic_bag_fee'] = [
-                    'status' => true,
-                    'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
-                    // 'value'  => $this->payload['plastic_bag_fee'] ?? 0,
-                    // here we're not using fee from frontend side payload
-                ];
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_kiosk == 1 && ! empty($plasticBagFee) &&
+                $this->payload['dine_in_type'] != 'dine_in') {
+                $isPlasticBagFeeApply = true;
             }
         }
 
         if ($this->system == SystemTypes::DINE_IN) {
-            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_dinein == 1 &&
-                $this->store->storeSetting->plastic_bag_fee && $this->payload['dine_in_type'] != 'dine_in' && $plasticBagFee > 0) {
-                $this->settings['plastic_bag_fee'] = [
-                    'status' => true,
-                    'value'  => $this->store->storeSetting->plastic_bag_fee ?? 0,
-                    // 'value'  => $this->payload['plastic_bag_fee'] ?? 0,
-                    // here we're not using fee from frontend side payload
-                ];
+            if (isset($this->store->storeSetting) && $this->store->storeSetting->is_bag_dinein == 1 && ! empty($plasticBagFee) &&
+                $this->payload['dine_in_type'] != 'dine_in') {
+                $isPlasticBagFeeApply = true;
             }
+        }
+
+        if ($isPlasticBagFeeApply) {
+            $this->settings['plastic_bag_fee'] = [
+                'status' => true,
+                'value'  => $plasticBagFee,
+            ];
         }
     }
 

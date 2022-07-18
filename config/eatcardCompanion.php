@@ -205,25 +205,25 @@ return [
                     'refundOrder'   => '/orders/<%order_id%>/refunds',
                 ],
                 'webhook'     => [
-                    'takeaway' => '/multisafe/takeaway/webhook/<%id%>/<%store_id%>',
+                    'takeaway' => '/webhook/multisafe/<%id%>/<%store_id%>',
                     'dine_in'  => '/webhook/multisafe/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
-                    'takeaway' => '/multisafe/takeaway/orders-success/<%id%>/<%store_id%>',
+                    'takeaway' => '/orders-success/multisafe/<%id%>/<%store_id%>',
                     'dine_in'  => '/orders-success/multisafe/<%id%>/<%store_id%>',
                 ],
                 'cancelUrl'   => [
-                    'takeaway' => '/multisafe/takeaway/cancel/<%id%>/<%store_id%>',
+                    'takeaway' => '/cancel/multisafe/<%id%>/<%store_id%>',
                     'dine_in'  => '/cancel/multisafe/<%id%>/<%store_id%>',
                 ],
             ],
             'mollie'    => [
                 'webhook'     => [
-                    'takeaway' => '/webhook/<%id%>/<%store_id%>',
+                    'takeaway' => '/webhook/mollie/<%id%>/<%store_id%>',
                     'dine_in'  => '/webhook/mollie/<%id%>/<%store_id%>',
                 ],
                 'redirectUrl' => [
-                    'takeaway' => '/orders-success/<%id%>/<%store_id%>',
+                    'takeaway' => '/orders-success/mollie/<%id%>/<%store_id%>',
                     'dine_in'  => '/orders-success/mollie/<%id%>/<%store_id%>',
                 ],
             ],

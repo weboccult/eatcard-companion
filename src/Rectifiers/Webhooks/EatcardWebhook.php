@@ -15,8 +15,8 @@ use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MollieGiftCardWebhoo
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardCancelRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardSuccessRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\MultiSafeGiftCardWebhook;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\WorldLineGetFinalPaymentStatusAction;
-use Weboccult\EatcardCompanion\Rectifiers\Webhooks\GiftCard\WorldLineWebhook;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineGetFinalPaymentStatusAction;
+use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Admin\WorldLineWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Kiosk\CcvKioskOrderWebhook;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Reservation\MollieReservationSuccessRedirect;
 use Weboccult\EatcardCompanion\Rectifiers\Webhooks\Reservation\MultiSafeReservationCancelRedirect;
@@ -215,7 +215,7 @@ class EatcardWebhook
                 break;
             /* Kiosk Webhook */
             case CcvKioskOrderWebhook::class:
-                static::$webhook->setOrderId(static::$orderId);
+                static::$webhook->setOrderId(static::$orderId)->setStoreId(static::$storeId);
                 break;
             /* Reservation Iframe Webhook and Redirects*/
             case MollieReservationWebhook::class:
@@ -240,7 +240,7 @@ class EatcardWebhook
             /* Wipay Global Webhook */
             case WorldLineWebhook::class:
             case WorldLineGetFinalPaymentStatusAction::class:
-                static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId);
+                static::$webhook->setOrderType(static::$orderType)->setOrderId(static::$orderId)->setStoreId(static::$storeId);
                 // only payload is required, which is already being set before running handle method.
                 break;
 

@@ -2,13 +2,14 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Revenue\Stages;
 
+use App\Models\OrderHistoryView;
+use App\Models\OrderView;
+use App\Models\ReservationRevenueView;
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\RevenueTypes;
 use Weboccult\EatcardCompanion\Models\DrawerCount;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
-use Weboccult\EatcardCompanion\Models\OrderHistory;
-use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Services\Common\Revenue\BaseGenerator;
 
 /**
@@ -21,7 +22,7 @@ trait Stage6PrepareAdvanceData
     {
 
         //get data from order
-        Order::select(
+        OrderView::select(
             'id',
             'store_id',
             'is_ignored',
@@ -80,7 +81,7 @@ trait Stage6PrepareAdvanceData
             });
 
         //get data from order
-        OrderHistory::select(
+        OrderHistoryView::select(
             'id',
             'store_id',
             'is_ignored',
@@ -142,7 +143,7 @@ trait Stage6PrepareAdvanceData
     {
 
         //get data from order
-        Order::select(
+        OrderView::select(
             'id',
             'is_ignored',
             'sub_total',
@@ -220,7 +221,7 @@ trait Stage6PrepareAdvanceData
                 $this->calculateOrderCreateDateRelatedData($orders);
             });
         //get data from order
-        OrderHistory::select(
+        OrderHistoryView::select(
             'id',
             'is_ignored',
             'sub_total',
@@ -341,7 +342,7 @@ trait Stage6PrepareAdvanceData
     protected function prepareStoreReservationDetails()
     {
         /*Count reservation received amount*/
-        StoreReservation::where('store_id', $this->storeId)
+        ReservationRevenueView::where('store_id', $this->storeId)
             ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
                 $qDate->whereDate('paid_on', $this->date);
             })
@@ -356,7 +357,7 @@ trait Stage6PrepareAdvanceData
                 }
             });
 
-        StoreReservation::where('store_id', $this->storeId)
+        ReservationRevenueView::where('store_id', $this->storeId)
            ->where('is_refunded', 1)
            ->when($this->revenueType == RevenueTypes::DAILY, function ($qDate) {
                $qDate->whereDate('refund_price_date', $this->date);

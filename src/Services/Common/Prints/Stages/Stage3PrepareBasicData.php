@@ -203,6 +203,8 @@ trait Stage3PrepareBasicData
     protected function preparePayloadData()
     {
         $globalOrderId = $this->payload['order_id'];
+        $full_receipt_print = $this->payload['print_status'] ?? true;
+        $this->full_receipt_print = $full_receipt_print;
         if (strpos($globalOrderId, 'pos') !== false) {
             $this->additionalSettings['exclude_print_status'] = true;
             $order_id = explode('pos', $globalOrderId);

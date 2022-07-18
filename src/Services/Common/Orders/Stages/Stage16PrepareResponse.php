@@ -36,7 +36,7 @@ trait Stage16PrepareResponse
                 $this->setDumpDieValue($this->paymentResponse);
             }
         } else {
-            companionLogger('Not supported method found.!');
+            companionLogger('Not supported payment method found.!');
         }
     }
 
@@ -54,7 +54,7 @@ trait Stage16PrepareResponse
         Session::forget('kiosk-language');
         App::setLocale('nl');
 
-        if (isset($this->payload['bop']) && $this->payload['bop'] == 'wot@kiosk') {
+        if ($this->settings['bop_kiosk']['status']) {
             $this->setDumpDieValue($this->paymentResponse);
         } elseif ($this->createdOrder->payment_method_type == 'ccv' || $this->createdOrder->payment_method_type == 'wipay') {
             $response = [];
@@ -70,9 +70,11 @@ trait Stage16PrepareResponse
             } else {
                 $response['order_id'] = ''.substr($this->createdOrder->order_id, -2);
             }
+
+            $response['id'] = encrypt($this->createdOrder->id);
             $this->setDumpDieValue($response);
         } else {
-            companionLogger('Not supported method found.!');
+            companionLogger('Not supported payment method found.!');
         }
     }
 

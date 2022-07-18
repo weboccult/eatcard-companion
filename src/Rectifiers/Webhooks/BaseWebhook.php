@@ -4,6 +4,9 @@ namespace Weboccult\EatcardCompanion\Rectifiers\Webhooks;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Weboccult\EatcardCompanion\Enums\PrintMethod;
+use Weboccult\EatcardCompanion\Enums\PrintTypes;
+use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Exceptions\OrderNotFoundException;
 use Weboccult\EatcardCompanion\Models\GiftPurchaseOrder;
 use Weboccult\EatcardCompanion\Models\Order;
@@ -12,6 +15,12 @@ use Weboccult\EatcardCompanion\Models\PaymentDetail;
 use Weboccult\EatcardCompanion\Models\Store;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
+use Weboccult\EatcardCompanion\Services\Common\Prints\Generators\PaidOrderGenerator;
+use function Weboccult\EatcardCompanion\Helpers\__companionTrans;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
+use function Weboccult\EatcardCompanion\Helpers\eatcardEmail;
+use function Weboccult\EatcardCompanion\Helpers\eatcardPrint;
+use function Weboccult\EatcardCompanion\Helpers\updateEmailCount;
 
 /**
  * @author Darshit Hedpara
@@ -250,6 +259,53 @@ abstract class BaseWebhook
     {
         if (! empty($this->paymentId)) {
             $this->fetchedPaymentDetails = PaymentDetail::query()->findOrFail($this->paymentId);
+        }
+    }
+
+    protected function sendKioskOrderMailToOwner($status)
+    {
+        $isSendEmail = false;
+        if ($status == 'success' && $this->fetchedStore->store_email
+            && filter_var($this->fetchedStore->store_email, FILTER_VALIDATE_EMAIL)
+            && ($this->fetchedStore->is_notification)
+            && (! $this->fetchedStore->notificationSetting
+                || ($this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_dine_in_email))
+        ) {
+            $isSendEmail = true;
+        }
+
+        if ($status == 'failed' && $this->fetchedStore->notificationSetting && $this->fetchedStore->notificationSetting->is_cancel_payment_email) {
+            $isSendEmail = true;
+        }
+
+        if ($isSendEmail) {
+            try {
+                $content = eatcardPrint()
+                    ->generator(PaidOrderGenerator::class)
+                    ->method(PrintMethod::HTML)
+                    ->type(PrintTypes::MAIN)
+                    ->system(SystemTypes::KIOSK)
+                    ->payload([
+                        'order_id'          => ''.$this->fetchedOrder->id,
+                        'takeawayEmailType' => 'owner',
+                    ])
+                    ->generate();
+                $translatedSubject = __companionTrans('takeaway.takeaway_order_owner_mail_sub_subject');
+                eatcardEmail()
+                    ->entityType('takeaway_user_email')
+                    ->entityId($this->fetchedOrder->id)
+                    ->email($this->fetchedStore->store_email)
+                    ->mailType('Takeaway owner email')
+                    ->mailFromName($this->fetchedStore->store_name)
+                    ->subject($translatedSubject)
+                    ->content($content)
+                    ->dispatch();
+                updateEmailCount('success');
+                companionLogger('KIOSK order create mail success', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            } catch (Exception | Throwable $e) {
+                updateEmailCount('error');
+                companionLogger('KIOSK order create mail error', '#OrderId : '.$this->fetchedOrder->id, '#Email : '.$this->fetchedOrder->email, '#Error : '.$e->getMessage(), '#ErrorLine : '.$e->getLine(), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
+            }
         }
     }
 }
