@@ -141,7 +141,8 @@ class WorldLineWebhook extends BaseWebhook
                             try {
                                 $client = new Client();
                                 $domain = config('eatcardCompanion.system_endpoints.kiosk');
-                                $client->request('GET', $domain.'/print-admin/'.$store_id.'/'.$order['id'].'?print=1');
+                                companionLogger('Kiosk url for sqs print : '. $domain);
+                                $client->request('GET', $domain.'/print-admin/'.$store_id.'/'.$this->fetchedOrder->id.'?print=1');
                                 companionLogger('Kiosk auto order print from admin success'.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
                             } catch (\Exception $e) {
                                 companionLogger('kiosk print from admin - auto print queue send error'.$e->getMessage().', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
