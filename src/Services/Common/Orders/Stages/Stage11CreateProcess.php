@@ -8,6 +8,7 @@ use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\createDeliveryDetail;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 
@@ -44,12 +45,14 @@ trait Stage11CreateProcess
 
     protected function createOrder()
     {
+        companionLogger('--before order create data : ', $this->orderData);
         $this->createdOrder = Order::query()->create($this->orderData);
         $this->createdOrder->refresh();
     }
 
     protected function createOrderItems()
     {
+        companionLogger('--before order items create data : ', $this->orderItemsData);
         foreach ($this->orderItemsData as $key => $orderItem) {
             $orderItem['order_id'] = $this->createdOrder->id;
             $this->createdOrderItems[] = OrderItem::query()->insert($orderItem);
@@ -114,6 +117,13 @@ trait Stage11CreateProcess
                         'is_checkout'   => 1,
                         'checkout_from' => 'pos',
                     ]);
+                    companionLogger(
+                        'Reservation checkout done after order create',
+                        [
+                            'reservation_id' => $this->storeReservation->id,
+                            'order_id' => $this->createdOrder->id,
+                        ]
+                    );
                     ReservationServeRequest::query()
                         ->where('reservation_id', $reservation->id)
                         ->where('is_served', 0)

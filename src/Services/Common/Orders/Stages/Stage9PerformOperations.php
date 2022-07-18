@@ -108,6 +108,8 @@ trait Stage9PerformOperations
                     $this->couponRemainingPrice = 0;
                     $this->orderData['coupon_price'] = 0;
                 }
+
+                companionLogger('--Gift card applied : ', [$qrCode, $this->orderData['coupon_price']]);
             }
         }
     }
@@ -135,6 +137,7 @@ trait Stage9PerformOperations
                         ->whereIn('status', ['pending', 'paid', 'initialized'])
                         ->count();
                     if ($max_number_of_order <= $same_time_slot_order) {
+                        companionLogger('Order create validation error : maximum_order_limit ');
                         $this->setDumpDieValue(['maximum_order_limit' => 'Maximum order limit reach. Please select another time slot.']);
                     }
                 }

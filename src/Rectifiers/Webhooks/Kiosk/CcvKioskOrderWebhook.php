@@ -39,7 +39,7 @@ class CcvKioskOrderWebhook extends BaseWebhook
         $kiosk_api_key = $device->environment == 'test' ? $device->test_api_key : $device->api_key;
         $api_key = base64_encode($kiosk_api_key.':');
 
-        $request = $client->request('POST', $url.$createOrderUrl.$this->fetchedOrder->id, [
+        $request = $client->request('GET', $url.$createOrderUrl.$this->fetchedOrder->ccv_payment_ref, [
             'headers' => [
                 'Authorization' => 'Basic '.$api_key,
                 'Content-Type'  => 'application/json;charset=UTF-8',
@@ -61,14 +61,15 @@ class CcvKioskOrderWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         Cache::forget('get-order-'.$this->fetchedOrder->id);
         Cache::tags([ORDERS])->flush();
-
-        if ($response['status'] == 'success' && $oldStatus != 'paid') {
-            $notificationResponse = $this->sendNotifications();
-            if (isset($notificationResponse['exception'])) {
-                return $notificationResponse;
+        if ($response['status'] == 'success' || $response['status'] == 'failed') {
+            if ($response['status'] == 'success' && $oldStatus != 'paid') {
+                $notificationResponse = $this->sendNotifications();
+                if (isset($notificationResponse['exception'])) {
+                    return $notificationResponse;
+                }
+                $this->sendPrintJsonToSQS();
             }
-            $this->sendPrintJsonToSQS();
-            $this->sendTakeawayOwnerEmail();
+            $this->sendKioskOrderMailToOwner($response['status']);
         }
 
         return true;

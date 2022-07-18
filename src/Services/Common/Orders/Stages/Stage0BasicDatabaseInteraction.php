@@ -3,7 +3,6 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Order;
@@ -68,7 +67,7 @@ trait Stage0BasicDatabaseInteraction
 
     protected function setTakeawaySettingData()
     {
-        if ($this->system === SystemTypes::TAKEAWAY && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
+        if (($this->system === SystemTypes::TAKEAWAY || $this->system === SystemTypes::KIOSK) && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
             $storeId = $this->payload['store_id'];
             $takeawaySetting = Cache::tags([
                 FLUSH_ALL,
@@ -116,7 +115,8 @@ trait Stage0BasicDatabaseInteraction
                 KIOSK_DEVICES,
             ])
                 ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
-                    return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
+//                    return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
+                    return KioskDevice::query()->where('id', $deviceId)->where('store_id', $storeId)->first();
                 });
             if (! empty($device)) {
                 $this->device = $device;
@@ -144,7 +144,6 @@ trait Stage0BasicDatabaseInteraction
         }
 
         if ($this->system == SystemTypes::DINE_IN) {
-//            $session_id = Session::get('dine-reservation-id-'.$this->store->id.'-'.$this->table->id);
             $session_id = $this->payload['reservation_id'] ?? 0;
             if (! empty($session_id)) {
                 $reservation = StoreReservation::where('id', $session_id)->first();

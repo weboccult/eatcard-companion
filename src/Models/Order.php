@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function Weboccult\EatcardCompanion\Helpers\appDutchDate;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 
 class Order extends Model
 {
@@ -98,6 +99,33 @@ class Order extends Model
     ];
 
     protected $appends = ['full_name', 'generated_date'];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::created(function ($model) {
+            $msg = 'Order Created: id-'.$model->id.' for the store '.$model->store_id;
+            companionLogger($msg.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+        });
+        static::deleted(function ($model) {
+            $msg = 'Order Deleted: id-'.$model->id.' for the store '.$model->store_id.'';
+            companionLogger($msg.', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+        });
+        static::updated(function ($model) {
+            $dirty = $model->getDirty();
+            $oldData = $newData = [];
+            if (! empty($dirty)) {
+                foreach ($dirty as $field => $newdata) {
+                    $olddata = $model->getRawOriginal($field);
+                    $oldData['old'][$field] = $olddata;
+                    $newData['new'][$field] = $newdata;
+                }
+                $msg = 'Order Updated: id-'.$model->id.' for the store '.$model->store_id;
+                companionLogger($msg, $oldData, $newData, ', IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+            }
+        });
+    }
+
     /**
      * @var mixed
      */
