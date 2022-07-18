@@ -115,7 +115,7 @@ class WorldLineWebhook extends BaseWebhook
         $this->updateOrder($update_data);
         if ($this->orderType == 'order') {
             if (! empty($this->fetchedOrder)) {
-                if ($this->payload['status'] == 'final' && $this->payload['status'] == 'paid') {
+                if ($this->payload['status'] == 'final' && $update_data['status'] == 'paid') {
                     if (isset($this->fetchedOrder->parent_id) && $this->fetchedOrder->parent_id != '') {
                         StoreReservation::query()->where('id', $this->fetchedOrder->parent_id)->update([
                             'end_time'    => date('Y-m-d H:i:s'),
