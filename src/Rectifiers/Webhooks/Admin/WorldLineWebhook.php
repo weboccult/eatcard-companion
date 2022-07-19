@@ -38,13 +38,14 @@ class WorldLineWebhook extends BaseWebhook
         companionLogger('Current order type : '. $this->orderType);
         if ($this->orderType == 'sub_order') {
             $order = $this->fetchAndSetSubOrder($ssai);
-            companionLogger('Current sub order details : '. json_encode($order));
+            companionLogger('Current sub order details : '.json_encode($order));
         } else {
             $this->orderId = $order_id;
             $order = $this->fetchAndSetOrder();
         }
-        if (!empty($this->fetchedOrder) && !empty($this->fetchedOrder->paid_on) && $this->payload['status'] == 'final' && $this->payload['approved'] == 1) {
-        	companionLogger('If order status was already paid');
+        if (! empty($this->fetchedOrder) && ! empty($this->fetchedOrder->paid_on) && $this->payload['status'] == 'final' && $this->payload['approved'] == 1) {
+            companionLogger('If order status was already paid');
+
             return;
         }
         $force_refresh = 0;
@@ -86,7 +87,7 @@ class WorldLineWebhook extends BaseWebhook
         }
         $device = null;
         if ($this->orderType == 'sub_order') {
-        	companionLogger('If order type was sub order');
+            companionLogger('If order type was sub order');
             $parent_order = Order::with([
                 'orderItems',
                 'subOrders.subOrderItems',
@@ -162,7 +163,7 @@ class WorldLineWebhook extends BaseWebhook
         }
 
         if ($this->orderType == 'sub_order' && $update_data['status'] == 'paid') {
-	        companionLogger('If order type was sub order and status was paid');
+            companionLogger('If order type was sub order and status was paid');
             if (isset($parent_order->order_date)) {
                 $return_date = $parent_order->order_date;
                 $current_data = [
