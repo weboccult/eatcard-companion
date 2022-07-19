@@ -162,26 +162,26 @@ class WorldLineWebhook extends BaseWebhook
             }
         }
 
-        if ($this->orderType == 'sub_order' && $update_data['status'] == 'paid') {
-            companionLogger('If order type was sub order and status was paid');
-            if (isset($parent_order->order_date)) {
-                $return_date = $parent_order->order_date;
-            }
-            $current_data = [
-                'orderDate'       => $return_date,
-                'is_notification' => 1,
-            ];
-            try {
-                $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
-                if ($socket_data) {
-                    $redis = LRedis::connection();
-                    $redis->publish('new_order', json_encode($socket_data));
-                    companionLogger('worldline callback sub order socket : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-                }
-            } catch (\Exception $e) {
-                companionLogger('Error :- worldline callback sub order socket error '.$e->getMessage().'  : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-            }
-        }
+//        if ($this->orderType == 'sub_order' && $update_data['status'] == 'paid') {
+//            companionLogger('If order type was sub order and status was paid');
+//            if (isset($parent_order->order_date)) {
+//                $return_date = $parent_order->order_date;
+//            }
+//            $current_data = [
+//                'orderDate'       => $return_date,
+//                'is_notification' => 1,
+//            ];
+//            try {
+//                $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
+//                if ($socket_data) {
+//                    $redis = LRedis::connection();
+//                    $redis->publish('new_order', json_encode($socket_data));
+//                    companionLogger('worldline callback sub order socket : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+//                }
+//            } catch (\Exception $e) {
+//                companionLogger('Error :- worldline callback sub order socket error '.$e->getMessage().'  : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+//            }
+//        }
 
         return true;
     }
