@@ -172,7 +172,7 @@ class WorldLineWebhook extends BaseWebhook
                 'is_notification' => 1,
             ];
             try {
-                $socket_data = $this->sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
+                $socket_data = sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
                 if ($socket_data) {
                     $redis = LRedis::connection();
                     $redis->publish('new_order', json_encode($socket_data));
