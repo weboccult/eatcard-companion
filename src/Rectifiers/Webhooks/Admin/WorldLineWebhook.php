@@ -28,24 +28,24 @@ class WorldLineWebhook extends BaseWebhook
     public function handle()
     {
         companionLogger('Worldline webhook request started', 'OrderId #'.$this->orderId.' | OrderType : '.$this->orderType, 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
-        companionLogger('Worldline payload', json_encode(['payload' => $this->payload], JSON_PRETTY_PRINT), 'IP address : '.request()->ip(), 'browser : '.request()->header('User-Agent'));
         $array = explode('-', $this->payload['txid']);
         $ssai = $this->payload['ssai'];
         $order_id = $this->orderId;
         $store_id = $this->storeId;
         $is_last_payment = isset($array[3]) && (int) $array[3] == 1;
         $this->fetchAndSetStore();
-        companionLogger('Current order type : '. $this->orderType);
         if ($this->orderType == 'sub_order') {
             $order = $this->fetchAndSetSubOrder($ssai);
-            companionLogger('Current sub order details : '.json_encode($order));
         } else {
             $this->orderId = $order_id;
             $order = $this->fetchAndSetOrder();
         }
+	    $return_date = Carbon::now()->format('Y-m-d');
+	    if(isset($order['reservation_id']) && !is_null($order['reservation_id'])) {
+		    $reservation = StoreReservation::where('id', $order['reservation_id'])->first();
+		    $return_date = $reservation->getRawOriginal('res_date');
+	    }
         if (! empty($this->fetchedOrder) && ! empty($this->fetchedOrder->paid_on) && $this->payload['status'] == 'final' && $this->payload['approved'] == 1) {
-            companionLogger('If order status was already paid');
-
             return;
         }
         $force_refresh = 0;
@@ -105,7 +105,6 @@ class WorldLineWebhook extends BaseWebhook
                         'total_price'  => (float) $parent_order->total_price - (float) $total_coupon_price,
                     ]);
                     // payment fields not needed here as it will be only updatd while some amount is paid from
-                    // reservation iframe
                     if (isset($parent_order['parent_id']) && $parent_order['parent_id'] != '') {
                         StoreReservation::query()->where('id', $parent_order['parent_id'])->update([
                             'end_time'    => date('Y-m-d H:i:s'),
@@ -166,21 +165,21 @@ class WorldLineWebhook extends BaseWebhook
             companionLogger('If order type was sub order and status was paid');
             if (isset($parent_order->order_date)) {
                 $return_date = $parent_order->order_date;
-                $current_data = [
-                    'orderDate'       => $return_date,
-                    'is_notification' => 1,
-                ];
-                try {
-                    $socket_data = $this->sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
-                    if ($socket_data) {
-                        $redis = LRedis::connection();
-                        $redis->publish('new_order', json_encode($socket_data));
-                        companionLogger('worldline callback sub order socket : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-                    }
-                } catch (\Exception $e) {
-                    companionLogger('Error :- worldline callback sub order socket error '.$e->getMessage().'  : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
-                }
             }
+	        $current_data = [
+		        'orderDate'       => $return_date,
+		        'is_notification' => 1,
+	        ];
+	        try {
+		        $socket_data = $this->sendWebNotification($this->fetchedStore, $this->fetchedOrder->toArray(), $current_data, $is_last_payment);
+		        if ($socket_data) {
+			        $redis = LRedis::connection();
+			        $redis->publish('new_order', json_encode($socket_data));
+			        companionLogger('worldline callback sub order socket : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+		        }
+	        } catch (\Exception $e) {
+		        companionLogger('Error :- worldline callback sub order socket error '.$e->getMessage().'  : sub order id  : '.$order->id.'  IP address : '.request()->ip().', browser : '.request()->header('User-Agent'));
+	        }
         }
 
         return true;
