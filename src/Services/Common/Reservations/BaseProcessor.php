@@ -3,6 +3,7 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Reservations;
 
 use Exception;
+use phpDocumentor\Reflection\Types\Collection;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\KioskDevice;
 use Weboccult\EatcardCompanion\Models\Meal;
@@ -52,7 +53,7 @@ abstract class BaseProcessor implements BaseProcessorContract
     /** @var Meal|null|object */
     protected ?Meal $meal;
 
-    /** @var null|object */
+    /** @var null|object| Collection */
     protected $slot = null;
 
     /** @var StoreReservation|null|object */

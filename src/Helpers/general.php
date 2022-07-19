@@ -28,6 +28,7 @@ use Weboccult\EatcardCompanion\Models\ReservationEvent;
 use Weboccult\EatcardCompanion\Models\ReservationOrderItem;
 use Weboccult\EatcardCompanion\Models\ReservationTable;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
+use Weboccult\EatcardCompanion\Models\StoreSlot;
 use Weboccult\EatcardCompanion\Models\SubCategory;
 use Weboccult\EatcardCompanion\Models\Supplement;
 use Weboccult\EatcardCompanion\Models\TakeawaySetting;
@@ -2390,5 +2391,28 @@ if (! function_exists('undoCheckIn')) {
         DineinCart::query()->where('reservation_id', $reservation->id)->delete();
 
         sendResWebNotification($reservation->id, $reservation->store_id, 'undo_check_in');
+    }
+}
+
+if (! function_exists('cloneSlot')) {
+    /**
+     * @param $store
+     * @param $meal
+     *
+     * @return StoreSlot
+     */
+    function cloneSlot($store, $meal): StoreSlot
+    {
+        $cloneSlot = new StoreSlot();
+        $cloneSlot->id = 0;
+        $cloneSlot->store_id = $store->id;
+        $cloneSlot->from_time = \Carbon\Carbon::now()->format('G:i');
+        $cloneSlot->max_entries = 'Unlimited';
+        $cloneSlot->meal_id = $meal->id;
+        $cloneSlot->store_weekdays_id = null;
+        $cloneSlot->is_slot_disabled = 0;
+        $cloneSlot->meal_group_id = null;
+
+        return $cloneSlot;
     }
 }

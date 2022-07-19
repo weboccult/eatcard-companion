@@ -13,6 +13,7 @@ use Weboccult\EatcardCompanion\Models\StoreSlot;
 use Weboccult\EatcardCompanion\Models\StoreSlotModified;
 use Weboccult\EatcardCompanion\Models\Table;
 use Weboccult\EatcardCompanion\Services\Common\Reservations\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\cloneSlot;
 
 /**
  * @description Stag 0
@@ -94,29 +95,19 @@ trait Stage0BasicDatabaseInteraction
         $slotId = $this->payload['slot_id'] ?? 0;
         $slot = [];
 
-        if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
-            $this->store->reservation_tickets_data = json_decode($this->store->reservation_tickets_data, true);
-            $this->allowNowSlot = ! empty($this->store->reservation_tickets_data['allow_booking_for_current_time_only'] ?? 0);
-        }
+//        if (isset($this->store->reservation_tickets_data) && ! empty($this->store->reservation_tickets_data)) {
+//            $this->store->reservation_tickets_data = json_decode($this->store->reservation_tickets_data, true);
+//            $this->allowNowSlot = ! empty($this->store->reservation_tickets_data['allow_booking_for_current_time_only'] ?? 0);
+//        }
 
-        if ($this->payload['res_date'] != Carbon::now()->format('Y-m-d')) {
-            $this->allowNowSlot = false;
-        }
+//        if ($this->payload['res_date'] != Carbon::now()->format('Y-m-d')) {
+//            $this->allowNowSlot = false;
+//        }
 
-        if ($this->allowNowSlot && empty($slotId)) {
-            $this->slot = (object) ([
-                            'id' => 0,
-                            'store_id' => $this->store->id,
-                            'from_time' => Carbon::now()->format('G:i'),
-                            'max_entries' => 'Unlimited',
-                            'meal_id' => $this->meal->id,
-                            'store_weekdays_id' => null,
-                            'is_slot_disabled' => 0,
-                            'meal_group_id' => null,
-
-                        ]);
+        if (empty($slotId)) {
+            $this->slot = cloneSlot($this->store, $this->meal);
             $this->reservationData['slot_id'] = null;
-        } elseif (! empty($slotId)) {
+        } else {
             if ($this->slotType == 'StoreSlot') {
                 $slot = StoreSlot::query()->where('id', $slotId)->first();
             }

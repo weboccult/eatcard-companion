@@ -11,14 +11,7 @@
             -webkit-text-size-adjust: 100% !important;
             -ms-text-size-adjust: 100% !important;
             -webkit-font-smoothing: antialiased !important;
-            font-family:Verdana, Arial, Tahoma;
-        }
-        *{
-            margin: 0 auto;
-            padding: 0;
-            -webkit-box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            box-sizing: border-box;
+            /*font-family:Verdana, Arial, Tahoma;*/
         }
         img {
             border: 0 !important;
@@ -86,7 +79,7 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container" style="margin: 0 auto;padding: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;box-sizing: border-box; font-family: Verdana, Arial, Tahoma !important;">
     <div class="revenue-print-ticket">
         <div class="" style="text-align: center">
             <p class="revenue-print-ticket__block" style="font-size: 12px">Maandinkomen</p>
