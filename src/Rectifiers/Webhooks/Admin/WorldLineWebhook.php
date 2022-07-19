@@ -35,6 +35,7 @@ class WorldLineWebhook extends BaseWebhook
         $store_id = $this->storeId;
         $is_last_payment = isset($array[3]) && (int) $array[3] == 1;
         $this->fetchAndSetStore();
+        companionLogger('Current order type : '. $this->orderType);
         if ($this->orderType == 'sub_order') {
             $order = $this->fetchAndSetSubOrder($ssai);
             companionLogger('Current sub order details : '. json_encode($order));
