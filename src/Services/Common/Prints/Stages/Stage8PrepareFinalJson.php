@@ -166,6 +166,12 @@ trait Stage8PrepareFinalJson
                 //                            ($this->order['is_asap'] ? ' | ZSM' : ' om '.($this->order['order_time'] ?? ''));
                 $titleTime = Carbon::parse($this->order['paid_on'])->format('d-m-Y H:i') ?? '';
                 $pickupTime = ($this->order['order_time']) ? ($this->order['is_asap'] ? 'ZSM' : $this->order['order_time']) : '';
+
+                if (! empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice') {
+                    $title1 = 'On Invoice';
+                    $title2 = $this->reservation->company;
+                    $title3 = $this->order['full_name'] ?? '';
+                }
             }
 
             // for reservation order need to add table name prefix before name | skip for dine-in guest orders (is_dine_in)
@@ -206,6 +212,11 @@ trait Stage8PrepareFinalJson
                     }
                     $timeTitle = 'Betaald op:';
                     $titleTime = Carbon::parse($this->reservation['paid_on'])->format('Y-m-d H:i') ?? '';
+                }
+
+                if (! empty($this->reservation) && $this->reservation->on_invoice == 1) {
+                    $title2 = $this->reservation->company;
+                    $title3 = $this->reservation['voornaam'] ?? '';
                 }
             }
 
@@ -248,13 +259,13 @@ trait Stage8PrepareFinalJson
             }
         }
 
-        if (! empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice') {
-            $title1 = 'On Invoice';
-            $this->jsonFormatFullReceipt['titteTime'][] = [
-                'key2'   => $this->reservation->company,
-                'value2' => '',
-            ];
-        }
+//        if (! empty($this->reservation) && $this->reservation->on_invoice == 1 && $this->order['method'] == 'on_invoice') {
+//            $title1 = 'On Invoice';
+//            $this->jsonFormatFullReceipt['titteTime'][] = [
+//                'key2'   => $this->reservation->company,
+//                'value2' => '',
+//            ];
+//        }
 
         if (! empty($titleTime)) {
             $this->jsonFormatFullReceipt['titteTime'][] = [
