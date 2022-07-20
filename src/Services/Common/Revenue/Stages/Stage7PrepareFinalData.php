@@ -171,6 +171,24 @@ trait Stage7PrepareFinalData
 
         $this->finalJson['summarytop'][] = $summaryTop;
 
+        // on invoice amount-------------------------------------------------------------------------------------------------
+        $summaryTop = [];
+        $summaryTop['title'] = __companionPrintTrans('general.on_invoice');
+
+        $detailJson['key'] = __companionPrintTrans('general.on_invoice');
+        $detailJson['value'] = '€'.($this->finalData['total_on_invoice_amount']);
+        $summaryTop['details'][] = $detailJson;
+
+        $detailJson['key'] = 'line';
+        $detailJson['value'] = '1';
+        $summaryTop['details'][] = $detailJson;
+
+        $totalJson['key1'] = __companionPrintTrans('general.total_cash_registered');
+        $totalJson['value1'] = '€'.($this->finalData['total_on_invoice_amount']);
+        $summaryTop['total'][] = $totalJson;
+
+        $this->finalJson['summarytop'][] = $summaryTop;
+
         // online/card payment -----------------------------------------------------------------------------------------
         $summaryTop = [];
         $summaryTop['title'] = __companionPrintTrans('general.wireless_payment');
