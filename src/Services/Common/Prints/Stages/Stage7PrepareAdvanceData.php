@@ -176,8 +176,8 @@ trait Stage7PrepareAdvanceData
         if ($this->systemType == SystemTypes::KIOSK && in_array(SystemTypes::KIOSK, $device_print_array) && $this->full_receipt_print == false) {
             $fullReceipt = '0';
         }
-        if($this->systemType == SystemTypes::POS && in_array(SystemTypes::POS, $device_print_array) && $this->full_receipt_print == true) {
-        	$fullReceipt = '0';
+        if ($this->systemType == SystemTypes::POS && in_array(SystemTypes::POS, $device_print_array) && $this->full_receipt_print == true) {
+            $fullReceipt = '0';
         }
         $excludeSystemName = '';
 
