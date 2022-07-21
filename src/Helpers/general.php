@@ -1558,6 +1558,8 @@ if (! function_exists('extractRevenuePayload')) {
             $requestType = '';
         }
 
+        $insight = $payload['insight'] ?? false;
+
         return [
             'generator' => $generator,
             'requestType' => $requestType,
@@ -1565,6 +1567,7 @@ if (! function_exists('extractRevenuePayload')) {
             'date' => $date,
             'month' => $month,
             'year' => $year,
+            'insight' => $insight,
         ];
     }
 }

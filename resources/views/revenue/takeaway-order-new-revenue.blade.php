@@ -5,6 +5,7 @@
     <title>Document</title>
 
     <style type="text/css" media="all">
+        @if(!empty($data['insight']))
         body {
             margin: 0 auto !important;
             padding: 0 !important;
@@ -64,6 +65,124 @@
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
+        @else
+            @media print {
+            		body {
+            			margin: 0 auto !important;
+            			padding: 0 !important;
+            			-webkit-text-size-adjust: 100% !important;
+            			-ms-text-size-adjust: 100% !important;
+            			-webkit-font-smoothing: antialiased !important;
+            			font-family:Verdana, Arial, Tahoma;
+            		}
+            		*{
+            			margin: 0 auto;
+            			padding: 0;
+            			-webkit-box-sizing: border-box;
+            			-moz-box-sizing: border-box;
+            			box-sizing: border-box;
+            		}
+            		img {
+            			border: 0 !important;
+            			outline: none !important;
+            		}
+            		p {
+            			margin: 0px !important;
+            			padding: 0px !important;
+            		}
+            		table {
+            			border-collapse: collapse;
+            			mso-table-lspace: 0px;
+            			mso-table-rspace: 0px;
+            		}
+            		td, a, span {
+            			border-collapse: collapse;
+            			mso-line-height-rule: exactly;
+            		}
+            		a[x-apple-data-detectors] {
+            			color: inherit !important;
+            			text-decoration: none !important;
+            			font-size: inherit !important;
+            			font-family: inherit !important;
+            			font-weight: inherit !important;
+            			line-height: inherit !important;
+            		}
+            	    .revenue-print-ticket{
+            		    width: 100%;
+            		    height: auto;
+            		    position: relative;
+            		    max-width: 300px;
+            		    padding: 13px 0 30px;
+            		    margin: 0 auto;
+            		    font-size: 12px;
+            		    line-height: 15px;
+            		    font-weight: 400;
+            	    }
+            	    .revenue-print-ticket h3{
+            		    font-size: 14px;
+            		    line-height: 16px;
+            		    font-weight: 700;
+            		    margin: 0 auto;
+            	    }
+            	    .revenue-print-ticket__top{
+            		    border-bottom: 1px solid #000;
+            		    text-align: center;
+            		    padding-bottom: 10px;
+            		    margin-bottom: 10px;
+            	    }
+            	    .revenue-print-ticket__top h2{
+            		    font-size: 24px;
+            		    line-height: 24px;
+            		    font-weight: 700;
+            		    margin-bottom: 8px;
+            	    }
+            	    .revenue-print-ticket__top span{
+            		    font-size: 14px;
+            		    line-height: 20px;
+            		    font-weight: 400;
+            		    display: block;
+            	    }
+            	    .revenue-print-ticket__day-info{
+            		    border-bottom: 1px solid #000;
+            		    padding-bottom: 10px;
+            		    margin-bottom: 10px;
+            	    }
+            	    .revenue-print-ticket__block{
+            		    border-bottom: 1px dashed #000;
+            		    padding-bottom: 10px;
+            		    margin-bottom: 10px;
+            	    }
+               	    .revenue-print-ticket__block.border-solid{
+            	   	    border-bottom: 1px solid #000;
+            	   	    }
+
+            		.revenue-print-ticket__block span{
+            			float: right;
+            			width: 30%;
+            			text-align: right;
+            		}
+            		.revenue-print-ticket__block .total-row{
+            			padding-top: 6px;
+            			margin-top: 6px;
+            		}
+            		.revenue-print-ticket__block .prices-total{
+            			position: relative;
+            			border-top: 1px solid #000;
+            			padding-top: 5px;
+            			margin-top: -6px;
+            		}
+            		.revenue-print-ticket__block .price-overall-total{
+            			padding-top: 14px;
+            		}
+            		.revenue-print-ticket__table-wrap{
+            			border-bottom: 1px dashed #000;
+            			padding-bottom: 10px;
+            			margin-bottom: 10px;
+            		}
+                }
+        @endif
+
+
 
 
     </style>
