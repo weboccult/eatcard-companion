@@ -73,6 +73,7 @@ trait Stage7PrepareFinalData
         $this->finalData['tip_amount'] = changePriceFormat($this->calcData['total_tip_amount']);
 
         $this->finalData['avg'] = changePriceFormat($this->calcData['final_avg']);
+        $this->finalData['insight'] = $this->payload['insight'] ?? false;
 
         foreach ($this->calcData['kioskTotal'] as $key => $value) {
             $this->finalData['kioskTotal'][$key] = changePriceFormat($value);
@@ -360,6 +361,10 @@ trait Stage7PrepareFinalData
             $detailJson['value'] = '€'.($this->finalData['kioskTotal'][$device->name]);
             $summaryBottom['details'][] = $detailJson;
         }
+
+        $detailJson['key'] = __companionPrintTrans('general.grab_and_go');
+        $detailJson['value'] = '€'.($this->finalData['grab_and_go_total_amount']);
+        $summaryBottom['details'][] = $detailJson;
 
         $detailJson['key'] = __companionPrintTrans('general.dine_in_revenue');
         $detailJson['value'] = '€'.($this->finalData['total_dine_in']);
