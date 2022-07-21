@@ -97,8 +97,8 @@ trait Stage8PrepareAdvanceData
             }
         }
 
-        if($this->system === SystemTypes::POS) {
-	        $this->orderData['is_paylater_order'] = $this->payload['paylater_order_id'] != null ? 1 : 0;
+        if ($this->system === SystemTypes::POS) {
+            $this->orderData['is_paylater_order'] = $this->payload['paylater_order_id'] != null ? 1 : 0;
         }
 
         if ($this->system === SystemTypes::TAKEAWAY) {
