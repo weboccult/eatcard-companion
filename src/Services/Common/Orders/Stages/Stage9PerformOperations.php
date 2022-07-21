@@ -36,7 +36,7 @@ trait Stage9PerformOperations
                     ->update(['edit_count' => $edit_order_count + 1]);
                 StoreReservation::withTrashed()->where('id', $this->storeReservation->ref_id)->update([
                     'dinein_price_id'  => $this->storeReservation->dinein_price_id,
-                    'all_you_eat_data' => $this->storeReservation->all_you_eat_data,
+                    'all_you_eat_data' => $this->storeReservation->all_you_eat_data ?? null,
                 ]);
                 if ($this->payload['method'] == 'cash') {
                     Order::query()->where('ref_id', $this->payload['ref_id'])->update(['is_ignored' => 1]);
@@ -56,20 +56,21 @@ trait Stage9PerformOperations
             return;
         }
 
-        if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id']) && ! empty($this->storeReservation)) {
-            $last_order = Order::query()
-                ->where('parent_id', $this->payload['reservation_id'])
-                ->orderBy('id', 'desc')
-                ->first();
-            $first_order = Order::query()->where('parent_id', $this->payload['reservation_id'])->first();
-            if (isset($first_order) && isset($first_order->order_id) && isset($last_order) && isset($last_order->id)) {
-                $this->orderData['order_id'] = $first_order->order_id;
-                $this->orderData['ref_id'] = $last_order->id;
-                $this->orderData['is_base_order'] = 1;
-
-                $this->setEffect(AfterEffectOrderTypes::UNDO_OPERATION_REQUESTED_EFFECTS);
-            }
-        }
+        /*This logic set on Stage8PrepareAdvanceData => prepareEditOrderDetails*/
+//        if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id']) && ! empty($this->storeReservation)) {
+//            $last_order = Order::query()
+//                ->where('parent_id', $this->payload['reservation_id'])
+//                ->orderBy('id', 'desc')
+//                ->first();
+//            $first_order = Order::query()->where('parent_id', $this->payload['reservation_id'])->first();
+//            if (isset($first_order) && isset($first_order->order_id) && isset($last_order) && isset($last_order->id)) {
+//                $this->orderData['order_id'] = $first_order->order_id;
+//                $this->orderData['ref_id'] = $last_order->id;
+//                $this->orderData['is_base_order'] = 1;
+//
+//                $this->setEffect(AfterEffectOrderTypes::UNDO_OPERATION_REQUESTED_EFFECTS);
+//            }
+//        }
     }
 
     protected function couponOperation()

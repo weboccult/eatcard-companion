@@ -73,11 +73,18 @@ trait Stage11CreateProcess
     protected function markOtherOrderAsIgnore()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-            if (! empty($this->storeReservation)) {
-                Order::query()
-                    ->where('parent_id', $this->storeReservation->id)
-                    ->whereNotIn('id', [$this->createdOrder->id])
-                    ->update(['is_base_order' => 0, 'is_ignored' => 1]);
+            if (!empty($this->storeReservation)) {
+            	if(isset($this->for_undo_order) && $this->for_undo_order) {
+		            Order::query()
+			            ->where('parent_id', $this->storeReservation->id)
+			            ->whereNotIn('id', [$this->createdOrder->id])
+			            ->update(['is_base_order' => 0, 'is_ignored' => 1]);
+	            } else {
+		            Order::query()
+			            ->where('parent_id', $this->storeReservation->id)
+			            ->whereNotIn('id', [$this->createdOrder->id])
+			            ->update(['is_ignored' => 1]);
+	            }
             }
         }
     }
