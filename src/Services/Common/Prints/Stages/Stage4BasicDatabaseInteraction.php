@@ -54,7 +54,7 @@ trait Stage4BasicDatabaseInteraction
         }
 
         $subOrder = SubOrder::query()
-	                ->with('parentOrder')
+                    ->with('parentOrder')
                     ->with([
                             'subOrderItems' => function ($q1) {
                                 $q1->with(['product' => function ($q2) {
