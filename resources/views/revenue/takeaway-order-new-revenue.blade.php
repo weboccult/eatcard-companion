@@ -333,18 +333,18 @@
                             </div>
                             {{--                            <div style="border-bottom: 1px dashed #000; margin-top: 138px"></div>--}}
                             @if((isset($data['third_party_print_status']) && $data['third_party_print_status']) && $data['on_the_house_status'])
-                                <div style="border-bottom: 1px dashed #000; margin-top: 263px"></div>
+                                <div style="border-bottom: 1px dashed #000; margin-top: 268px"></div>
                             @elseif((isset($data['third_party_print_status']) && $data['third_party_print_status']))
-                                <div style="border-bottom: 1px dashed #000; margin-top: 253px"></div>
+                                <div style="border-bottom: 1px dashed #000; margin-top: 256px"></div>
                             @elseif($data['on_the_house_status'])
-                                <div style="border-bottom: 1px dashed #000; margin-top: 230px"></div>
+                                <div style="border-bottom: 1px dashed #000; margin-top: 232px"></div>
                             @else
-                                <div style="border-bottom: 1px dashed #000; margin-top: 220px"></div>
+                                <div style="border-bottom: 1px dashed #000; margin-top: 221px"></div>
                             @endif
                         </div>
                         <div style="font-size: 11px;line-height: 12px;padding-top: 0px;"> {{-- 37 + 290 --}}
                             {{--@endif--}}
-                            <div style="padding-top: 15px">
+                            <div style="padding-top : {{ !empty($data['insight']) ? '15px' : '5px'}}">
                                 <div style="">
                                     <div style="display: inline-block;width: 23%">
                                         <p>@companionPrintTrans('general.percentage')</p>
@@ -358,7 +358,7 @@
                                         <p>€{{($data['total_9_without_tax_discount_subtotal'])}}</p>
                                         <p>€{{($data['total_21_without_tax_discount_subtotal'])}}</p>
                                     </div>
-                                    <div style="display: inline-block;width: 24%">
+                                    <div style="display: inline-block;width: 23%">
                                         <p>@companionPrintTrans('general.tax_amount')</p>
                                         <p>€0,00</p>
                                             <p>€{{($data['total_9_tax'])}}</p>
@@ -387,8 +387,8 @@
                         <div style="font-size: 11px;line-height: 12px;padding-top: 5px">
                             {{--@endif--}}
                             <h3>@companionPrintTrans('general.total_sales_per_channel')</h3>
-                            <div style="padding-top: 5px">
-                                <div style="display: inline-block;float: left">
+                            <div style="padding-top: 5px; width: 100%">
+                                <div style="display: inline-block;width: 51%; float: left">
                                     <p>@companionPrintTrans('general.takeaway'):</p>
                                     @foreach($store->kioskDevices as $device)
                                         <p>{{$device->name}}:</p>
@@ -405,9 +405,9 @@
                                     @endif
                                     <div style="border-bottom: 2px solid #fff; width: 85px;margin-left: 0px;margin-top: 3px;margin-bottom: 3px"></div>
                                     <p style="margin-top: 20px">@companionPrintTrans('general.total_sumup_from'):</p>
-                                    <div style="border-bottom: 2px solid #000;width: 122px;margin-top: 5px"></div>
+                                    <div style="border-bottom: 2px solid #000;width: 123px;margin-top: 5px"></div>
                                 </div>
-                                <div style="display: inline-block;text-align: right;float: right">
+                                <div style="display: inline-block;text-align: right;width: 49%; float:right;">
                                     <p>€{{($data['total_takeaway'])}}</p>
                                     @foreach($store->kioskDevices as $device)
                                         <p>€{{($data['kioskTotal'][$device->name])}}</p>
