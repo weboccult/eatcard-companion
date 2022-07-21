@@ -129,6 +129,11 @@ trait Stage3PrepareBasicData
         $aycePrice = getAycePrice($this->reservationData['all_you_eat_data']);
         $ayceDiscount = aycePersonDiscountCalculate($this->reservationData['all_you_eat_data']);
 
+        $discountType = $this->reservationData['all_you_eat_data']['discount']['discount_on'] ?? null;
+        if (!empty($discountType) && strtolower($discountType) === 'cart'){
+            $this->reservationData['ayce_discount_type'] = $discountType;
+        }
+
         $this->reservationData['total_price'] = $aycePrice - $ayceDiscount;
         $this->reservationData['original_total_price'] = $aycePrice;
         $this->reservationData['ayce_discount'] = $ayceDiscount;

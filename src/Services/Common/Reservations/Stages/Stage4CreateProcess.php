@@ -44,7 +44,7 @@ trait Stage4CreateProcess
             $tables = $this->payload['table_ids'] ?? [];
             $tableAvailabilityCheck = checkAnotherMeeting($tables, $this->createdReservation);
             if ($tableAvailabilityCheck) {
-                $this->setDumpDieValue(['error' => 'Currently, this table is available please try another one']);
+                $this->setDumpDieValue(['error' => 'Currently, this table is not available please try another one']);
             }
         }
     }

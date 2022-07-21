@@ -277,6 +277,13 @@ abstract class BaseReservationUpdate
             'ayce_discount'        => $ayceDiscount,
         ];
 
+        $discountType = $reservationAllYouEatData['discount']['discount_on'] ?? null;
+        if (!empty($discountType) && strtolower($discountType) === 'cart') {
+            $this->updatePayload['ayce_discount_type'] = $discountType;
+        }else{
+            $this->updatePayload['ayce_discount_type'] = null;
+        }
+
         $this->payableAmount = (float) (($this->allYouEatPrice - $ayceDiscount) - $this->reservation->total_price);
 
         companionLogger('----payableAmount | TotalAmount | allYouEatPrice-----', $this->payableAmount, $this->reservation->total_price, $this->allYouEatPrice);
@@ -327,7 +334,9 @@ abstract class BaseReservationUpdate
             StoreReservation::query()->find($this->reservation->id)->update($updateReservationData);
             $this->reservation->refresh();
         } else {
-            $this->updatePayload['original_total_price'] = $this->reservation->original_total_price + $this->payableAmount;
+            /*<--- add amount into original amount if ayce price is greater than original amount ---->*/
+            $amountAddIntoOriginal = $this->allYouEatPrice > $this->reservation->original_total_price ? $this->payableAmount : 0;
+            $this->updatePayload['original_total_price'] = $this->reservation->original_total_price + $amountAddIntoOriginal;
         }
 
         $this->isReAssignTable = checkTableMinMaxLimitAccordingToPerson($this->reservation, $this->payload);

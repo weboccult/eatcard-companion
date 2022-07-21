@@ -412,12 +412,22 @@ if (! function_exists('aycePersonDiscountCalculate')) {
     {
         $discount = 0;
         $discountData = $aycedata['discount']['ayce_data'] ?? null;
+        $isItemDiscountOrCartDiscount = $aycedata['discount']['discount_on'] ?? null;
 
         /*<--- not set any type of discount --->*/
-        if (empty($discountData)) {
+        if (empty($discountData) && empty($isItemDiscountOrCartDiscount)) {
             return $discount;
         }
 
+        if (strtolower($isItemDiscountOrCartDiscount) === 'cart'){
+            /*<--- get total price and calculate discount based on discount type --->*/
+            $totalAycePrice = getAycePrice($aycedata);
+            $discountData = $aycedata['discount'] ?? null;
+            $discountData = array_merge($discountData, ['total_ayce_amount' => $totalAycePrice]);
+            return calculateOfDiscount($discountData, '', 'cart');
+        }
+
+        /*<---- this all are used for item wise discount --->*/
         $dineInPrice = $aycedata['dinein_price'] ?? null;
         $ayce_no_of_adults = $aycedata['no_of_adults'] ?? null;
         $ayce_no_of_kids2 = $aycedata['no_of_kids2'] ?? null;
@@ -432,23 +442,28 @@ if (! function_exists('aycePersonDiscountCalculate')) {
         if (! empty($dineInPrice)) {
             if (! empty($ayce_no_of_adults) && ! empty($discount_no_of_adults)) {
                 /*<--- adult discount --->*/
+//                foreach ($discount_no_of_adults as $adult){
+//                    $discount += calculateOfDiscount($adult, $dineInPrice['price']);
+//                }
                 $discount += calculateOfDiscount($discountData['no_of_adults'], $dineInPrice['price']);
             }
 
             if (! empty($ayce_no_of_kids2) && ! empty($discount_no_of_kids2)) {
                 /*<--- kids2 discount --->*/
+//                foreach ($discount_no_of_kids2 as $kids2){
+//                    $discount += calculateOfDiscount($kids2, $dineInPrice['child_price_2']);
+//                }
                 $discount += calculateOfDiscount($discountData['no_of_kids2'], $dineInPrice['child_price_2']);
             }
 
-            /*<--- kids per year discount --->*/
             if (! empty($ayce_no_of_kids) && ! empty($discount_no_of_kids)) {
+            /*<--- kids per year discount --->*/
                 $price = $dineInPrice['child_price'];
                 $min_age = (int) ($dineInPrice['min_age'] ?? 0);
                 $kid_price = (float) ($dineInPrice['child_price'] ?? 0);
 
                 foreach ($discount_no_of_kids as $kids_age) {
                     if (! empty($ayce_is_per_year) && count($discount_no_of_kids) > 0) {
-//                        $price = ($kid_price * ((int) $kids_age['age']) - $min_age);
                         $price = ((((int) $kids_age['age']) - $min_age) + 1) * $kid_price;
                     }
 
@@ -456,8 +471,8 @@ if (! function_exists('aycePersonDiscountCalculate')) {
                 }
             }
 
-            /*<--- Dynamic kids discount --->*/
             if (! empty($dineInPrice['dynamic_prices'] ?? null) && ! empty($discount_dynm_kids)) {
+            /*<--- Dynamic kids discount --->*/
                 foreach ($discount_dynm_kids as $dynamic_prices) {
                     $dynamicPriceData = collect($dineInPrice['dynamic_prices'])->where('id', $dynamic_prices['id'])->first();
                     if ($dynamicPriceData) {
@@ -479,22 +494,39 @@ if (! function_exists('calculateOfDiscount')) {
      *
      * @return float|int|mixed
      */
-    function calculateOfDiscount($data, $aycePrice)
+    function calculateOfDiscount($data, $aycePrice, $discountOn = 'item')
     {
         $discountAmount = 0;
         $discountType = $data['discount_type'] ?? null;
-        if (empty($discountType)) {
+        if (empty($discountType) || empty($discountOn)) {
             return $discountAmount;
         }
 
-        $price = (float) ($aycePrice ?? 0);
-        $person = (int) ($data['count'] ?? 0);
-        $discount = $data['discount'] ?? 0;
+        switch (strtolower($discountOn)) {
+            case "cart": // total cart wise discount calculation
+                $totalAmountOfAyce = (float)($data['total_ayce_amount'] ?? 0);
+                $discount = $data['discount'] ?? 0;
 
-        if ($discountType == 'euro') {
-            $discountAmount = round(($person * $discount), 5);
-        } else {
-            $discountAmount = round(($person * $price * $discount) / 100, 5);
+                if ($discountType == 'euro') {
+                    $discountAmount = round(($totalAmountOfAyce - $discount), 5);
+                }else {
+                    $discountAmount = round(($totalAmountOfAyce * $discount) / 100, 5);
+                }
+                break;
+            case "item": // per person item wise discount calculation
+                $price = (float)($aycePrice ?? 0);
+                $person = (int)($data['count'] ?? 0);
+                $discount = $data['discount'] ?? 0;
+
+                if ($discountType == 'euro') {
+                    $discountAmount = round(($person * $discount), 5);
+                }else {
+                    $discountAmount = round(($person * $price * $discount) / 100, 5);
+                }
+
+                break;
+            default:
+                return $discountAmount;
         }
 
         return $discountAmount;
