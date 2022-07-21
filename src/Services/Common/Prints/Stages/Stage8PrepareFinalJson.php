@@ -185,10 +185,10 @@ trait Stage8PrepareFinalJson
                 if ($this->additionalSettings['is_print_exclude_email'] == 0) {
                     $title4 = $this->reservation['email'] ?? '';
                 }
-                if(strpos($this->advanceData['tableName'], 'Table') !== false) {
-	                $orderNo = $this->advanceData['tableName'];
+                if (strpos($this->advanceData['tableName'], 'Table') !== false) {
+                    $orderNo = $this->advanceData['tableName'];
                 } else {
-	                $orderNo = 'Table '.$this->advanceData['tableName'];
+                    $orderNo = 'Table '.$this->advanceData['tableName'];
                 }
                 $titleTime = '';
 
