@@ -2,7 +2,6 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
-use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Supplement;
