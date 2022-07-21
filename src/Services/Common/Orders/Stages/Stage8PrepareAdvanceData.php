@@ -34,7 +34,7 @@ trait Stage8PrepareAdvanceData
     protected function prepareOrderDiscount()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-            if (!empty($this->storeReservation)) {
+            if (! empty($this->storeReservation)) {
                 if (isset($this->storeReservation->discount_type) && isset($this->storeReservation->discount) && ! empty($this->storeReservation->discount) && (float) $this->storeReservation->discount > 0) {
                     $this->discountData['order_discount'] = $this->payload['order_discount'] = (float) $this->storeReservation->discount;
                     $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] = $this->storeReservation->discount_type == 'EURO' ? 1 : 0;
@@ -53,10 +53,10 @@ trait Stage8PrepareAdvanceData
             	$this->discountData['order_discount'] = $this->payload['order_discount'] ?? 0;
             	$this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ?? 0;
             }
-	        if(isset($this->payload['direct_order_discount_type']) && !is_null($this->payload['direct_order_discount_type'])) {
-		        $direct_discount_type = OrderDiscountType::query()->where('id', $this->payload['direct_order_discount_type'])->first();
-		        $this->orderData['direct_order_discount_type'] = $direct_discount_type->name;
-	        }
+            if (isset($this->payload['direct_order_discount_type']) && ! is_null($this->payload['direct_order_discount_type'])) {
+                $direct_discount_type = OrderDiscountType::query()->where('id', $this->payload['direct_order_discount_type'])->first();
+                $this->orderData['direct_order_discount_type'] = $direct_discount_type->name;
+            }
         }
         if ($this->system == SystemTypes::TAKEAWAY) {
             $this->discountData['order_discount'] = 0;
@@ -366,7 +366,7 @@ trait Stage8PrepareAdvanceData
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
                         $currentSup = collect($this->supplementData)->where('id', $i['id'])->first();
-						Log::info('Supplement data : '. json_encode($currentSup));
+
                         $supQty = $i['qty'] ?? 1;
                         $supVal = $i['val'] ?? 0;
                         $supTotalVal = $i['total_val'] ?? 0;
