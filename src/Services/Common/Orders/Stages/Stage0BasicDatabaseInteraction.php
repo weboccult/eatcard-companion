@@ -103,32 +103,32 @@ trait Stage0BasicDatabaseInteraction
     protected function setDeviceData()
     {
         if (isset($this->payload['device_id']) && ! empty($this->payload['device_id']) && isset($this->payload['store_id']) && ! empty($this->payload['store_id'])) {
-        	$deviceId = $this->payload['device_id'];
+            $deviceId = $this->payload['device_id'];
             if ($this->system === SystemTypes::KIOSK) {
                 $deviceId = phpDecrypt($this->payload['device_id']);
             }
             $storeId = $this->payload['store_id'];
-            if($this->system === SystemTypes::KIOSK) {
-	            $device = Cache::tags([
-		            FLUSH_ALL,
-		            FLUSH_POS,
-		            FLUSH_STORE_BY_ID.$storeId,
-		            KIOSK_DEVICES,
-	            ])
-		            ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
-			            //                    return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
-			            return KioskDevice::query()->where('id', $deviceId)->where('store_id', $storeId)->first();
-		            });
-            } elseif($this->system === SystemTypes::POS) {
-	            $device = Cache::tags([
-		            FLUSH_ALL,
-		            FLUSH_POS,
-		            FLUSH_STORE_BY_ID.$storeId,
-		            KIOSK_DEVICES,
-	            ])
-		            ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
-			            return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
-		            });
+            if ($this->system === SystemTypes::KIOSK) {
+                $device = Cache::tags([
+                    FLUSH_ALL,
+                    FLUSH_POS,
+                    FLUSH_STORE_BY_ID.$storeId,
+                    KIOSK_DEVICES,
+                ])
+                    ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
+                        //                    return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
+                        return KioskDevice::query()->where('id', $deviceId)->where('store_id', $storeId)->first();
+                    });
+            } elseif ($this->system === SystemTypes::POS) {
+                $device = Cache::tags([
+                    FLUSH_ALL,
+                    FLUSH_POS,
+                    FLUSH_STORE_BY_ID.$storeId,
+                    KIOSK_DEVICES,
+                ])
+                    ->remember('{eat-card}-companion-kiosk-device-with-code-'.$storeId.$deviceId, CACHING_TIME, function () use ($deviceId, $storeId) {
+                        return KioskDevice::query()->where('pos_code', $deviceId)->where('store_id', $storeId)->first();
+                    });
             }
             if (! empty($device)) {
                 $this->device = $device;

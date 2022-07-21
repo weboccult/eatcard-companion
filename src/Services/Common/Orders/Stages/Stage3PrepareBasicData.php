@@ -106,7 +106,7 @@ trait Stage3PrepareBasicData
         $this->orderData['order_time'] = Carbon::now()->format('H:i');
 
         // System wise condition goes here...
-        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && (isset($this->payload['reservation_id']) && !empty($this->payload['reservation_id']))) {
+        if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS]) && (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id']))) {
             $this->orderData['order_status'] = 'done';
             $this->orderData['is_picked_up'] = 1;
         }
