@@ -346,13 +346,13 @@
                             {{--@endif--}}
                             <div style="padding-top: 15px">
                                 <div style="">
-                                    <div style="display: inline-block;width: 24%">
+                                    <div style="display: inline-block;width: 23%">
                                         <p>@companionPrintTrans('general.percentage')</p>
                                         <p>0%</p>
                                         <p>9%</p>
                                         <p>21%</p>
                                     </div>
-                                    <div style="display: inline-block;width: 24%">
+                                    <div style="display: inline-block;width: 23%">
                                         <p>@companionPrintTrans('general.revenue_ex_tax')</p>
                                         <p>€{{ ($data['total_0_without_tax_subtotal']) }}</p>
                                         <p>€{{($data['total_9_without_tax_discount_subtotal'])}}</p>
@@ -364,7 +364,7 @@
                                             <p>€{{($data['total_9_tax'])}}</p>
                                         <p>€{{($data['total_21_tax'])}}</p>
                                     </div>
-                                    <div style="display: inline-block;width: 24%;text-align: right">
+                                    <div style="display: inline-block;width: 25%;text-align: right">
                                         <p>@companionPrintTrans('general.revenue_with_tax')</p>
                                         <p>€{{ ($data['total_0_without_tax_subtotal']) }}</p>
                                         <p>€{{($data['total_9_inc_tax_without_discount_subtotal'])}}</p>
@@ -374,7 +374,7 @@
                                 </div>
                             </div>
                             {{--                            <div style="border-bottom: 1px dashed #000; margin-top: 55px"></div>--}}
-                            <div style="border-bottom: 1px dashed #000; margin-top: 0px"></div>
+                            <div style="border-bottom: 1px dashed #000; margin-top: 5px"></div>
                         </div>
                         {{--                        <div style="font-size: 11px;line-height: 12px;padding-top: 360px">--}}
                         {{--@if((isset($data['third_party_print_status']) && $data['third_party_print_status']) && $data['on_the_house_status'])--}}
