@@ -185,8 +185,11 @@ trait Stage8PrepareFinalJson
                 if ($this->additionalSettings['is_print_exclude_email'] == 0) {
                     $title4 = $this->reservation['email'] ?? '';
                 }
-
-                $orderNo = 'Table '.$this->advanceData['tableName'];
+                if(strpos($this->advanceData['tableName'], 'Table') !== false) {
+	                $orderNo = $this->advanceData['tableName'];
+                } else {
+	                $orderNo = 'Table '.$this->advanceData['tableName'];
+                }
                 $titleTime = '';
 
                 if (in_array($this->systemType, [SystemTypes::KIOSKTICKETS, SystemTypes::POSTICKETS])) {

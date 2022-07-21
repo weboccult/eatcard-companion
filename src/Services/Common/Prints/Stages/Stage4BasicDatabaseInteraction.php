@@ -53,7 +53,8 @@ trait Stage4BasicDatabaseInteraction
             throw new SubOrderEmptyException();
         }
 
-        $subOrder = SubOrder::query()->has('parentOrder')
+        $subOrder = SubOrder::query()
+	                ->with('parentOrder')
                     ->with([
                             'subOrderItems' => function ($q1) {
                                 $q1->with(['product' => function ($q2) {
