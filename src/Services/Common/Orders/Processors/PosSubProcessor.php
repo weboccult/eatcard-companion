@@ -4,12 +4,12 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Processors;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\PaymentSplitTypes;
-use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Models\SubOrderItem;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
+use function Weboccult\EatcardCompanion\Helpers\companionLogger;
 use function Weboccult\EatcardCompanion\Helpers\sendResWebNotification;
 
 /**
@@ -52,7 +52,7 @@ class PosSubProcessor extends BaseProcessor
 
     protected function createOrder()
     {
-    	companionLogger('Sub order create data : '. json_encode($this->orderData, JSON_PRETTY_PRINT));
+        companionLogger('Sub order create data : '.json_encode($this->orderData, JSON_PRETTY_PRINT));
         $this->createdOrder = SubOrder::query()->create($this->orderData);
     }
 
@@ -115,19 +115,19 @@ class PosSubProcessor extends BaseProcessor
                 $this->orderData['total_price'] = ($this->parentOrder->total_price) ? ($this->parentOrder->total_price / $this->parentOrder->payment_split_persons) : 0;
                 $this->orderData['total_price'] = floor($this->orderData['total_price'] * 100) / 100;
             }
-	        $total_21_amount = 0;
-	        $total_21_product_deposit = 0;
-	        collect($this->parentOrder->orderItems)->each(function ($q) use(&$total_21_amount, &$total_21_product_deposit){
-		        if($q->tax_percentage == 21){
-			        $total_21_amount += $q->total_price - $q->statiege_deposite_total;
-			        $total_21_product_deposit += $q->statiege_deposite_total;
-		        };
-	        });
-	        $total_9_amount = $this->parentOrder->total_price - $total_21_amount-$this->parentOrder->statiege_deposite_total - $this->parentOrder->tip_amount;
+            $total_21_amount = 0;
+            $total_21_product_deposit = 0;
+            collect($this->parentOrder->orderItems)->each(function ($q) use (&$total_21_amount, &$total_21_product_deposit) {
+                if ($q->tax_percentage == 21) {
+                    $total_21_amount += $q->total_price - $q->statiege_deposite_total;
+                    $total_21_product_deposit += $q->statiege_deposite_total;
+                }
+            });
+            $total_9_amount = $this->parentOrder->total_price - $total_21_amount - $this->parentOrder->statiege_deposite_total - $this->parentOrder->tip_amount;
 
-	        $total_9_amount = ($total_9_amount / $this->parentOrder->payment_split_persons);
-	        $total_21_amount = ($total_21_amount / $this->parentOrder->payment_split_persons);
-	        $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total / $this->parentOrder->payment_split_persons);
+            $total_9_amount = ($total_9_amount / $this->parentOrder->payment_split_persons);
+            $total_21_amount = ($total_21_amount / $this->parentOrder->payment_split_persons);
+            $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total / $this->parentOrder->payment_split_persons);
 
 	        $this->orderData['alcohol_product_total'] = $total_21_amount;
 	        $this->orderData['normal_product_total'] = $total_9_amount;
@@ -145,18 +145,18 @@ class PosSubProcessor extends BaseProcessor
     private function customSplitLogic()
     {
         $amount = $this->payload['amount'];
-        if(isset($this->parentOrder->total_price)) {
-	        $total_amount = $this->parentOrder->total_price;
+        if (isset($this->parentOrder->total_price)) {
+            $total_amount = $this->parentOrder->total_price;
 
-	        $total_21_amount = 0;
-	        $total_21_product_deposit = 0;
-	        collect($this->parentOrder->orderItems)->each(function ($q) use(&$total_21_amount, &$total_21_product_deposit){
-		        if($q->tax_percentage == 21){
-			        $total_21_amount += $q->total_price - $q->statiege_deposite_total;
-			        $total_21_product_deposit += $q->statiege_deposite_total;
-		        };
-	        });
-	        $total_9_amount = $this->parentOrder->total_price - $total_21_amount - $this->parentOrder->statiege_deposite_total - $this->parentOrder->tip_amount;
+            $total_21_amount = 0;
+            $total_21_product_deposit = 0;
+            collect($this->parentOrder->orderItems)->each(function ($q) use (&$total_21_amount, &$total_21_product_deposit) {
+                if ($q->tax_percentage == 21) {
+                    $total_21_amount += $q->total_price - $q->statiege_deposite_total;
+                    $total_21_product_deposit += $q->statiege_deposite_total;
+                }
+            });
+            $total_9_amount = $this->parentOrder->total_price - $total_21_amount - $this->parentOrder->statiege_deposite_total - $this->parentOrder->tip_amount;
 
 	        //division index
 	        $dIndex = $amount / $total_amount;
@@ -174,9 +174,9 @@ class PosSubProcessor extends BaseProcessor
 	        $this->orderData['total_price'] = ($this->parentOrder->total_price) ? round($this->parentOrder->total_price * $dIndex, 2) : 0;
 	        $this->orderData['total_price'] = floor($this->orderData['total_price'] * 100) / 100;
 
-	        $total_9_amount = ($total_9_amount * $dIndex);
-	        $total_21_amount = ($total_21_amount * $dIndex);
-	        $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total * $dIndex);
+            $total_9_amount = ($total_9_amount * $dIndex);
+            $total_21_amount = ($total_21_amount * $dIndex);
+            $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total * $dIndex);
 
 	        $this->orderData['alcohol_product_total'] = $total_21_amount ;
 	        $this->orderData['normal_product_total'] = $total_9_amount;

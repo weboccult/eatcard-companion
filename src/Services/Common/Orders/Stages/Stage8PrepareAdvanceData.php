@@ -51,8 +51,8 @@ trait Stage8PrepareAdvanceData
                     }
                 }
             } else {
-            	$this->discountData['order_discount'] = $this->payload['order_discount'] ?? 0;
-            	$this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ?? 0;
+                $this->discountData['order_discount'] = $this->payload['order_discount'] ?? 0;
+                $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ?? 0;
             }
             if (isset($this->payload['direct_order_discount_type']) && ! is_null($this->payload['direct_order_discount_type'])) {
                 $direct_discount_type = OrderDiscountType::query()->where('id', $this->payload['direct_order_discount_type'])->first();
@@ -303,8 +303,7 @@ trait Stage8PrepareAdvanceData
                         $productPriceTypeForLog = 'al-a-cate-pieces';
                     }
                 }
-            }
-            elseif ($this->system === SystemTypes::TAKEAWAY) {
+            } elseif ($this->system === SystemTypes::TAKEAWAY) {
                 $product_price = $product->price;
                 $product_price = (! is_null($product->discount_price) && $product->discount_show && ($this->orderData['order_type'] == 'pickup' || $this->orderData['order_type'] == 'delivery')) ? $product->discount_price : $product_price;
                 /*discount related calculation based on from and to date*/
@@ -694,7 +693,7 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
             }
         }
-	    if ($this->system == SystemTypes::TAKEAWAY) {
+        if ($this->system == SystemTypes::TAKEAWAY) {
             if ($this->settings['delivery_fee']['status'] == true) {
                 $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['delivery_fee']['value'];
