@@ -3,9 +3,11 @@
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Enums\AfterEffectOrderTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Order;
+use Weboccult\EatcardCompanion\Models\OrderDiscountType;
 use Weboccult\EatcardCompanion\Models\SubCategory;
 use Weboccult\EatcardCompanion\Models\SubOrder;
 use Weboccult\EatcardCompanion\Services\Common\Orders\BaseProcessor;
@@ -32,7 +34,7 @@ trait Stage8PrepareAdvanceData
     protected function prepareOrderDiscount()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-            if (! empty($this->storeReservation)) {
+            if (!empty($this->storeReservation)) {
                 if (isset($this->storeReservation->discount_type) && isset($this->storeReservation->discount) && ! empty($this->storeReservation->discount) && (float) $this->storeReservation->discount > 0) {
                     $this->discountData['order_discount'] = $this->payload['order_discount'] = (float) $this->storeReservation->discount;
                     $this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] = $this->storeReservation->discount_type == 'EURO' ? 1 : 0;
@@ -47,7 +49,14 @@ trait Stage8PrepareAdvanceData
                         }
                     }
                 }
+            } else {
+            	$this->discountData['order_discount'] = $this->payload['order_discount'];
+            	$this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'];
             }
+	        if(isset($this->payload['direct_order_discount_type']) && !is_null($this->payload['direct_order_discount_type'])) {
+		        $direct_discount_type = OrderDiscountType::query()->where('id', $this->payload['direct_order_discount_type'])->first();
+		        $this->orderData['direct_order_discount_type'] = $direct_discount_type->name;
+	        }
         }
         if ($this->system == SystemTypes::TAKEAWAY) {
             $this->discountData['order_discount'] = 0;
@@ -665,6 +674,7 @@ trait Stage8PrepareAdvanceData
             $this->orderData['normal_sub_total'] += $product_total - $current_sub;
             $this->orderData['total_tax'] += $current_sub;
             $this->orderData['total_price'] += $product_total;
+            companionLogger('Total price fenil : '. $this->orderData['total_price']);
         }
     }
 
@@ -676,7 +686,7 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['total_price'] += $this->settings['additional_fee']['value'];
             }
         }
-        if ($this->system == SystemTypes::TAKEAWAY) {
+	    if ($this->system == SystemTypes::TAKEAWAY) {
             if ($this->settings['delivery_fee']['status'] == true) {
                 $this->orderData['delivery_fee'] = $this->settings['delivery_fee']['value'];
                 $this->orderData['total_price'] += $this->settings['delivery_fee']['value'];
