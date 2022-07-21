@@ -50,8 +50,8 @@ trait Stage8PrepareAdvanceData
                     }
                 }
             } else {
-            	$this->discountData['order_discount'] = $this->payload['order_discount'];
-            	$this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'];
+            	$this->discountData['order_discount'] = $this->payload['order_discount'] ?? 0;
+            	$this->discountData['is_euro_discount'] = $this->payload['is_euro_discount'] ?? 0;
             }
 	        if(isset($this->payload['direct_order_discount_type']) && !is_null($this->payload['direct_order_discount_type'])) {
 		        $direct_discount_type = OrderDiscountType::query()->where('id', $this->payload['direct_order_discount_type'])->first();
@@ -98,7 +98,7 @@ trait Stage8PrepareAdvanceData
         }
 
         if ($this->system === SystemTypes::POS) {
-            $this->orderData['is_paylater_order'] = $this->payload['paylater_order_id'] != null ? 1 : 0;
+            $this->orderData['is_paylater_order'] = isset($this->payload['paylater_order_id']) && $this->payload['paylater_order_id'] != null ? 1 : 0;
         }
 
         if ($this->system === SystemTypes::TAKEAWAY) {
@@ -302,7 +302,8 @@ trait Stage8PrepareAdvanceData
                         $productPriceTypeForLog = 'al-a-cate-pieces';
                     }
                 }
-            } elseif ($this->system === SystemTypes::TAKEAWAY) {
+            }
+            elseif ($this->system === SystemTypes::TAKEAWAY) {
                 $product_price = $product->price;
                 $product_price = (! is_null($product->discount_price) && $product->discount_show && ($this->orderData['order_type'] == 'pickup' || $this->orderData['order_type'] == 'delivery')) ? $product->discount_price : $product_price;
                 /*discount related calculation based on from and to date*/
@@ -365,7 +366,7 @@ trait Stage8PrepareAdvanceData
                         $finalSupplements[$isExist]['total_val'] = $finalSupplements[$isExist]['val'] * $finalSupplements[$isExist]['qty'];
                     } else {
                         $currentSup = collect($this->supplementData)->where('id', $i['id'])->first();
-
+						Log::info('Supplement data : '. json_encode($currentSup));
                         $supQty = $i['qty'] ?? 1;
                         $supVal = $i['val'] ?? 0;
                         $supTotalVal = $i['total_val'] ?? 0;
@@ -399,7 +400,7 @@ trait Stage8PrepareAdvanceData
             }
             foreach ($item['supplements'] as $supp) {
                 $currentSup = collect($this->supplementData)->where('id', $supp['id'])->first();
-                if ($supp['val'] != 0) {
+                if ($supp['val'] != 0 && $currentSup) {
                     $this->orderItemsData[$key]['supplement_total'] += $currentSup->price * $supp['qty'];
                     $supplement_total += $currentSup->price * $supp['qty'];
                 }
@@ -674,7 +675,6 @@ trait Stage8PrepareAdvanceData
             $this->orderData['normal_sub_total'] += $product_total - $current_sub;
             $this->orderData['total_tax'] += $current_sub;
             $this->orderData['total_price'] += $product_total;
-            companionLogger('Total price fenil : '. $this->orderData['total_price']);
         }
     }
 

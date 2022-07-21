@@ -322,7 +322,7 @@ class SaveOrderGenerator extends BaseGenerator
             $this->is_euro_discount = $item['is_euro_discount'];
             $this->item_discount = (float) $item['discount'];
         }
-        $notVoided = ! (isset($item['void_id']) && $item['void_id'] != '');
+        $notVoided = ! (isset($item['void_id']) && $item['void_id'] > 0);
         $this->isVoidProduct = ! $notVoided;
         $notOnTheHouse = ! (isset($item['on_the_house']) && $item['on_the_house'] == '1');
         $this->isOnTheHouseProduct = ! $notOnTheHouse;

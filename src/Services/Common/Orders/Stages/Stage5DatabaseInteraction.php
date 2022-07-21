@@ -2,6 +2,7 @@
 
 namespace Weboccult\EatcardCompanion\Services\Common\Orders\Stages;
 
+use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
 use Weboccult\EatcardCompanion\Models\Product;
 use Weboccult\EatcardCompanion\Models\Supplement;
@@ -35,7 +36,7 @@ trait Stage5DatabaseInteraction
     protected function setSupplementData()
     {
         if ($this->system == SystemTypes::POS && $this->isSubOrder) {
-            $supplement_ids = collect($this->originalCart)->pluck('supplements.id')->filter()->toArray();
+            $supplement_ids = collect($this->originalCart)->pluck('supplements')->flatten(1)->pluck('id')->filter()->toArray();
         } else {
             // other systems : POS | Waitress | Takeaway
 //            $supplement_ids = collect($this->cart)->pluck('supplements.id')->filter()->toArray();

@@ -39,7 +39,11 @@ trait Stage1PrepareValidationRules
     {
         // Add condition here... If you want to exclude store_id validation
         $this->addRuleToCommonRules(StoreEmptyException::class, (! isset($this->payload['store_id']) || empty($this->payload['store_id']) || empty($this->store)));
-        $this->addRuleToCommonRules(OrderItemsNotFoundException::class, empty($this->cart));
+		if(!isset($this->payload['is_item_split_order'])) {
+			$this->addRuleToCommonRules(OrderItemsNotFoundException::class, empty($this->cart));
+		} elseif($this->payload['is_item_split_order'] == 1) {
+			$this->addRuleToCommonRules(OrderItemsNotFoundException::class, empty($this->originalCart));
+		}
 
         if (! empty($this->device) && $this->device->payment_type == 'worldline') {
             $this->addRuleToCommonRules(WorldLineSecretsNotFoundException::class, ! file_exists(public_path('worldline/eatcard.nl.pem')));
