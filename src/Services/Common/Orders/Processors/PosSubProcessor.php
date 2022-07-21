@@ -37,9 +37,9 @@ class PosSubProcessor extends BaseProcessor
                 $this->equalSplitLogic();
                 break;
             case PaymentSplitTypes::CUSTOM_SPLIT:
-            	if(!isset($this->parentOrder->id)) {
-            		parent::prepareOrderItemsDetails();
-	            }
+                if (! isset($this->parentOrder->id)) {
+                    parent::prepareOrderItemsDetails();
+                }
                 $this->customSplitLogic();
                 break;
             case PaymentSplitTypes::PRODUCT_SPLIT:
@@ -129,16 +129,16 @@ class PosSubProcessor extends BaseProcessor
             $total_21_amount = ($total_21_amount / $this->parentOrder->payment_split_persons);
             $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total / $this->parentOrder->payment_split_persons);
 
-	        $this->orderData['alcohol_product_total'] = $total_21_amount;
-	        $this->orderData['normal_product_total'] = $total_9_amount;
-	        $this->orderData['statiege_deposite_total'] = $statiege_deposite_total;
-	        $this->orderData['total_price'] = $total_21_amount + $total_9_amount;
-	        $this->orderData['total_alcohol_tax'] = $total_21_amount * 21 / 121;
-	        $this->orderData['total_tax'] = $total_9_amount * 9 / 109;
-	        $this->orderData['sub_total'] = $this->orderData['total_price'] - $this->orderData['total_alcohol_tax'] - $this->orderData['total_tax'];
-	        $this->orderData['original_order_total'] = $this->orderData['total_price'] + $this->orderData['discount_inc_tax'];
-	        $this->orderData['alcohol_sub_total'] = $total_21_amount - $this->orderData['total_alcohol_tax'];
-	        $this->orderData['normal_sub_total'] = $total_9_amount - $this->orderData['total_tax'];
+            $this->orderData['alcohol_product_total'] = $total_21_amount;
+            $this->orderData['normal_product_total'] = $total_9_amount;
+            $this->orderData['statiege_deposite_total'] = $statiege_deposite_total;
+            $this->orderData['total_price'] = $total_21_amount + $total_9_amount;
+            $this->orderData['total_alcohol_tax'] = $total_21_amount * 21 / 121;
+            $this->orderData['total_tax'] = $total_9_amount * 9 / 109;
+            $this->orderData['sub_total'] = $this->orderData['total_price'] - $this->orderData['total_alcohol_tax'] - $this->orderData['total_tax'];
+            $this->orderData['original_order_total'] = $this->orderData['total_price'] + $this->orderData['discount_inc_tax'];
+            $this->orderData['alcohol_sub_total'] = $total_21_amount - $this->orderData['total_alcohol_tax'];
+            $this->orderData['normal_sub_total'] = $total_9_amount - $this->orderData['total_tax'];
         }
     }
 
@@ -158,82 +158,80 @@ class PosSubProcessor extends BaseProcessor
             });
             $total_9_amount = $this->parentOrder->total_price - $total_21_amount - $this->parentOrder->statiege_deposite_total - $this->parentOrder->tip_amount;
 
-	        //division index
-	        $dIndex = $amount / $total_amount;
-	        $this->orderData['discount_amount'] = ($this->parentOrder->discount_amount) ? round($this->parentOrder->discount_amount * $dIndex, 2) : 0;
-	        $this->orderData['discount_inc_tax'] = ($this->parentOrder->discount_inc_tax) ? round($this->parentOrder->discount_inc_tax * $dIndex, 2) : 0;
-	        $this->orderData['discount_type'] = $this->parentOrder->discount_type ?? null;
-	        if (! empty($this->orderData['discount_type'])) {
-		        if ($this->orderData['discount_type'] == 'EURO') {
-			        $this->orderData['discount'] = ($this->parentOrder->discount) ? round($this->parentOrder->discount * $dIndex, 2) : null;
-		        } else {
-			        $this->orderData['discount'] = $this->parentOrder->discount ?? null;
-		        }
-	        }
-	        $this->orderData['sub_total'] = $this->orderData['sub_total'] - $this->orderData['discount_amount'];
-	        $this->orderData['total_price'] = ($this->parentOrder->total_price) ? round($this->parentOrder->total_price * $dIndex, 2) : 0;
-	        $this->orderData['total_price'] = floor($this->orderData['total_price'] * 100) / 100;
+            //division index
+            $dIndex = $amount / $total_amount;
+            $this->orderData['discount_amount'] = ($this->parentOrder->discount_amount) ? round($this->parentOrder->discount_amount * $dIndex, 2) : 0;
+            $this->orderData['discount_inc_tax'] = ($this->parentOrder->discount_inc_tax) ? round($this->parentOrder->discount_inc_tax * $dIndex, 2) : 0;
+            $this->orderData['discount_type'] = $this->parentOrder->discount_type ?? null;
+            if (! empty($this->orderData['discount_type'])) {
+                if ($this->orderData['discount_type'] == 'EURO') {
+                    $this->orderData['discount'] = ($this->parentOrder->discount) ? round($this->parentOrder->discount * $dIndex, 2) : null;
+                } else {
+                    $this->orderData['discount'] = $this->parentOrder->discount ?? null;
+                }
+            }
+            $this->orderData['sub_total'] = $this->orderData['sub_total'] - $this->orderData['discount_amount'];
+            $this->orderData['total_price'] = ($this->parentOrder->total_price) ? round($this->parentOrder->total_price * $dIndex, 2) : 0;
+            $this->orderData['total_price'] = floor($this->orderData['total_price'] * 100) / 100;
 
             $total_9_amount = ($total_9_amount * $dIndex);
             $total_21_amount = ($total_21_amount * $dIndex);
             $statiege_deposite_total = ($this->parentOrder->statiege_deposite_total * $dIndex);
 
-	        $this->orderData['alcohol_product_total'] = $total_21_amount ;
-	        $this->orderData['normal_product_total'] = $total_9_amount;
-	        $this->orderData['statiege_deposite_total'] = $statiege_deposite_total;
-	        $this->orderData['total_tax'] = $total_9_amount * 9 / 109;
-	        $this->orderData['total_alcohol_tax'] = $total_21_amount * 21 / 121;
-	        $this->orderData['sub_total'] = $this->orderData['total_price'] - $this->orderData['total_tax'] - $this->orderData['total_alcohol_tax'];
-	        $this->orderData['alcohol_sub_total'] = $total_9_amount - $this->orderData['total_tax'];
-	        $this->orderData['normal_sub_total'] = $total_21_amount - $this->orderData['total_alcohol_tax'];
-	        $this->orderData['original_order_total'] = $this->orderData['total_price'] + $this->orderData['discount_inc_tax'];
-
-        }  else {
-	        /*Get prev suborders total price*/
-	        $reservation = StoreReservation::where('id', $this->payload['reservation_id'])->first();
-	        $sub_orders = SubOrder::where('reservation_id', $this->payload['reservation_id'])->where('status', 'paid');
-	        $sub_order_total_price = $sub_orders->sum('total_price');
-	        if($sub_order_total_price > $this->payload['total_price']) {
-		        $dIndex = $amount / $sub_order_total_price;
-		        $this->orderData['sub_total'] = $sub_orders->sum('sub_total') * $dIndex;
-		        $this->orderData['alcohol_sub_total'] = $sub_orders->sum('alcohol_sub_total') * $dIndex;
-		        $this->orderData['normal_sub_total'] = $sub_orders->sum('normal_sub_total') * $dIndex;
-		        $this->orderData['total_tax'] = $sub_orders->sum('total_tax') * $dIndex;
-		        $this->orderData['total_alcohol_tax'] = $sub_orders->sum('total_alcohol_tax') * $dIndex;
-		        $this->orderData['discount_amount'] = $sub_orders->sum('discount_amount') * $dIndex;
-		        $this->orderData['discount_inc_tax'] = $sub_orders->sum('discount_inc_tax') * $dIndex;
-		        if (isset($this->orderData['discount_type']) && $this->orderData['discount_type'] == 'EURO'){
-			        $this->orderData['discount'] = ($reservation->discount) ? round($reservation->discount * $dIndex, 2) : null;
-		        } else {
-			        $this->orderData['discount'] = ($reservation->discount) ? $reservation->discount : null;
-		        }
-		        $this->orderData['normal_product_total'] = $sub_orders->sum('normal_product_total') * $dIndex;
-		        $this->orderData['alcohol_product_total'] = $sub_orders->sum('alcohol_product_total') * $dIndex;
-		        $this->orderData['statiege_deposite_total'] = $sub_orders->sum('statiege_deposite_total') * $dIndex;
-		        $this->orderData['total_price'] = $amount;
-		        $this->orderData['original_order_total'] = $this->orderData['total_price'] - $this->orderData['discount_inc_tax'];
-	        }
-	        else {
-		        $dIndex = $amount / $this->payload['total_price'];
-		        $order_data['sub_total'] = ($this->orderData['sub_total']) ? round($this->orderData['sub_total'] * $dIndex, 2)
-			        : 0;
-		        $this->orderData['alcohol_sub_total'] = ($this->orderData['alcohol_sub_total']) ? round($this->orderData['alcohol_sub_total'] * $dIndex, 2) : 0;
-		        $this->orderData['normal_sub_total'] = ($this->orderData['normal_sub_total']) ? round($this->orderData['normal_sub_total'] * $dIndex, 2) : 0;
-		        $this->orderData['total_tax'] = ($this->orderData['total_tax']) ? round($this->orderData['total_tax'] * $dIndex, 2) : 0;
-		        $this->orderData['total_alcohol_tax'] = ($this->orderData['total_alcohol_tax']) ? round($this->orderData['total_alcohol_tax'] * $dIndex, 2) : 0;
-		        $this->orderData['discount_amount'] = ($this->orderData['discount_amount']) ? round($this->orderData['discount_amount'] * $dIndex, 2) : 0;
-		        $this->orderData['discount_inc_tax'] = ($this->orderData['discount_inc_tax']) ? round($this->orderData['discount_inc_tax'] * $dIndex, 2) : 0;
-		        if (isset($this->orderData['discount_type']) && $this->orderData['discount_type'] == 'EURO'){
-			        $this->orderData['discount'] = ($reservation->discount) ? round($reservation->discount * $dIndex, 2) : null;
-		        } else {
-			        $this->orderData['discount'] = ($reservation->discount) ? $reservation->discount : null;
-		        }
-		        $this->orderData['normal_product_total'] = ($sub_orders->sum('normal_product_total') * $dIndex);
-		        $this->orderData['alcohol_product_total'] = ($sub_orders->sum('alcohol_product_total') * $dIndex);
-		        $this->orderData['statiege_deposite_total'] = ($sub_orders->sum('statiege_deposite_total') * $dIndex);
-		        $this->orderData['total_price'] = $amount;
-		        $this->orderData['original_order_total'] = $this->orderData['total_price'] - $this->orderData['discount_inc_tax'];
-	        }
+            $this->orderData['alcohol_product_total'] = $total_21_amount;
+            $this->orderData['normal_product_total'] = $total_9_amount;
+            $this->orderData['statiege_deposite_total'] = $statiege_deposite_total;
+            $this->orderData['total_tax'] = $total_9_amount * 9 / 109;
+            $this->orderData['total_alcohol_tax'] = $total_21_amount * 21 / 121;
+            $this->orderData['sub_total'] = $this->orderData['total_price'] - $this->orderData['total_tax'] - $this->orderData['total_alcohol_tax'];
+            $this->orderData['alcohol_sub_total'] = $total_9_amount - $this->orderData['total_tax'];
+            $this->orderData['normal_sub_total'] = $total_21_amount - $this->orderData['total_alcohol_tax'];
+            $this->orderData['original_order_total'] = $this->orderData['total_price'] + $this->orderData['discount_inc_tax'];
+        } else {
+            /*Get prev suborders total price*/
+            $reservation = StoreReservation::where('id', $this->payload['reservation_id'])->first();
+            $sub_orders = SubOrder::where('reservation_id', $this->payload['reservation_id'])->where('status', 'paid');
+            $sub_order_total_price = $sub_orders->sum('total_price');
+            if ($sub_order_total_price > $this->payload['total_price']) {
+                $dIndex = $amount / $sub_order_total_price;
+                $this->orderData['sub_total'] = $sub_orders->sum('sub_total') * $dIndex;
+                $this->orderData['alcohol_sub_total'] = $sub_orders->sum('alcohol_sub_total') * $dIndex;
+                $this->orderData['normal_sub_total'] = $sub_orders->sum('normal_sub_total') * $dIndex;
+                $this->orderData['total_tax'] = $sub_orders->sum('total_tax') * $dIndex;
+                $this->orderData['total_alcohol_tax'] = $sub_orders->sum('total_alcohol_tax') * $dIndex;
+                $this->orderData['discount_amount'] = $sub_orders->sum('discount_amount') * $dIndex;
+                $this->orderData['discount_inc_tax'] = $sub_orders->sum('discount_inc_tax') * $dIndex;
+                if (isset($this->orderData['discount_type']) && $this->orderData['discount_type'] == 'EURO') {
+                    $this->orderData['discount'] = ($reservation->discount) ? round($reservation->discount * $dIndex, 2) : null;
+                } else {
+                    $this->orderData['discount'] = ($reservation->discount) ? $reservation->discount : null;
+                }
+                $this->orderData['normal_product_total'] = $sub_orders->sum('normal_product_total') * $dIndex;
+                $this->orderData['alcohol_product_total'] = $sub_orders->sum('alcohol_product_total') * $dIndex;
+                $this->orderData['statiege_deposite_total'] = $sub_orders->sum('statiege_deposite_total') * $dIndex;
+                $this->orderData['total_price'] = $amount;
+                $this->orderData['original_order_total'] = $this->orderData['total_price'] - $this->orderData['discount_inc_tax'];
+            } else {
+                $dIndex = $amount / $this->payload['total_price'];
+                $order_data['sub_total'] = ($this->orderData['sub_total']) ? round($this->orderData['sub_total'] * $dIndex, 2)
+                    : 0;
+                $this->orderData['alcohol_sub_total'] = ($this->orderData['alcohol_sub_total']) ? round($this->orderData['alcohol_sub_total'] * $dIndex, 2) : 0;
+                $this->orderData['normal_sub_total'] = ($this->orderData['normal_sub_total']) ? round($this->orderData['normal_sub_total'] * $dIndex, 2) : 0;
+                $this->orderData['total_tax'] = ($this->orderData['total_tax']) ? round($this->orderData['total_tax'] * $dIndex, 2) : 0;
+                $this->orderData['total_alcohol_tax'] = ($this->orderData['total_alcohol_tax']) ? round($this->orderData['total_alcohol_tax'] * $dIndex, 2) : 0;
+                $this->orderData['discount_amount'] = ($this->orderData['discount_amount']) ? round($this->orderData['discount_amount'] * $dIndex, 2) : 0;
+                $this->orderData['discount_inc_tax'] = ($this->orderData['discount_inc_tax']) ? round($this->orderData['discount_inc_tax'] * $dIndex, 2) : 0;
+                if (isset($this->orderData['discount_type']) && $this->orderData['discount_type'] == 'EURO') {
+                    $this->orderData['discount'] = ($reservation->discount) ? round($reservation->discount * $dIndex, 2) : null;
+                } else {
+                    $this->orderData['discount'] = ($reservation->discount) ? $reservation->discount : null;
+                }
+                $this->orderData['normal_product_total'] = ($sub_orders->sum('normal_product_total') * $dIndex);
+                $this->orderData['alcohol_product_total'] = ($sub_orders->sum('alcohol_product_total') * $dIndex);
+                $this->orderData['statiege_deposite_total'] = ($sub_orders->sum('statiege_deposite_total') * $dIndex);
+                $this->orderData['total_price'] = $amount;
+                $this->orderData['original_order_total'] = $this->orderData['total_price'] - $this->orderData['discount_inc_tax'];
+            }
         }
     }
 }

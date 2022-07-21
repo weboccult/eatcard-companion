@@ -98,8 +98,8 @@ trait Stage0BasicDatabaseInteraction
                 $this->orderData['parent_order_id'] = $orderId;
             }
         } elseif (isset($this->payload['split_payment_type'])) {
-		    $this->isSubOrder = true;
-	    }
+            $this->isSubOrder = true;
+        }
     }
 
     protected function setDeviceData()
