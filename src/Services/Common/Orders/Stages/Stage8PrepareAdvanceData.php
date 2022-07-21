@@ -67,6 +67,7 @@ trait Stage8PrepareAdvanceData
             $this->orderData['method'] = $this->payload['method'];
             if (isset($this->payload['manual_pin']) && $this->payload['manual_pin'] == 1) {
                 $this->orderData['method'] = 'manual_pin';
+                $this->orderData['status'] = 'paid';
             }
         }
         if ($this->system === SystemTypes::TAKEAWAY) {
@@ -86,6 +87,11 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['payment_method_type'] = $this->device->payment_type == 'ccv' ? 'ccv' : 'wipay';
             }
         }
+
+        if($this->system === SystemTypes::POS) {
+	        $this->orderData['is_paylater_order'] = $this->payload['paylater_order_id'] != null ? 1 : 0;
+        }
+
         if ($this->system === SystemTypes::TAKEAWAY) {
             $this->orderData['is_paylater_order'] = $this->payload['is_pay_later_order'] = (int) ($this->payload['is_pay_later_order'] ?? 0);
             if (empty($this->orderData['is_paylater_order'])) {
