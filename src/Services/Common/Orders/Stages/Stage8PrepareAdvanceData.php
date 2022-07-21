@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Weboccult\EatcardCompanion\Enums\AfterEffectOrderTypes;
 use Weboccult\EatcardCompanion\Enums\SystemTypes;
+use function Weboccult\EatcardCompanion\Helpers\getAycePrice;
 use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\OrderDiscountType;
 use Weboccult\EatcardCompanion\Models\SubCategory;
@@ -238,7 +239,7 @@ trait Stage8PrepareAdvanceData
                 $item_discount = isset($item['discount']) ? (float) $item['discount'] : 0;
 
                 // if same quantity is not in sub order then need to calculate euro discount
-                if ($is_euro_discount == 1 & $this->discountData['order_discount'] == 0 && $original_quantity > 0 && $original_quantity != $item_quantity) {
+                if ($is_euro_discount == 1 & isset($this->discountData['order_discount']) && $this->discountData['order_discount'] == 0 && $original_quantity > 0 && $original_quantity != $item_quantity) {
                     $this->orderItemsData['discount'] = ($item_discount / $original_quantity) * $item_quantity;
                 }
             }
@@ -675,6 +676,13 @@ trait Stage8PrepareAdvanceData
             $this->orderData['normal_sub_total'] += $product_total - $current_sub;
             $this->orderData['total_tax'] += $current_sub;
             $this->orderData['total_price'] += $product_total;
+        } elseif (isset($this->payload['all_you_eat_data'])) {
+	        $ayce_amount = getAycePrice($this->payload['all_you_eat_data']);
+	        $this->orderData['ayce_price'] = $ayce_amount;
+	        $current_sub = ($ayce_amount * 9 / 109);
+	        $this->orderData['normal_sub_total'] += $ayce_amount - $current_sub;
+	        $this->orderData['total_tax'] += $current_sub;
+	        $this->orderData['total_price'] += $ayce_amount;
         }
     }
 

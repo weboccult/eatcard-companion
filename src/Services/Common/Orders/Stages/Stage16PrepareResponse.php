@@ -18,7 +18,7 @@ trait Stage16PrepareResponse
         if ($this->orderData['method'] == 'cash') {
             if ($this->isSubOrder) {
                 $this->setDumpDieValue([
-                    'data'      => $this->parentOrder,
+                    'data'      => null,
                     'sub_order' => $this->createdOrder,
                 ]);
             } else {

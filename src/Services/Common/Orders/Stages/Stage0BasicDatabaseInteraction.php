@@ -97,7 +97,9 @@ trait Stage0BasicDatabaseInteraction
                 $this->isSubOrder = true;
                 $this->orderData['parent_order_id'] = $orderId;
             }
-        }
+        } elseif (isset($this->payload['split_payment_type'])) {
+		    $this->isSubOrder = true;
+	    }
     }
 
     protected function setDeviceData()
@@ -143,7 +145,7 @@ trait Stage0BasicDatabaseInteraction
     protected function setReservationData()
     {
         if (isset($this->payload['reservation_id']) && ! empty($this->payload['reservation_id'])) {
-            $reservationId = $this->isSubOrder ? $this->parentOrder->parent_id : $this->payload['reservation_id'];
+            $reservationId = $this->isSubOrder && isset($this->parentOrder->parent_id) ? $this->parentOrder->parent_id : $this->payload['reservation_id'];
             $reservation = StoreReservation::with([
                 'dineInPrice' => function ($q1) {
                     $q1->withTrashed();
