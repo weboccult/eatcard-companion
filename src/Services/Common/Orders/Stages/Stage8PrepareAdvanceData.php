@@ -185,12 +185,12 @@ trait Stage8PrepareAdvanceData
     protected function prepareTipAmount()
     {
         if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
-	        $this->orderData['tip_amount'] = $this->payload['tip_amount'] ?? 0;
-        	if(!empty($this->storeReservation)) {
-	            $subOrder = SubOrder::query()->where('reservation_id', $this->storeReservation->id)->get();
-	            if (isset($subOrder) && collect($subOrder)->count() > 0) {
-		            $this->orderData['tip_amount'] = collect($subOrder)->sum('tip_amount');
-	            }
+            $this->orderData['tip_amount'] = $this->payload['tip_amount'] ?? 0;
+            if (! empty($this->storeReservation)) {
+                $subOrder = SubOrder::query()->where('reservation_id', $this->storeReservation->id)->get();
+                if (isset($subOrder) && collect($subOrder)->count() > 0) {
+                    $this->orderData['tip_amount'] = collect($subOrder)->sum('tip_amount');
+                }
             }
         }
     }
@@ -263,35 +263,33 @@ trait Stage8PrepareAdvanceData
             }
 
             //set product default price first
-	        $product_price = ((! empty($product->discount_price) && $product->discount_price > 0) && $product->discount_show) ? $product->discount_price : $product_price;
+            $product_price = ((! empty($product->discount_price) && $product->discount_price > 0) && $product->discount_show) ? $product->discount_price : $product_price;
             if (in_array($this->system, [SystemTypes::POS, SystemTypes::WAITRESS])) {
                 if ($productCalcPrice > 0) {
-	                $product_price = $productCalcPrice;
+                    $product_price = $productCalcPrice;
                 } elseif (! $item['base_price']) {
-	                $product_price = 0;
+                    $product_price = 0;
                     $is_product_chargeable = false;
                     $productPriceTypeForLog = 'base-price-zero';
                 }
-            }
-            elseif ($this->system === SystemTypes::DINE_IN) {
+            } elseif ($this->system === SystemTypes::DINE_IN) {
 
                 /*
                  *  -> need to set product piece price for dine-in store and guest 1st order because the not have reservation
                     -> we need to set pieces price for all without reservation orders
                 */
                 if ($productCalcPrice > 0) {
-	                $product_price = $productCalcPrice;
+                    $product_price = $productCalcPrice;
                 } elseif (empty($this->storeReservation)) {
                     if (isset($product->is_al_a_carte) && $product->is_al_a_carte == 1 && isset($product->total_pieces) && $product->total_pieces != '' && isset($product->pieces_price) && $product->pieces_price != '') {
-	                    $product_price = (float) $product->pieces_price;
+                        $product_price = (float) $product->pieces_price;
                         $product->show_pieces = 1;
                         $productPriceTypeForLog = 'al-a-cate-pieces';
                     }
                 }
-            }
-            elseif ($this->system === SystemTypes::TAKEAWAY) {
+            } elseif ($this->system === SystemTypes::TAKEAWAY) {
                 $product_price = $product->price;
-	            $product_price = (! is_null($product->discount_price) && $product->discount_show && ($this->orderData['order_type'] == 'pickup' || $this->orderData['order_type'] == 'delivery')) ? $product->discount_price : $product_price;
+                $product_price = (! is_null($product->discount_price) && $product->discount_show && ($this->orderData['order_type'] == 'pickup' || $this->orderData['order_type'] == 'delivery')) ? $product->discount_price : $product_price;
                 /*discount related calculation based on from and to date*/
                 if ($product->discount_price && ($this->orderData['order_type'] == 'pickup' || $this->orderData['order_type'] == 'delivery')) {
                     if (($product->from_date < $this->orderData['order_date'] && $product->to_date < $this->orderData['order_date']) || ($product->from_date > $this->orderData['order_date'] && $product->to_date > $this->orderData['order_date'])) {
@@ -301,12 +299,12 @@ trait Stage8PrepareAdvanceData
                             $productPriceTypeForLog = 'normal';
                         } else {
                             /*use discount price*/
-	                        $product_price = $product->discount_price;
+                            $product_price = $product->discount_price;
                             $productPriceTypeForLog = 'discount';
                         }
                     } else {
                         /*use discount price*/
-	                    $product_price = $product->discount_price;
+                        $product_price = $product->discount_price;
                         $productPriceTypeForLog = 'discount';
                     }
                 }
@@ -381,8 +379,7 @@ trait Stage8PrepareAdvanceData
                     }
                 }
                 $item['supplements'] = $finalSupplements;
-            }
-            else {
+            } else {
                 $item['supplements'] = [];
             }
             foreach ($item['supplements'] as $supp) {
@@ -453,8 +450,7 @@ trait Stage8PrepareAdvanceData
                         $this->orderData['total_alcohol_tax'] += $current_sub;
                     }
                 }
-            }
-            else {
+            } else {
                 //9% tax
                 $current_sub = ($product_total * $productTax / 109);
                 $this->orderItemsData[$key]['normal_sub_total'] = $product_total - $current_sub;
@@ -624,7 +620,7 @@ trait Stage8PrepareAdvanceData
                 $this->orderItemsData[$key]['statiege_deposite_total'] = 0;
                 $this->orderData['statiege_deposite_total'] += 0;
             }
-	        if (isset($item['status'])) {
+            if (isset($item['status'])) {
                 $this->orderItemsData[$key]['status'] = $item['status'];
             } else {
                 $this->orderItemsData[$key]['status'] = 'received';
@@ -740,7 +736,7 @@ trait Stage8PrepareAdvanceData
 
     protected function calculateTipAmount()
     {
-        if ($this->system == SystemTypes::POS && !$this->isSubOrder) {
+        if ($this->system == SystemTypes::POS && ! $this->isSubOrder) {
             $this->orderData['total_price'] += $this->orderData['tip_amount'];
         }
     }
@@ -770,20 +766,20 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['edited_by'] = $this->payload['edited_by'] ?? '';
                 $this->orderData['ref_id'] = $this->payload['ref_id'] ?? '';
                 $this->orderData['is_base_order'] = 0;
-            } elseif (!empty($this->storeReservation)) {
-	            $last_order = Order::query()
-		            ->where('parent_id', $this->payload['reservation_id'])
-		            ->orderBy('id', 'desc')
-		            ->first();
-	            $first_order = Order::query()->where('parent_id', $this->payload['reservation_id'])->first();
-	            if (isset($first_order) && isset($first_order->order_id) && isset($last_order) && isset($last_order->id)) {
-		            $this->orderData['order_id'] = $first_order->order_id;
-		            $this->orderData['ref_id'] = $last_order->id;
-		            $this->setEffect(AfterEffectOrderTypes::UNDO_OPERATION_REQUESTED_EFFECTS);
-		            $for_undo_order = true;
-		            $this->for_undo_order = $for_undo_order;
-	            }
-	            $this->orderData['is_base_order'] = 1;
+            } elseif (! empty($this->storeReservation)) {
+                $last_order = Order::query()
+                    ->where('parent_id', $this->payload['reservation_id'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $first_order = Order::query()->where('parent_id', $this->payload['reservation_id'])->first();
+                if (isset($first_order) && isset($first_order->order_id) && isset($last_order) && isset($last_order->id)) {
+                    $this->orderData['order_id'] = $first_order->order_id;
+                    $this->orderData['ref_id'] = $last_order->id;
+                    $this->setEffect(AfterEffectOrderTypes::UNDO_OPERATION_REQUESTED_EFFECTS);
+                    $for_undo_order = true;
+                    $this->for_undo_order = $for_undo_order;
+                }
+                $this->orderData['is_base_order'] = 1;
             }
         }
     }
