@@ -56,14 +56,14 @@ class PosSubProcessor extends BaseProcessor
         companionLogger('Sub order create data : '.json_encode($this->orderData, JSON_PRETTY_PRINT));
         $this->createdOrder = SubOrder::query()->create($this->orderData);
         /*It's improvement from our side*/
-        if(isset($this->orderData['additional_fee']) && $this->orderData['additional_fee']) {
-        	if(isset($this->parentOrder->id)) {
-        		Order::where('id', $this->parentOrder->id)->update([
-        			'total_price' => ($this->parentOrder->total_price + $this->createdOrder->additional_fee),
-			        'original_order_total' => ($this->parentOrder->original_order_total + $this->createdOrder->additional_fee),
-			        'additional_fee' => ($this->parentOrder->additional_fee + $this->createdOrder->additional_fee)
-		        ]);
-	        }
+        if (isset($this->orderData['additional_fee']) && $this->orderData['additional_fee']) {
+            if (isset($this->parentOrder->id)) {
+                Order::where('id', $this->parentOrder->id)->update([
+                    'total_price' => ($this->parentOrder->total_price + $this->createdOrder->additional_fee),
+                    'original_order_total' => ($this->parentOrder->original_order_total + $this->createdOrder->additional_fee),
+                    'additional_fee' => ($this->parentOrder->additional_fee + $this->createdOrder->additional_fee),
+                ]);
+            }
         }
     }
 

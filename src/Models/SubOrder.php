@@ -38,7 +38,7 @@ class SubOrder extends Model
         'statiege_deposite_total',
         'additional_fee',
         'alcohol_product_total',
-        'normal_product_total'
+        'normal_product_total',
     ];
 
     /**
