@@ -4,6 +4,7 @@ namespace Weboccult\EatcardCompanion\Services\Common\Orders\Processors;
 
 use Carbon\Carbon;
 use Weboccult\EatcardCompanion\Enums\PaymentSplitTypes;
+use Weboccult\EatcardCompanion\Models\Order;
 use Weboccult\EatcardCompanion\Models\ReservationServeRequest;
 use Weboccult\EatcardCompanion\Models\StoreReservation;
 use Weboccult\EatcardCompanion\Models\SubOrder;
@@ -54,6 +55,16 @@ class PosSubProcessor extends BaseProcessor
     {
         companionLogger('Sub order create data : '.json_encode($this->orderData, JSON_PRETTY_PRINT));
         $this->createdOrder = SubOrder::query()->create($this->orderData);
+        /*It's improvement from our side*/
+        if(isset($this->orderData['additional_fee']) && $this->orderData['additional_fee']) {
+        	if(isset($this->parentOrder->id)) {
+        		Order::where('id', $this->parentOrder->id)->update([
+        			'total_price' => ($this->parentOrder->total_price + $this->createdOrder->additional_fee),
+			        'original_order_total' => ($this->parentOrder->original_order_total + $this->createdOrder->additional_fee),
+			        'additional_fee' => ($this->parentOrder->additional_fee + $this->createdOrder->additional_fee)
+		        ]);
+	        }
+        }
     }
 
     protected function createOrderItems()
@@ -136,6 +147,7 @@ class PosSubProcessor extends BaseProcessor
             $this->orderData['total_alcohol_tax'] = $total_21_amount * 21 / 121;
             $this->orderData['total_tax'] = $total_9_amount * 9 / 109;
             $this->orderData['sub_total'] = $this->orderData['total_price'] - $this->orderData['total_alcohol_tax'] - $this->orderData['total_tax'];
+            $this->orderData['total_price'] += $statiege_deposite_total;
             $this->orderData['original_order_total'] = $this->orderData['total_price'] + $this->orderData['discount_inc_tax'];
             $this->orderData['alcohol_sub_total'] = $total_21_amount - $this->orderData['total_alcohol_tax'];
             $this->orderData['normal_sub_total'] = $total_9_amount - $this->orderData['total_tax'];

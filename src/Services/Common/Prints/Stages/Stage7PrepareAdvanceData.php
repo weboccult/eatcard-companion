@@ -1172,7 +1172,7 @@ trait Stage7PrepareAdvanceData
                                 - ($total_21_tax_amount + $additional_fee + $tip_amount + $statiege_deposite_total);
         } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
             $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
-            //                $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
+            // $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
             $total_0_tax_amount = $statiege_deposite_total;
             if ($this->order['payment_split_type'] == PaymentSplitTypes::PRODUCT_SPLIT) {
                 $total_21_tax_amount = $this->total_21_tax_amount ?? 0;

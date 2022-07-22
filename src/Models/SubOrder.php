@@ -36,6 +36,9 @@ class SubOrder extends Model
         'discount_inc_tax',
         'created_from',
         'statiege_deposite_total',
+        'additional_fee',
+        'alcohol_product_total',
+        'normal_product_total'
     ];
 
     /**
