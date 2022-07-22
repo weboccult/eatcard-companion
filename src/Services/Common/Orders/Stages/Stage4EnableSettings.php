@@ -32,7 +32,9 @@ trait Stage4EnableSettings
         $isAdditionalFeeApply = false;
         $paymentMethod = $this->payload['method'] ?? '';
 
-        if (in_array($paymentMethod, ['cash', 'paylater'])) {
+        if(isset($this->payload['manual_pin']) && $this->payload['manual_pin'] == 1) {
+	        $isAdditionalFeeApply = true;
+        }elseif (in_array($paymentMethod, ['cash', 'paylater'])) {
             $isAdditionalFeeApply = false;
         } elseif ($this->system == SystemTypes::DINE_IN && (($this->store->storeSetting->is_online_payment == 1 && $paymentMethod != 'pin') || (($this->store->storeSetting->is_pin == 1 && $paymentMethod == 'pin')))) {
             $isAdditionalFeeApply = true;
@@ -41,9 +43,8 @@ trait Stage4EnableSettings
         } elseif ($this->system == SystemTypes::TAKEAWAY && $this->store->storeSetting->is_online_payment == 1) {
             $isAdditionalFeeApply = true;
         }
-
         if ($isAdditionalFeeApply && isset($this->store->storeSetting) && $this->store->storeSetting->additional_fee) {
-            $this->settings['additional_fee'] = [
+        	$this->settings['additional_fee'] = [
                 'status' => true,
                 'value'  => $this->store->storeSetting->additional_fee ?? 0,
                 // 'value'  => $this->payload['additional_fee'] ?? 0,

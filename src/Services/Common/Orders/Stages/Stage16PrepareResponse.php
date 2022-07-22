@@ -15,7 +15,7 @@ trait Stage16PrepareResponse
 {
     protected function posResponse()
     {
-        if ($this->orderData['method'] == 'cash') {
+        if ($this->orderData['method'] == 'cash' || $this->orderData['method'] == 'manual_pin') {
             if ($this->isSubOrder) {
                 $this->setDumpDieValue([
                     'data'      => null,

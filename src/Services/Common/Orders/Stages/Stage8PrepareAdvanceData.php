@@ -77,6 +77,7 @@ trait Stage8PrepareAdvanceData
             $this->orderData['method'] = $this->payload['method'];
             if (isset($this->payload['manual_pin']) && $this->payload['manual_pin'] == 1) {
                 $this->orderData['method'] = 'manual_pin';
+                $this->orderData['payment_method_type'] = null;
                 $this->orderData['status'] = 'paid';
             }
         }
@@ -88,6 +89,7 @@ trait Stage8PrepareAdvanceData
     protected function preparePaymentDetails()
     {
         if (in_array($this->system, [SystemTypes::KIOSK, SystemTypes::POS, SystemTypes::WAITRESS])) {
+	        $this->orderData['method'] = $this->payload['method'];
             if ($this->orderData['method'] == 'cash') {
                 $this->orderData['status'] = 'paid';
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
@@ -498,7 +500,7 @@ trait Stage8PrepareAdvanceData
                 $this->orderData['total_price'] += $product_total;
             }
             $this->orderItemsData[$key]['sub_total'] = $this->orderItemsData[$key]['normal_sub_total'] + $this->orderItemsData[$key]['alcohol_sub_total'];
-            $this->orderItemsData[$key]['unit_price'] = $product->price;
+            $this->orderItemsData[$key]['unit_price'] = $product->discount_price ?? $product->price;
             /*calculate discount for each product*/
             $this->orderItemsData[$key]['discount'] = null;
             $this->orderItemsData[$key]['discount_type'] = null;
@@ -514,7 +516,7 @@ trait Stage8PrepareAdvanceData
                     $this->orderItemsData[$key]['discount_inc_tax'] = discountCalc($product_total, $product_total, $is_euro_discount, $item['discount']);
 
                     if ($notVoided && $notOnTheHouse) {
-                        $this->orderData['discount_amount'] += $this->orderItemsData[$key][$key]['discount_price'];
+                        $this->orderData['discount_amount'] += $this->orderItemsData[$key]['discount_price'];
                         $this->orderData['discount_inc_tax'] += $this->orderItemsData[$key]['discount_inc_tax'];
                     }
                 } elseif (isset($this->discountData['order_discount']) && (float) $this->discountData['order_discount'] > 0) {

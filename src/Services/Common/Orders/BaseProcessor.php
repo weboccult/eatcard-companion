@@ -285,8 +285,8 @@ abstract class BaseProcessor implements BaseProcessorContract
     {
         $this->stageIt([
             fn () => $this->prepareOrderDiscount(),
-            fn () => $this->preparePaymentMethod(),
             fn () => $this->preparePaymentDetails(),
+            fn () => $this->preparePaymentMethod(),
             fn () => $this->prepareSplitPaymentDetails(),
             fn () => $this->prepareOrderId(),
             fn () => $this->prepareOrderDetails(),

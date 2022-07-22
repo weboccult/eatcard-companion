@@ -109,7 +109,8 @@ trait Stage9PerformOperations
                     $this->couponRemainingPrice = 0;
                     $this->orderData['coupon_price'] = 0;
                 }
-
+				/*Update gift price remaining price after create order for cash and manual_pin payment method*/
+	            /*Stage11CreateProcess -> createOrder*/
                 companionLogger('--Gift card applied : ', [$qrCode, $this->orderData['coupon_price']]);
             }
         }
