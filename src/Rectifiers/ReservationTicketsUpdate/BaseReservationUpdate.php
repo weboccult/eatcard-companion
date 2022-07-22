@@ -278,9 +278,9 @@ abstract class BaseReservationUpdate
         ];
 
         $discountType = $reservationAllYouEatData['discount']['discount_on'] ?? null;
-        if (!empty($discountType) && strtolower($discountType) === 'cart') {
+        if (! empty($discountType) && strtolower($discountType) === 'cart') {
             $this->updatePayload['ayce_discount_type'] = $discountType;
-        }else{
+        } else {
             $this->updatePayload['ayce_discount_type'] = null;
         }
 

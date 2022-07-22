@@ -130,7 +130,7 @@ trait Stage3PrepareBasicData
         $ayceDiscount = aycePersonDiscountCalculate($this->reservationData['all_you_eat_data']);
 
         $discountType = $this->reservationData['all_you_eat_data']['discount']['discount_on'] ?? null;
-        if (!empty($discountType) && strtolower($discountType) === 'cart'){
+        if (! empty($discountType) && strtolower($discountType) === 'cart') {
             $this->reservationData['ayce_discount_type'] = $discountType;
         }
 

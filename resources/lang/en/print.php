@@ -17,6 +17,7 @@ return [
     'large' => 'Large',
 
     /* 5. -> sub total summary */
+    'disposable_items' => 'Disposable Items',
     'deposit' => 'Deposit',
     'delivery_fee' => 'Delivery cost',
     'additional_fees' => 'Additional fee',
