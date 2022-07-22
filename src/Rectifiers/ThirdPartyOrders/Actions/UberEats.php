@@ -175,6 +175,7 @@ class UberEats extends ThirdPartyOrders
     {
         $this->prepareOrderData();
         $this->prepareDeliveryData();
+        $this->prepareDisposableItems();
         $this->prepareOrderItemData();
         $this->createOrderAndOrderItems();
         $this->orderAutoAccept();
@@ -273,6 +274,14 @@ class UberEats extends ThirdPartyOrders
             $this->orderData['first_name'] = $this->response['eater']['first_name'] ?? '';
             $this->orderData['last_name'] = $this->response['eater']['last_name'] ?? '';
             $this->orderData['contact_no'] = $this->response['eater']['phone_code'] ?? '';
+        }
+    }
+
+    private function prepareDisposableItems()
+    {
+        $isDisposableItems = $this->response['packaging']['disposable_items'] ?? null;
+        if (! empty($isDisposableItems)) {
+            $this->orderData['disposable_items'] = $isDisposableItems['should_include'] === true;
         }
     }
 

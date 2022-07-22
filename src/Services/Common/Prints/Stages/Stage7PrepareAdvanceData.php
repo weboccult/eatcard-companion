@@ -1054,6 +1054,7 @@ trait Stage7PrepareAdvanceData
         $additional_fee = 0;
         $plastic_bag_fee = 0;
         $tip_amount = 0;
+        $disposable_items = null;
 
         if ($this->orderType == OrderTypes::PAID && ! empty($this->order)) {
             $statiege_deposite_total = $this->order['statiege_deposite_total'] ?? 0;
@@ -1061,6 +1062,9 @@ trait Stage7PrepareAdvanceData
             $additional_fee = $this->order['additional_fee'] ?? 0;
             $plastic_bag_fee = $this->order['plastic_bag_fee'] ?? 0;
             $tip_amount = $this->order['tip_amount'] ?? 0;
+            if (! empty($this->order['uber_eats_order_id'])) {
+                $disposable_items = ! empty($this->order['disposable_items'] ?? null) ? 'Yes' : 'No';
+            }
         } elseif ($this->orderType == OrderTypes::SUB && ! empty($this->order) && ! empty($this->subOrder)) {
 //            $statiege_deposite_total = ($this->subOrder['total_price'] * $this->order['statiege_deposite_total']) / $this->order['total_price'];
             $statiege_deposite_total = $this->subOrder['statiege_deposite_total'] ?? 0;
@@ -1069,6 +1073,12 @@ trait Stage7PrepareAdvanceData
             $tip_amount = $this->subOrder['tip_amount'] ?? 0;
         }
 
+        if (! empty($disposable_items)) {
+            $summary[] = [
+                'key'   => __companionPrintTrans('print.disposable_items'),
+                'value' => $disposable_items,
+            ];
+        }
         if ($statiege_deposite_total > 0) {
             $summary[] = [
                 'key'   => __companionPrintTrans('print.deposit'),
