@@ -89,7 +89,7 @@ trait Stage8PrepareAdvanceData
     protected function preparePaymentDetails()
     {
         if (in_array($this->system, [SystemTypes::KIOSK, SystemTypes::POS, SystemTypes::WAITRESS])) {
-	        $this->orderData['method'] = $this->payload['method'];
+            $this->orderData['method'] = $this->payload['method'];
             if ($this->orderData['method'] == 'cash') {
                 $this->orderData['status'] = 'paid';
                 $this->orderData['paid_on'] = Carbon::now()->format('Y-m-d H:i:s');
