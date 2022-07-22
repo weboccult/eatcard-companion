@@ -22,7 +22,7 @@ trait Stage11CreateProcess
 {
     protected function updateTipAmountInParentOrderIfApplicable()
     {
-        if ($this->system == SystemTypes::POS && $this->isSubOrder && ! empty($this->storeReservation) && isset ($this->parentOrder->tip_amount)) {
+        if ($this->system == SystemTypes::POS && $this->isSubOrder && ! empty($this->storeReservation) && isset($this->parentOrder->tip_amount)) {
             $parent_tip = $this->parentOrder->tip_amount ?? 0;
             $tip = $parent_tip + $this->orderData['tip_amount'];
             $updateParentData['tip_amount'] = $tip;
