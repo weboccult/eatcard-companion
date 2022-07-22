@@ -48,17 +48,17 @@ trait Stage11CreateProcess
     {
         companionLogger('--before order create data : ', $this->orderData);
         $this->createdOrder = Order::query()->create($this->orderData);
-	    if(($this->createdOrder->method == 'manual_pin' || $this->createdOrder->method == 'cash') && $this->createdOrder->status == 'paid') {
-			if(!is_null($this->createdOrder->gift_purchase_id) && $this->createdOrder->coupon_price) {
-				$gift_purchase_coupon = GiftPurchaseOrder::where('id', $this->createdOrder->gift_purchase_id)->first();
-				if(isset($gift_purchase_coupon->is_multi_usage) && $gift_purchase_coupon->is_multi_usage == 1) {
-					$gift_purchase_remaining_amount = $gift_purchase_coupon->remaining_price - $this->createdOrder->coupon_price;
-					$gift_purchase_coupon->update(['remaining_price' => $gift_purchase_remaining_amount]);
-				} else {
-					$gift_purchase_coupon->update(['remaining_price' => 0]);
-				}
-			}
-	    }
+        if (($this->createdOrder->method == 'manual_pin' || $this->createdOrder->method == 'cash') && $this->createdOrder->status == 'paid') {
+            if (! is_null($this->createdOrder->gift_purchase_id) && $this->createdOrder->coupon_price) {
+                $gift_purchase_coupon = GiftPurchaseOrder::where('id', $this->createdOrder->gift_purchase_id)->first();
+                if (isset($gift_purchase_coupon->is_multi_usage) && $gift_purchase_coupon->is_multi_usage == 1) {
+                    $gift_purchase_remaining_amount = $gift_purchase_coupon->remaining_price - $this->createdOrder->coupon_price;
+                    $gift_purchase_coupon->update(['remaining_price' => $gift_purchase_remaining_amount]);
+                } else {
+                    $gift_purchase_coupon->update(['remaining_price' => 0]);
+                }
+            }
+        }
         $this->createdOrder->refresh();
     }
 
